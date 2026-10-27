@@ -22,3 +22,96 @@ body {
   color: var(--color-ink);
   background: #ffffff;
 }
+
+/* ---------- Lab-style motion ---------- */
+
+/* DNA helix rungs: flipping on the X axis reads as a rotating double helix */
+@keyframes helix-rung {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(-1); }
+}
+@keyframes helix-dot-a {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(var(--span)); opacity: 0.35; }
+}
+@keyframes helix-dot-b {
+  0%, 100% { transform: translateX(0); opacity: 0.35; }
+  50% { transform: translateX(calc(var(--span) * -1)); opacity: 1; }
+}
+/* Scrolling columns of sequence letters */
+@keyframes seq-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+/* Sector strip */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* Generic float for data chips */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+/* Word rotator */
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(60%); filter: blur(4px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+/* Service visuals */
+@keyframes align-slide {
+  0% { transform: translateX(var(--from)); }
+  40%, 100% { transform: translateX(0); }
+}
+@keyframes bar-fill {
+  0% { transform: scaleX(0); }
+  60%, 100% { transform: scaleX(1); }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes draw-line {
+  from { stroke-dashoffset: var(--len); }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes node-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+@keyframes type-line {
+  0% { width: 0; }
+  50%, 100% { width: var(--w); }
+}
+@keyframes caret {
+  50% { opacity: 0; }
+}
+/* Pipeline pulse travelling along the line */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(205 226 74 / 0.55); }
+  100% { box-shadow: 0 0 0 14px rgb(205 226 74 / 0); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Respect visitors who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

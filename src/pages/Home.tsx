@@ -1,63 +1,67 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Dna, Network, FlaskConical, Cpu, ClipboardList, Code2 } from "lucide-react";
-import { Button, CheckList, CtaBand, Eyebrow, Section, SectionHeading } from "../components/ui";
-import { capabilitiesList, engagementModels, services } from "../data/site";
+import {
+  ArrowRight,
+  Dna,
+  Layers,
+  ShieldAlert,
+  Leaf,
+  Microscope,
+  Atom,
+  Sprout,
+  BrainCircuit,
+  Code2,
+  BarChart3,
+  Target,
+  Workflow,
+  PackageCheck,
+  ShieldCheck,
+  Scale,
+  Lock,
+  Handshake,
+} from "lucide-react";
+import { Button, CtaBand, Eyebrow, Section, SectionHeading } from "../components/ui";
+import { Reveal, RotatingWords } from "../components/motion";
+import HeroLab from "../components/home/HeroLab";
+import ServicesShowcase from "../components/home/ServicesShowcase";
+import Pipeline from "../components/home/Pipeline";
+import NeedPicker from "../components/home/NeedPicker";
 
-const serviceIcons = [FlaskConical, Dna, Network, Cpu, ClipboardList, Code2];
-
-// Home lists the six core services in the order of the brief
-const homeServices = [
-  services[0],
-  services[1],
-  services[2],
-  {
-    id: "ai-software",
-    title: "AI-Enabled Scientific Research",
-    short:
-      "Development and application of computational workflows, research tools, machine-learning approaches, and AI-assisted analytical systems for appropriate scientific use cases.",
-  },
-  services[5],
-  {
-    id: "ai-software",
-    title: "Scientific Software & Workflow Development",
-    short:
-      "Development of research-oriented applications, computational pipelines, data-processing workflows, and digital tools for scientific problems.",
-  },
+const sectors = [
+  "Biotechnology",
+  "Pharmaceutical & drug discovery",
+  "Universities & research groups",
+  "Principal investigators",
+  "Healthcare & biomedical research",
+  "Agricultural biotech & plant science",
+  "Scientific software & AI",
+  "Foundations & nonprofits",
+  "Contract research teams",
 ];
 
-const partners = [
-  "Biotechnology and life sciences companies",
-  "Pharmaceutical and drug-discovery organizations",
-  "Universities and academic research groups",
-  "Independent researchers and principal investigators",
-  "Healthcare and biomedical research organizations",
-  "Agricultural biotechnology and plant science organizations",
-  "Scientific software and AI companies",
-  "Research foundations, nonprofits, and development organizations",
-  "Companies and research teams seeking contract research or specialist subcontracting",
+const capabilities = [
+  { icon: Dna, label: "Genomics & molecular biology" },
+  { icon: Layers, label: "Bioinformatics & computational biology" },
+  { icon: ShieldAlert, label: "AMR & genomic surveillance" },
+  { icon: Leaf, label: "Human & plant genomics" },
+  { icon: Microscope, label: "Cancer genomics & oncology" },
+  { icon: Atom, label: "Molecular modelling & drug discovery" },
+  { icon: Sprout, label: "Medicinal plants & natural products" },
+  { icon: BrainCircuit, label: "AI & machine learning for biology" },
+  { icon: Code2, label: "Scientific software & workflows" },
+  { icon: BarChart3, label: "Research data analysis" },
 ];
 
-const steps = [
-  {
-    title: "Understand the Problem",
-    text: "We discuss the scientific question, project objectives, available data, constraints, and desired outcomes.",
-  },
-  {
-    title: "Define the Engagement",
-    text: "We establish the scope, methodology, deliverables, timeline, budget, responsibilities, and relevant contractual requirements.",
-  },
-  {
-    title: "Assemble the Capabilities",
-    text: "We identify the appropriate expertise, tools, collaborators, and resources needed for the engagement.",
-  },
-  {
-    title: "Execute the Project",
-    text: "We carry out the agreed work, coordinate delivery, communicate progress, and address technical issues as they arise.",
-  },
-  {
-    title: "Deliver and Review",
-    text: "We provide the agreed outputs, documentation, technical reports, code, analytical results, or other deliverables specified in the project agreement.",
-  },
+const pillars = [
+  { icon: Target, title: "The right expertise", text: "Specialists matched to your question." },
+  { icon: Workflow, title: "Clear methods", text: "Scope and approach agreed up front." },
+  { icon: PackageCheck, title: "Defined deliverables", text: "Outputs reviewed against the brief." },
+];
+
+const values = [
+  { icon: ShieldCheck, label: "Scientific integrity" },
+  { icon: Scale, label: "Clear expectations" },
+  { icon: Lock, label: "Responsible data handling" },
+  { icon: Handshake, label: "Reliable execution" },
 ];
 
 const Home = () => (
@@ -84,8 +88,16 @@ const Home = () => (
             <span className="text-lime">Measurable Impact.</span>
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/75 leading-relaxed max-w-xl">
-            We help organizations transform scientific questions, research ideas, and technical
-            challenges into structured research projects, actionable insights, and practical solutions.
+            We turn scientific questions into structured research, actionable insight and practical
+            solutions.
+          </p>
+          <p className="mt-4 text-sm text-white/60">
+            Your partner for{" "}
+            <span className="text-white font-semibold">
+              <RotatingWords
+                words={["genomics", "bioinformatics", "drug discovery", "AI for science", "contract research"]}
+              />
+            </span>
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Button to="/contact">Discuss a Project</Button>
@@ -95,208 +107,153 @@ const Home = () => (
           </div>
         </div>
 
-        {/* Concept-to-delivery panel */}
-        <div className="bg-white/[0.06] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur">
-          <p className="text-white/60 text-xs font-semibold tracking-widest uppercase mb-5">
-            From concept to delivery
-          </p>
-          <ol className="space-y-4">
-            {steps.map((step, i) => (
-              <li key={step.title} className="flex items-center gap-4">
-                <span className="w-9 h-9 shrink-0 rounded-full bg-lime/10 border border-lime/40 text-lime text-sm font-semibold flex items-center justify-center">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="text-white text-[15px] font-medium">{step.title}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        {/* Animated lab visual */}
+        <HeroLab />
       </div>
     </header>
 
+    {/* Sector strip */}
+    <div className="bg-plum border-t border-white/10 py-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+      <div className="flex w-max gap-3" style={{ animation: "marquee 40s linear infinite" }}>
+        {[...sectors, ...sectors].map((s, i) => (
+          <span key={i} className="shrink-0 text-sm text-white/70 border border-white/15 rounded-full px-4 py-1.5">
+            {s}
+          </span>
+        ))}
+      </div>
+    </div>
+
     {/* Intro */}
     <Section>
-      <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-        <div>
+      <div className="grid lg:grid-cols-[1fr_1.2fr] gap-10 lg:gap-16 items-center">
+        <Reveal>
           <Eyebrow>Who we are</Eyebrow>
           <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
-            Your Research Partner from Concept to Delivery
+            Your research partner from concept to delivery
           </h2>
-        </div>
-        <div className="space-y-4 text-muted leading-relaxed">
-          <p>
-            Genomac Services &amp; Consult (GSC) provides scientific research, biotechnology consulting,
-            bioinformatics, computational analysis, and research project execution support to
-            organizations seeking reliable expertise and capable research partners.
+          <p className="mt-4 text-muted leading-relaxed">
+            Scientific projects need more than ideas. GSC brings the expertise, methods and coordinated
+            execution together in flexible engagements built around your work.
           </p>
-          <p>
-            Scientific projects require more than ideas. They require the right expertise, clear
-            methodologies, appropriate resources, coordinated execution, and well-defined deliverables.
-            GSC brings these elements together through flexible research and consulting engagements
-            tailored to the needs of each client.
-          </p>
-          <p>
-            We work with organizations that need to design research projects, analyze complex biological
-            data, develop scientific tools, coordinate specialist teams, or extend their research
-            capabilities through external expertise.
-          </p>
+        </Reveal>
+        <div className="grid sm:grid-cols-3 gap-4">
+          {pillars.map(({ icon: Icon, title, text }, i) => (
+            <Reveal key={title} delay={i * 120}>
+              <div className="h-full rounded-2xl border border-gray-200/80 p-5 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/5 transition-all">
+                <span className="w-10 h-10 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center mb-4">
+                  <Icon size={19} />
+                </span>
+                <h3 className="text-plum font-semibold">{title}</h3>
+                <p className="mt-1 text-sm text-muted">{text}</p>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </Section>
 
     {/* Services */}
     <Section tone="mist">
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 md:mb-12">
-        <SectionHeading
-          eyebrow="Our services"
-          title="Research, analysis and technical delivery under one partner"
-        />
-        <div className="md:mb-12 shrink-0">
-          <Button to="/services" variant="secondary">
-            Explore All Services <ArrowRight size={15} />
-          </Button>
-        </div>
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
+        <Reveal>
+          <Eyebrow>Our services</Eyebrow>
+          <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
+            Research, analysis and technical delivery
+          </h2>
+        </Reveal>
+        <Link to="/services" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
+          All services <ArrowRight size={15} />
+        </Link>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 -mt-6 md:-mt-12">
-        {homeServices.map((s, i) => {
-          const Icon = serviceIcons[i];
-          return (
-            <Link
-              key={s.title}
-              to={`/services#${s.id}`}
-              className="group bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-magenta/40 hover:shadow-lg hover:shadow-plum/5 transition-all"
-            >
-              <span className="w-11 h-11 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center mb-5">
-                <Icon size={20} />
-              </span>
-              <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{s.title}</h3>
-              <p className="text-muted text-[15px] leading-relaxed">{s.short}</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-magenta-dark text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                Learn more <ArrowRight size={14} />
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </Section>
-
-    {/* Capabilities + partners */}
-    <Section>
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-        <div>
-          <SectionHeading
-            eyebrow="Scientific capabilities"
-            title="Interconnected scientific and technical disciplines"
-          />
-          <CheckList items={capabilitiesList} />
-          <p className="mt-6 text-sm text-muted leading-relaxed">
-            Specific methods, resources, and services are selected according to project objectives,
-            available data, required expertise, and technical feasibility.
-          </p>
-          <div className="mt-6">
-            <Link to="/capabilities" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
-              View research capabilities <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-        <div className="bg-mist rounded-3xl p-6 md:p-10">
-          <SectionHeading
-            eyebrow="Who we work with"
-            title="Built for organizations that need a dependable technical partner"
-          />
-          <CheckList items={partners} />
-          <div className="mt-6">
-            <Link to="/industries" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
-              Industries &amp; partners <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-      </div>
-    </Section>
-
-    {/* Engagement models */}
-    <Section tone="plum">
-      <SectionHeading
-        light
-        eyebrow="Flexible research engagements"
-        title="Every project is different. We structure engagements around the work that needs to be done."
-      />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {engagementModels.map((m) => (
-          <div key={m.title} className="bg-white/[0.06] border border-white/10 rounded-2xl p-5">
-            <h3 className="text-white font-semibold mb-2">{m.title}</h3>
-            <p className="text-white/65 text-sm leading-relaxed">{m.text}</p>
-          </div>
-        ))}
-      </div>
+      <ServicesShowcase />
     </Section>
 
     {/* How we work */}
+    <section className="bg-linear-to-br from-plum via-plum to-plum-soft py-16 md:py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-magenta/20 blur-3xl pointer-events-none" />
+      <div className="max-w-6xl mx-auto relative">
+        <SectionHeading light center eyebrow="How we work" title="From first conversation to delivered outputs" />
+        <Pipeline />
+        <div className="mt-10 text-center">
+          <Link to="/how-we-work" className="inline-flex items-center gap-1.5 text-lime font-medium text-sm hover:gap-2.5 transition-all">
+            See the full engagement process <ArrowRight size={15} />
+          </Link>
+        </div>
+      </div>
+    </section>
+
+    {/* Capabilities */}
     <Section>
-      <SectionHeading eyebrow="How we work" title="A clear path from first conversation to delivered outputs" />
-      <div className="grid md:grid-cols-5 gap-6">
-        {steps.map((step, i) => (
-          <div key={step.title} className="relative">
-            <span className="block text-magenta-dark font-semibold text-sm mb-3">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div className="h-0.5 bg-gray-200 mb-5">
-              <div className="h-full w-10 bg-magenta"></div>
-            </div>
-            <h3 className="text-plum font-semibold mb-2">{step.title}</h3>
-            <p className="text-muted text-sm leading-relaxed">{step.text}</p>
-          </div>
+      <Reveal>
+        <SectionHeading
+          center
+          eyebrow="Scientific capabilities"
+          title="Interconnected disciplines, one research partner"
+        />
+      </Reveal>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {capabilities.map(({ icon: Icon, label }, i) => (
+          <Reveal key={label} delay={(i % 5) * 80}>
+            <Link
+              to="/capabilities"
+              className="group h-full flex flex-col items-start gap-3 rounded-2xl border border-gray-200/80 p-4 hover:border-magenta/50 hover:bg-magenta-tint/50 transition-all"
+            >
+              <span className="w-10 h-10 rounded-xl bg-plum text-lime flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Icon size={19} />
+              </span>
+              <span className="text-sm font-medium text-plum leading-snug">{label}</span>
+            </Link>
+          </Reveal>
         ))}
       </div>
-      <div className="mt-10">
-        <Link to="/how-we-work" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
-          See our full engagement process <ArrowRight size={15} />
-        </Link>
-      </div>
+      <p className="mt-6 text-center text-xs text-muted">
+        Methods and resources are selected according to each project's objectives, data and feasibility.
+      </p>
+    </Section>
+
+    {/* Engagement picker */}
+    <Section tone="mist">
+      <Reveal>
+        <SectionHeading
+          eyebrow="Flexible engagements"
+          title="What do you need?"
+          intro={<p>Choose your situation and we'll show you how to start.</p>}
+        />
+      </Reveal>
+      <NeedPicker />
     </Section>
 
     {/* Genomac ecosystem */}
-    <Section tone="mist">
-      <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-        <div>
+    <Section>
+      <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
+        <Reveal>
           <Eyebrow>Part of Genomac Holdings</Eyebrow>
           <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
-            A Research and Consulting Partner Built for Collaboration
+            Built for collaboration
           </h2>
-        </div>
-        <div className="space-y-4 text-muted leading-relaxed">
-          <p>
-            Through its relationship with Genomac Holdings, GSC operates within a broader innovation
-            ecosystem focused on biotechnology, healthcare, genomics, research infrastructure, and
-            technology.
+          <p className="mt-4 text-muted leading-relaxed">
+            GSC works within the wider Genomac ecosystem across biotechnology, healthcare, genomics and
+            research infrastructure, drawing on relevant capabilities as each engagement requires.
           </p>
-          <p>
-            This relationship can support access to relevant capabilities and collaborative
-            opportunities, depending on the requirements of each engagement.
-          </p>
-          <p className="text-plum font-medium">
-            We believe effective research partnerships are built on clear expectations, scientific
-            integrity, responsible data handling, and reliable execution.
-          </p>
+        </Reveal>
+        <div className="grid grid-cols-2 gap-3">
+          {values.map(({ icon: Icon, label }, i) => (
+            <Reveal key={label} delay={i * 100}>
+              <div className="flex items-center gap-3 rounded-2xl bg-mist p-4">
+                <span className="w-9 h-9 shrink-0 rounded-lg bg-white text-magenta-dark flex items-center justify-center shadow-sm">
+                  <Icon size={17} />
+                </span>
+                <span className="text-sm font-medium text-plum">{label}</span>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </Section>
 
     <CtaBand
-      title="Have a Project in Mind?"
-      text={
-        <>
-          <p>
-            Whether you are planning a new study, seeking bioinformatics support, developing a scientific
-            tool, or looking for a partner to execute a defined research work package, we welcome a
-            conversation.
-          </p>
-          <p>
-            Tell us what you are trying to achieve. We will assess the requirements and discuss an
-            appropriate engagement model.
-          </p>
-        </>
-      }
+      title="Have a project in mind?"
+      text={<p>Tell us what you're trying to achieve. We'll assess the requirements and suggest the right engagement.</p>}
       primary={{ to: "/contact", label: "Submit a Project Enquiry" }}
       secondary={{ to: "/partner", label: "Become a Research Partner" }}
     />
