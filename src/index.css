@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* GSC palette: deep navy, white, teal accent */
+@theme {
+  --color-navy: #0b1f3a;
+  --color-navy-soft: #13294b;
+  --color-teal: #0e9f8e;
+  --color-teal-dark: #0b8577;
+  --color-teal-tint: #e8f6f4;
+  --color-mist: #f5f8fa;
+  --color-ink: #1f2937;
+  --color-muted: #5b6472;
+}
+
+/* Keep anchor jumps clear of the fixed navbar */
+html {
+  scroll-padding-top: 110px;
+}
+
+body {
+  color: var(--color-ink);
+  background: #ffffff;
+}
