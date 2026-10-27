@@ -84,20 +84,15 @@ const Home = () => (
             A Genomac Holdings Company
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-semibold text-white leading-[1.1] tracking-tight">
-            Scientific Expertise. Research Execution.{" "}
-            <span className="text-lime">Measurable Impact.</span>
+            Your go-to partner for
+            {/* Own line so the changing word never reflows the headline */}
+            <span className="block text-lime">
+              <RotatingWords words={["genomics", "bioinformatics", "drug discovery", "AI for science", "lab workflows"]} />
+            </span>
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/75 leading-relaxed max-w-xl">
-            We turn scientific questions into structured research, actionable insight and practical
-            solutions.
-          </p>
-          <p className="mt-4 text-sm text-white/60">
-            Your partner for{" "}
-            <span className="text-white font-semibold">
-              <RotatingWords
-                words={["genomics", "bioinformatics", "drug discovery", "AI for science", "contract research"]}
-              />
-            </span>
+            From multi-omics data to lab-ready solutions: we design, run and deliver the science, end to
+            end.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Button to="/contact">Discuss a Project</Button>
