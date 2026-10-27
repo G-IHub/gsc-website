@@ -1,5 +1,8 @@
-import { FlaskConical, Pill, GraduationCap, UserRound, Cpu, HeartPulse, Sprout, HandHeart } from "lucide-react";
+import { useState } from "react";
+import { FlaskConical, Pill, GraduationCap, UserRound, Cpu, HeartPulse, Sprout, HandHeart, Plus } from "lucide-react";
 import { CtaBand, PageHero, Section, SectionHeading } from "../components/ui";
+import { Reveal } from "../components/motion";
+import { ChipCloud } from "../components/interactive";
 
 const industries = [
   {
@@ -52,6 +55,33 @@ const models = [
   "Longer-term service partnerships",
 ];
 
+// Card that reveals its detail on click (title-first, detail on demand)
+const IndustryCard = ({ icon: Icon, title, text }: (typeof industries)[number]) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <button
+      onClick={() => setOpen(!open)}
+      aria-expanded={open}
+      className={`group h-full w-full text-left rounded-2xl p-5 md:p-6 border transition-all duration-300 ${
+        open
+          ? "bg-linear-to-br from-plum via-plum-soft to-magenta-dark border-plum text-white shadow-xl shadow-plum/20"
+          : "bg-white border-gray-200/80 hover:border-magenta/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/5"
+      }`}
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className={`w-11 h-11 rounded-xl flex items-center justify-center transition-colors ${open ? "bg-lime text-plum" : "bg-plum text-lime"}`}>
+          <Icon size={20} />
+        </span>
+        <Plus size={18} className={`mt-1 shrink-0 transition-transform duration-300 ${open ? "rotate-45 text-lime" : "text-muted"}`} />
+      </span>
+      <h3 className={`mt-4 font-semibold leading-snug ${open ? "text-white" : "text-plum"}`}>{title}</h3>
+      <div className={`grid transition-all duration-300 ${open ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"}`}>
+        <p className="overflow-hidden text-sm leading-relaxed text-white/80">{text}</p>
+      </div>
+    </button>
+  );
+};
+
 const Industries = () => (
   <>
     <PageHero
@@ -59,46 +89,43 @@ const Industries = () => (
       title="Research Capabilities for Organizations Advancing Science"
       intro={
         <p>
-          GSC works to support organizations that need additional scientific expertise, computational
-          capacity, research coordination, or technical execution.
+          Extra scientific expertise, computational capacity, coordination or technical execution — for
+          organizations advancing science.
         </p>
       }
     />
 
     <Section>
-      <SectionHeading eyebrow="Who we work with" title="How GSC supports each type of organization" />
-      <div className="grid sm:grid-cols-2 gap-5">
-        {industries.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-magenta/40 transition-colors">
-            <span className="w-11 h-11 rounded-xl bg-plum text-lime flex items-center justify-center mb-5">
-              <Icon size={20} />
-            </span>
-            <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{title}</h3>
-            <p className="text-muted text-[15px] leading-relaxed">{text}</p>
-          </div>
+      <Reveal>
+        <SectionHeading eyebrow="Who we work with" title="How GSC supports each type of organization" intro={<p>Tap a card to see how we help.</p>} />
+      </Reveal>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+        {industries.map((industry, i) => (
+          <Reveal key={industry.title} delay={(i % 4) * 90}>
+            <IndustryCard {...industry} />
+          </Reveal>
         ))}
       </div>
     </Section>
 
-    <Section tone="mist">
+    <Section tone="plum">
       <div className="grid lg:grid-cols-2 gap-10 items-center">
-        <SectionHeading
-          eyebrow="Partnership models"
-          title="Ways to engage GSC"
-          intro={
-            <p>
-              We welcome discussions about the requirements, responsibilities, and deliverables of
-              prospective engagements.
-            </p>
-          }
-        />
-        <div className="flex flex-wrap gap-3">
-          {models.map((m) => (
-            <span key={m} className="bg-white border border-gray-200 text-plum text-sm font-medium px-4 py-2.5 rounded-full">
-              {m}
-            </span>
-          ))}
-        </div>
+        <Reveal>
+          <SectionHeading
+            light
+            eyebrow="Partnership models"
+            title="Ways to engage GSC"
+            intro={
+              <p>
+                We welcome discussions about the requirements, responsibilities, and deliverables of
+                prospective engagements.
+              </p>
+            }
+          />
+        </Reveal>
+        <Reveal delay={150}>
+          <ChipCloud items={models} tone="dark" />
+        </Reveal>
       </div>
     </Section>
 

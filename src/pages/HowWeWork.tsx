@@ -1,35 +1,69 @@
+import {
+  MessagesSquare,
+  Crosshair,
+  Calculator,
+  FileSignature,
+  FlaskConical,
+  BadgeCheck,
+  RefreshCw,
+  Target,
+  Radio,
+  Scale,
+  Lock,
+  FileCheck2,
+  Users,
+} from "lucide-react";
 import { CtaBand, PageHero, Section, SectionHeading } from "../components/ui";
+import { Reveal } from "../components/motion";
+import { ChipCloud } from "../components/interactive";
+import Pipeline, { type PipelineStep } from "../components/home/Pipeline";
 
-const steps = [
+const steps: PipelineStep[] = [
   {
-    title: "Initial Consultation",
-    text: "We discuss the research question, business need, intended outcome, available data or materials, constraints, and anticipated timeline.",
+    icon: MessagesSquare,
+    title: "Consult",
+    line: "We discuss the research question, business need, intended outcome, available data or materials, constraints, and anticipated timeline.",
+    outputs: ["Objectives", "Constraints", "Timeline"],
   },
   {
-    title: "Scope Definition",
-    text: "We establish the work to be performed, the methods to be considered, the required expertise, expected deliverables, and any dependencies.",
+    icon: Crosshair,
+    title: "Scope",
+    line: "We establish the work to be performed, the methods to be considered, the required expertise, expected deliverables, and any dependencies.",
+    outputs: ["Work plan", "Methods", "Deliverables"],
   },
   {
-    title: "Proposal & Budget",
-    text: "We prepare an appropriate proposal outlining the scope, responsibilities, milestones, estimated costs, timeline, and commercial terms.",
+    icon: Calculator,
+    title: "Propose",
+    line: "We prepare an appropriate proposal outlining the scope, responsibilities, milestones, estimated costs, timeline, and commercial terms.",
+    outputs: ["Proposal", "Milestones", "Budget"],
   },
   {
-    title: "Contracting & Project Setup",
-    text: "Before work begins, the parties agree on the applicable contract, confidentiality arrangements, intellectual property terms, data-handling requirements, payment terms, and project governance.",
+    icon: FileSignature,
+    title: "Contract",
+    line: "Before work begins, the parties agree on the contract, confidentiality, intellectual property, data handling, payment terms, and project governance.",
+    outputs: ["Contract", "NDA / IP", "Governance"],
   },
   {
-    title: "Project Execution",
-    text: "The project is carried out by the appropriate GSC personnel and approved collaborators. Progress, technical issues, dependencies, and material changes are communicated through agreed channels.",
+    icon: FlaskConical,
+    title: "Execute",
+    line: "The project is carried out by the appropriate GSC personnel and approved collaborators, with progress and changes communicated through agreed channels.",
+    outputs: ["Progress updates", "Issue log", "Change control"],
   },
   {
-    title: "Quality Review & Delivery",
-    text: "We review the work against the agreed requirements and provide the specified deliverables and supporting documentation.",
+    icon: BadgeCheck,
+    title: "Deliver",
+    line: "We review the work against the agreed requirements and provide the specified deliverables and supporting documentation.",
+    outputs: ["Quality review", "Deliverables", "Documentation"],
   },
   {
-    title: "Follow-up & Continued Collaboration",
-    text: "Where appropriate, we discuss next steps, additional work packages, improvements, or continuing research and consulting needs.",
+    icon: RefreshCw,
+    title: "Follow up",
+    line: "Where appropriate, we discuss next steps, additional work packages, improvements, or continuing research and consulting needs.",
+    outputs: ["Next steps", "New work packages"],
   },
 ];
+
+const principleIcons = [Target, Radio, Scale, Lock, FileCheck2, Users];
 
 const principles = [
   ["Defined scope", "Projects begin with an agreed understanding of what will be delivered."],
@@ -53,48 +87,56 @@ const HowWeWork = () => (
       }
     />
 
-    <Section>
-      <SectionHeading eyebrow="The engagement process" title="Seven steps, agreed before work begins" />
-      <ol className="relative border-l-2 border-gray-100 ml-4 md:ml-5 space-y-10">
-        {steps.map((step, i) => (
-          <li key={step.title} className="pl-8 md:pl-10 relative">
-            <span className="absolute -left-[19px] md:-left-[21px] top-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-plum text-lime text-sm font-semibold flex items-center justify-center ring-4 ring-white">
-              {i + 1}
-            </span>
-            <p className="text-xs font-bold tracking-widest uppercase text-magenta-dark mb-1">Step {i + 1}</p>
-            <h3 className="text-plum font-semibold text-lg mb-2">{step.title}</h3>
-            <p className="text-muted text-[15px] leading-relaxed max-w-2xl">{step.text}</p>
-          </li>
-        ))}
-      </ol>
-    </Section>
+    <section className="bg-linear-to-br from-plum via-plum to-plum-soft py-16 md:py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-magenta/20 blur-3xl pointer-events-none" />
+      <div className="max-w-6xl mx-auto relative">
+        <SectionHeading light center eyebrow="The engagement process" title="Seven steps, agreed before work begins" intro={<p>Click any step, or watch it run.</p>} />
+        <Pipeline steps={steps} />
+      </div>
+    </section>
 
     <Section tone="mist">
-      <SectionHeading eyebrow="Our engagement principles" title="What clients can expect from GSC" />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {principles.map(([title, text]) => (
-          <div key={title} className="bg-white border border-gray-200/80 rounded-2xl p-6">
-            <h3 className="text-plum font-semibold mb-2">{title}</h3>
-            <p className="text-muted text-[15px] leading-relaxed">{text}</p>
-          </div>
-        ))}
+      <Reveal>
+        <SectionHeading center eyebrow="Our engagement principles" title="What clients can expect from GSC" />
+      </Reveal>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {principles.map(([title, text], i) => {
+          const Icon = principleIcons[i];
+          return (
+            <Reveal key={title} delay={(i % 3) * 100}>
+              <div className="group h-full bg-white border border-gray-200/80 rounded-2xl p-6 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/5 hover:border-magenta/40 transition-all">
+                <span className="w-11 h-11 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center mb-4 group-hover:bg-magenta group-hover:text-white transition-colors">
+                  <Icon size={20} />
+                </span>
+                <h3 className="text-plum font-semibold mb-1.5">{title}</h3>
+                <p className="text-muted text-sm leading-relaxed">{text}</p>
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
     </Section>
 
-    <Section tone="plum">
-      <div className="grid lg:grid-cols-2 gap-10">
-        <SectionHeading light eyebrow="Quality, data and confidentiality" title="Requirements identified and agreed before execution" />
-        <div className="space-y-4 text-white/75 leading-relaxed">
-          <p>
-            Quality assurance, data security, reproducibility, research ethics, and regulatory considerations
-            are addressed according to the nature of each engagement. Specific controls and responsibilities
-            are documented in the applicable project agreements.
-          </p>
-          <p>
-            GSC does not assume that one quality or compliance framework applies to every type of project.
-            Requirements are identified and agreed before execution.
-          </p>
-        </div>
+    <Section>
+      <div className="grid lg:grid-cols-2 gap-10 items-center">
+        <Reveal>
+          <SectionHeading
+            eyebrow="Quality, data and confidentiality"
+            title="Requirements agreed before execution"
+            intro={
+              <p>
+                No single framework fits every project. The controls and responsibilities for each engagement
+                are identified up front and documented in the project agreement.
+              </p>
+            }
+          />
+        </Reveal>
+        <Reveal delay={150}>
+          <div className="rounded-3xl bg-mist p-6 md:p-8">
+            <p className="text-xs font-bold tracking-widest uppercase text-magenta-dark mb-4">Addressed per engagement</p>
+            <ChipCloud items={["Quality assurance", "Data security", "Reproducibility", "Research ethics", "Regulatory considerations"]} />
+          </div>
+        </Reveal>
       </div>
     </Section>
 

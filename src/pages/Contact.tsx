@@ -27,6 +27,15 @@ const Field = ({
   </label>
 );
 
+// Numbered divider that breaks the form into three short stages
+const Stage = ({ n, title }: { n: number; title: string }) => (
+  <div className={`flex items-center gap-3 ${n > 1 ? "pt-4" : ""}`}>
+    <span className="w-8 h-8 shrink-0 rounded-full bg-plum text-lime text-sm font-semibold flex items-center justify-center">{n}</span>
+    <span className="text-plum font-semibold">{title}</span>
+    <span className="flex-1 h-px bg-gray-200" />
+  </div>
+);
+
 type Status = "idle" | "sending" | "sent" | "error";
 
 const Contact = () => {
@@ -99,16 +108,15 @@ const Contact = () => {
         eyebrow="Contact & Request a Proposal"
         title="Discuss Your Research or Consulting Project"
         intro={
-          <>
-            <p>Tell us what you are working on, what you need to achieve, and where you require support.</p>
-            <p>
-              Whether you need bioinformatics analysis, scientific consulting, research project execution, a
-              computational tool, or a partner for a larger research engagement, GSC welcomes the opportunity
-              to understand your requirements.
-            </p>
-          </>
+          <p>Tell us what you're working on, what you need to achieve, and where you need support.</p>
         }
-      />
+      >
+        {["Bioinformatics", "Consulting", "Project execution", "Scientific tools", "Partnerships"].map((t) => (
+          <span key={t} className="text-xs text-white/80 border border-white/20 rounded-full px-3 py-1.5 w-fit">
+            {t}
+          </span>
+        ))}
+      </PageHero>
 
       <Section tone="mist">
         <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-10 items-start">
@@ -136,6 +144,7 @@ const Contact = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+                <Stage n={1} title="About you" />
                 <Field label="Type of enquiry" required>
                   <select name="enquiryType" defaultValue={initialType} className={inputClass} required>
                     {pathways.map((p) => (
@@ -161,6 +170,7 @@ const Contact = () => {
                   </Field>
                 </div>
 
+                <Stage n={2} title="Your project" />
                 <Field label="Project title" required>
                   <input name="title" className={inputClass} required />
                 </Field>
@@ -193,6 +203,7 @@ const Contact = () => {
                   <textarea name="deliverables" rows={3} className={inputClass} />
                 </Field>
 
+                <Stage n={3} title="Timeline & budget" />
                 <div className="grid sm:grid-cols-2 gap-5">
                   <Field label="Preferred timeline">
                     <input name="timeline" className={inputClass} placeholder="e.g. Start in Q1, 3 months" />

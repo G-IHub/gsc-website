@@ -7,17 +7,32 @@ export const useInView = <T extends HTMLElement>(threshold = 0.2) => {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let done = false;
+    const show = () => {
+      if (done) return;
+      done = true;
+      setInView(true);
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          io.disconnect();
-        }
+        if (entry.isIntersecting) show();
       },
       { threshold },
     );
+    // Fast scrolls and anchor jumps can skip straight past an element without it ever
+    // intersecting, so also reveal anything whose top is already above the viewport bottom
+    const onScroll = () => {
+      if (el.getBoundingClientRect().top < window.innerHeight * 0.9) show();
+    };
     io.observe(el);
-    return () => io.disconnect();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [threshold]);
   return { ref, inView };
 };

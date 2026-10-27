@@ -96,7 +96,32 @@ export const PageHero = ({
 }) => (
   <header className="bg-linear-to-br from-plum via-plum-soft to-magenta-dark pt-36 md:pt-44 pb-16 md:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
     <div className="absolute -top-40 -right-40 w-125 h-125 rounded-full bg-magenta/20 blur-3xl pointer-events-none"></div>
-    <div className="max-w-6xl mx-auto relative">
+    <div
+      className="absolute inset-0 opacity-[0.06] pointer-events-none"
+      style={{
+        backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+        backgroundSize: "56px 56px",
+      }}
+    ></div>
+    {/* Streaming sequence motif */}
+    <div
+      aria-hidden="true"
+      className="absolute right-0 top-0 bottom-0 w-1/2 hidden sm:flex justify-around font-mono text-[11px] leading-5 text-white/15 overflow-hidden pointer-events-none [mask-image:linear-gradient(to_left,black,transparent)]"
+    >
+      {Array.from({ length: 8 }, (_, c) => {
+        const col = Array.from({ length: 30 }, (_, i) => "ACGT"[(c * 5 + i * 3 + ((i * c) % 7)) % 4]);
+        return (
+          <div key={c} className="flex flex-col" style={{ animation: `seq-scroll ${16 + (c % 3) * 4}s linear infinite`, animationDelay: `-${c * 2}s` }}>
+            {[...col, ...col].map((b, i) => (
+              <span key={i} className={i % 11 === c ? "text-lime/60" : ""}>
+                {b}
+              </span>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+    <div className="max-w-6xl mx-auto relative" style={{ animation: "word-in 0.6s ease both" }}>
       <Eyebrow light>{eyebrow}</Eyebrow>
       <h1 className="text-3xl md:text-[44px] font-semibold text-white leading-tight tracking-tight max-w-3xl">
         {title}

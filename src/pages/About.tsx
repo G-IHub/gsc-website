@@ -1,4 +1,16 @@
+import { HelpCircle, Brain, Cpu, Workflow, PackageCheck, ShieldCheck, ClipboardCheck, Users, Lock, Lightbulb, RefreshCw, Wrench, MessagesSquare, ListChecks, Handshake } from "lucide-react";
 import { CtaBand, Eyebrow, PageHero, Section, SectionHeading } from "../components/ui";
+import { Reveal } from "../components/motion";
+import { Accordion } from "../components/interactive";
+
+const principleIcons = [ShieldCheck, ClipboardCheck, Users, Lock, Lightbulb, RefreshCw];
+
+const modes = [
+  { icon: Wrench, label: "Deliver a defined technical service" },
+  { icon: MessagesSquare, label: "Advise on a research challenge" },
+  { icon: ListChecks, label: "Manage an agreed workstream" },
+  { icon: Handshake, label: "Partner from design to delivery" },
+];
 
 const principles = [
   {
@@ -34,139 +46,158 @@ const About = () => (
       title="Turning Scientific Expertise into Executable Projects"
       intro={
         <p>
-          GSC is a research and scientific consulting organization within Genomac Holdings, helping
-          organizations plan, develop, coordinate, and execute scientific and technical projects across
-          biotechnology, life sciences, computational research, and related fields.
+          The research and scientific consulting arm of Genomac Holdings, helping organizations plan,
+          coordinate and execute scientific and technical projects.
         </p>
       }
     />
 
+    {/* Why GSC exists: the gap, drawn as a flow */}
     <Section>
-      <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-        <div>
-          <Eyebrow>Why GSC exists</Eyebrow>
-          <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
-            Bridging the gap between research questions and delivered work
-          </h2>
-        </div>
-        <div className="space-y-4 text-muted leading-relaxed">
-          <p>
-            GSC was established around a practical need: organizations often have important research
-            questions, promising ideas, or defined project objectives but require additional scientific
-            expertise, technical capabilities, project coordination, or implementation support to achieve
-            them.
-          </p>
-          <p className="text-plum font-medium">We aim to bridge that gap.</p>
-          <p>
-            By combining scientific knowledge, computational methods, technical development, and project
-            execution, GSC helps clients move from research requirements to clearly defined work and
-            deliverables.
-          </p>
-        </div>
+      <Reveal>
+        <SectionHeading
+          center
+          eyebrow="Why GSC exists"
+          title="Bridging the gap between research questions and delivered work"
+        />
+      </Reveal>
+      <div className="grid md:grid-cols-[1fr_auto_1.3fr_auto_1fr] items-center gap-4 md:gap-3">
+        <Reveal>
+          <div className="rounded-2xl border border-gray-200/80 p-6 text-center">
+            <HelpCircle size={28} className="mx-auto text-magenta-dark mb-3" />
+            <p className="font-semibold text-plum">Your research question</p>
+            <p className="text-sm text-muted mt-1">An idea, objective or challenge</p>
+          </div>
+        </Reveal>
+        <div className="hidden md:block w-16 h-0.5 bg-linear-to-r from-gray-200 to-magenta" style={{ animation: "node-pulse 2.4s ease-in-out infinite" }} />
+        <Reveal delay={150}>
+          <div className="rounded-3xl bg-linear-to-br from-plum via-plum-soft to-magenta-dark p-6 text-white">
+            <p className="text-xs font-bold tracking-widest uppercase text-lime text-center mb-4">GSC brings</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                [Brain, "Scientific knowledge"],
+                [Cpu, "Computational methods"],
+                [Workflow, "Technical development"],
+                [PackageCheck, "Project execution"],
+              ].map(([Icon, label], i) => {
+                const I = Icon as typeof Brain;
+                return (
+                  <div key={String(label)} className="rounded-xl bg-white/10 border border-white/10 p-3 text-center" style={{ animation: "node-pulse 3s ease-in-out infinite", animationDelay: `${i * 0.4}s` }}>
+                    <I size={18} className="mx-auto text-lime mb-1.5" />
+                    <span className="text-xs font-medium">{String(label)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Reveal>
+        <div className="hidden md:block w-16 h-0.5 bg-linear-to-r from-magenta to-lime" style={{ animation: "node-pulse 2.4s ease-in-out infinite", animationDelay: "1.2s" }} />
+        <Reveal delay={300}>
+          <div className="rounded-2xl border-2 border-lime bg-lime/10 p-6 text-center">
+            <PackageCheck size={28} className="mx-auto text-plum mb-3" />
+            <p className="font-semibold text-plum">Clearly defined, delivered work</p>
+            <p className="text-sm text-muted mt-1">Scoped, executed, documented</p>
+          </div>
+        </Reveal>
       </div>
     </Section>
 
     <Section tone="mist">
       <div className="grid md:grid-cols-2 gap-5">
-        <div className="bg-plum rounded-3xl p-8 md:p-10">
-          <Eyebrow light>Our mission</Eyebrow>
-          <p className="text-white text-lg md:text-xl leading-relaxed font-medium">
-            To make scientific expertise, research execution, and technical innovation accessible to
-            organizations through reliable consulting, collaborative research, and project-based services.
-          </p>
-        </div>
-        <div className="bg-white border border-gray-200/80 rounded-3xl p-8 md:p-10">
-          <Eyebrow>Our vision</Eyebrow>
-          <p className="text-plum text-lg md:text-xl leading-relaxed font-medium">
-            To become a trusted international research and scientific consulting partner, connecting
-            organizations with the expertise, capabilities, and execution capacity needed to advance
-            scientific discovery and innovation.
-          </p>
-        </div>
+        <Reveal>
+          <div className="h-full bg-linear-to-br from-plum to-plum-soft rounded-3xl p-8 md:p-10">
+            <Eyebrow light>Our mission</Eyebrow>
+            <p className="text-white text-lg md:text-xl leading-relaxed font-medium">
+              To make scientific expertise, research execution, and technical innovation accessible to
+              organizations through reliable consulting, collaborative research, and project-based services.
+            </p>
+          </div>
+        </Reveal>
+        <Reveal delay={150}>
+          <div className="h-full bg-white border border-gray-200/80 rounded-3xl p-8 md:p-10">
+            <Eyebrow>Our vision</Eyebrow>
+            <p className="text-plum text-lg md:text-xl leading-relaxed font-medium">
+              To become a trusted international research and scientific consulting partner, connecting
+              organizations with the expertise, capabilities, and execution capacity needed to advance
+              scientific discovery and innovation.
+            </p>
+          </div>
+        </Reveal>
       </div>
     </Section>
 
     <Section>
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-        <div>
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+        <Reveal>
           <SectionHeading
             eyebrow="What we do"
-            title="At the intersection of research, consulting, technology, and project delivery"
-            intro={
-              <>
-                <p>
-                  We support clients with scientific problem-solving, research design, bioinformatics,
-                  computational analysis, biotechnology consulting, scientific software development, and
-                  coordination of specialist research teams.
-                </p>
-                <p>
-                  Our engagement model is flexible. We may provide a defined technical service, advise on a
-                  research challenge, manage an agreed project workstream, or collaborate with a client from
-                  project design through delivery.
-                </p>
-              </>
-            }
+            title="Research, consulting, technology and delivery"
+            intro={<p>Our engagement model is flexible. Depending on what you need, we:</p>}
           />
-        </div>
-        <div>
-          <SectionHeading
-            eyebrow="Our relationship with Genomac Holdings"
-            title="The services and consulting platform of Genomac Holdings"
-            intro={
-              <>
-                <p>
-                  GSC is part of Genomac Holdings, a multidisciplinary innovation and development
-                  organization focused on biotechnology, healthcare, research, and technology.
-                </p>
-                <p>
-                  This relationship provides an organizational foundation for collaboration across relevant
-                  Genomac capabilities and initiatives. The resources engaged in any specific project depend
-                  on its scope, requirements, and approved arrangements.
-                </p>
-                <p>
-                  GSC serves as the platform through which appropriate scientific and technical engagements
-                  can be developed and delivered to external clients.
-                </p>
-              </>
-            }
+          <div className="grid sm:grid-cols-2 gap-3 -mt-4">
+            {modes.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3 rounded-2xl bg-mist p-4">
+                <span className="w-9 h-9 shrink-0 rounded-lg bg-plum text-lime flex items-center justify-center">
+                  <Icon size={17} />
+                </span>
+                <span className="text-sm font-medium text-plum">{label}</span>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+        <Reveal delay={150}>
+          <Eyebrow>More about GSC</Eyebrow>
+          <Accordion
+            items={[
+              {
+                title: "What we support",
+                body: "Scientific problem-solving, research design, bioinformatics, computational analysis, biotechnology consulting, scientific software development, and coordination of specialist research teams.",
+              },
+              {
+                title: "Our relationship with Genomac Holdings",
+                body: (
+                  <>
+                    <p>
+                      GSC is part of Genomac Holdings, a multidisciplinary innovation and development organization
+                      focused on biotechnology, healthcare, research, and technology.
+                    </p>
+                    <p className="mt-2">
+                      The resources engaged in any project depend on its scope, requirements, and approved
+                      arrangements. GSC is the platform through which scientific and technical engagements are
+                      delivered to external clients.
+                    </p>
+                  </>
+                ),
+              },
+              {
+                title: "Our approach",
+                body: "We do not assume every client needs the same solution. We start with the problem, then shape an engagement to fit its complexity, budget, resources and intended outcomes — clearly scoped, technically grounded and professionally managed.",
+              },
+            ]}
           />
-        </div>
+        </Reveal>
       </div>
     </Section>
 
     <Section tone="mist">
-      <SectionHeading eyebrow="Our working principles" title="How we conduct every engagement" />
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {principles.map((p, i) => (
-          <div key={p.title} className="bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7">
-            <span className="block text-magenta-dark font-semibold text-sm mb-3">
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <h3 className="text-plum font-semibold text-lg mb-2">{p.title}</h3>
-            <p className="text-muted text-[15px] leading-relaxed">{p.text}</p>
-          </div>
-        ))}
-      </div>
-    </Section>
-
-    <Section>
-      <div className="max-w-3xl">
-        <SectionHeading
-          eyebrow="Our approach"
-          title="We do not assume that every client needs the same solution"
-          intro={
-            <>
-              <p>
-                We begin by understanding the scientific or technical problem, then develop an engagement
-                appropriate to its complexity, budget, resources, and intended outcomes.
-              </p>
-              <p>
-                Our goal is to build lasting client relationships by delivering work that is clearly scoped,
-                technically grounded, and professionally managed.
-              </p>
-            </>
-          }
-        />
+      <Reveal>
+        <SectionHeading center eyebrow="Our working principles" title="How we conduct every engagement" />
+      </Reveal>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {principles.map((p, i) => {
+          const Icon = principleIcons[i];
+          return (
+            <Reveal key={p.title} delay={(i % 3) * 100}>
+              <div className="group h-full bg-white border border-gray-200/80 rounded-2xl p-6 hover:-translate-y-1 hover:shadow-lg hover:shadow-plum/5 hover:border-magenta/40 transition-all">
+                <span className="w-11 h-11 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center mb-4 group-hover:bg-magenta group-hover:text-white transition-colors">
+                  <Icon size={20} />
+                </span>
+                <h3 className="text-plum font-semibold mb-1.5">{p.title}</h3>
+                <p className="text-muted text-sm leading-relaxed">{p.text}</p>
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
     </Section>
 

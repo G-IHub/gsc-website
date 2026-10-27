@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { Search, FileSignature, Users, FlaskConical, PackageCheck } from "lucide-react";
 import { useInView, usePrefersReducedMotion } from "../motion";
 
-const steps = [
+export type PipelineStep = {
+  icon: ComponentType<{ size?: number }>;
+  title: string;
+  line: string;
+  outputs: string[];
+};
+
+const defaultSteps: PipelineStep[] = [
   {
     icon: Search,
     title: "Understand",
@@ -36,7 +43,7 @@ const steps = [
 ];
 
 // Interactive research pipeline: auto-advances once in view, click any step to jump
-const Pipeline = () => {
+const Pipeline = ({ steps = defaultSteps }: { steps?: PipelineStep[] }) => {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const reduced = usePrefersReducedMotion();
@@ -46,7 +53,7 @@ const Pipeline = () => {
     if (!inView || paused || reduced) return;
     const t = setInterval(() => setActive((n) => (n + 1) % steps.length), 3200);
     return () => clearInterval(t);
-  }, [inView, paused, reduced]);
+  }, [inView, paused, reduced, steps.length]);
 
   const progress = (active / (steps.length - 1)) * 100;
   const step = steps[active];
@@ -56,14 +63,20 @@ const Pipeline = () => {
       {/* Track */}
       <div className="relative">
         {/* line (horizontal on desktop, vertical on mobile) */}
-        <div className="absolute hidden md:block left-[10%] right-[10%] top-7 h-0.5 bg-white/10">
+        <div
+          className="absolute hidden md:block top-7 h-0.5 bg-white/10"
+          style={{ left: `${50 / steps.length}%`, right: `${50 / steps.length}%` }}
+        >
           <div className="h-full bg-linear-to-r from-magenta to-lime transition-[width] duration-700 ease-out" style={{ width: `${progress}%` }} />
         </div>
         <div className="absolute md:hidden left-7 top-7 bottom-7 w-0.5 bg-white/10">
           <div className="w-full bg-linear-to-b from-magenta to-lime transition-[height] duration-700 ease-out" style={{ height: `${progress}%` }} />
         </div>
 
-        <ol className="relative grid md:grid-cols-5 gap-4 md:gap-2">
+        <ol
+          className="relative grid md:[grid-template-columns:var(--cols)] gap-4 md:gap-2"
+          style={{ ["--cols" as string]: `repeat(${steps.length}, minmax(0, 1fr))` }}
+        >
           {steps.map((s, i) => {
             const Icon = s.icon;
             const done = i <= active;
