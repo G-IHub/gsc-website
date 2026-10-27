@@ -2,6 +2,7 @@ import { HelpCircle, Brain, Cpu, Workflow, PackageCheck, ShieldCheck, ClipboardC
 import { CtaBand, Eyebrow, PageHero, Section, SectionHeading } from "../components/ui";
 import { Reveal } from "../components/motion";
 import { Accordion } from "../components/interactive";
+import TeamSection from "../components/TeamSection";
 
 const principleIcons = [ShieldCheck, ClipboardCheck, Users, Lock, Lightbulb, RefreshCw];
 
@@ -178,6 +179,8 @@ const About = () => (
         </Reveal>
       </div>
     </Section>
+
+    <TeamSection />
 
     <Section tone="mist">
       <Reveal>
