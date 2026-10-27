@@ -69,11 +69,11 @@ const Industries = () => (
       <SectionHeading eyebrow="Who we work with" title="How GSC supports each type of organization" />
       <div className="grid sm:grid-cols-2 gap-5">
         {industries.map(({ icon: Icon, title, text }) => (
-          <div key={title} className="border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-teal/40 transition-colors">
-            <span className="w-11 h-11 rounded-xl bg-navy text-teal flex items-center justify-center mb-5">
+          <div key={title} className="border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-magenta/40 transition-colors">
+            <span className="w-11 h-11 rounded-xl bg-plum text-lime flex items-center justify-center mb-5">
               <Icon size={20} />
             </span>
-            <h3 className="text-navy font-semibold text-lg leading-snug mb-2">{title}</h3>
+            <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{title}</h3>
             <p className="text-muted text-[15px] leading-relaxed">{text}</p>
           </div>
         ))}
@@ -94,7 +94,7 @@ const Industries = () => (
         />
         <div className="flex flex-wrap gap-3">
           {models.map((m) => (
-            <span key={m} className="bg-white border border-gray-200 text-navy text-sm font-medium px-4 py-2.5 rounded-full">
+            <span key={m} className="bg-white border border-gray-200 text-plum text-sm font-medium px-4 py-2.5 rounded-full">
               {m}
             </span>
           ))}

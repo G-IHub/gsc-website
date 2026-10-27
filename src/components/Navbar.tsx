@@ -21,7 +21,7 @@ const Navbar = () => {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `transition-colors hover:text-navy ${isActive ? "text-navy" : ""}`
+                  `transition-colors hover:text-plum ${isActive ? "text-plum" : ""}`
                 }
               >
                 {item.label}
@@ -31,14 +31,14 @@ const Navbar = () => {
 
           <Link
             to="/contact"
-            className="hidden xl:inline-flex whitespace-nowrap items-center gap-2 bg-teal hover:bg-teal-dark text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
+            className="hidden xl:inline-flex whitespace-nowrap items-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
           >
             Discuss a Project
             <ArrowRight size={14} />
           </Link>
 
           <button
-            className="xl:hidden p-2 text-muted hover:text-navy"
+            className="xl:hidden p-2 text-muted hover:text-plum"
             onClick={() => setOpen(!open)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
@@ -55,7 +55,7 @@ const Navbar = () => {
                 to={item.to}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `px-2 py-2 rounded-lg text-sm font-medium ${isActive ? "text-navy bg-mist" : "text-muted"}`
+                  `px-2 py-2 rounded-lg text-sm font-medium ${isActive ? "text-plum bg-mist" : "text-muted"}`
                 }
               >
                 {item.label}
@@ -64,7 +64,7 @@ const Navbar = () => {
             <Link
               to="/contact"
               onClick={() => setOpen(false)}
-              className="mt-2 flex items-center justify-center gap-2 bg-teal text-white px-5 py-2.5 rounded-full text-sm font-medium"
+              className="mt-2 flex items-center justify-center gap-2 bg-magenta text-white px-5 py-2.5 rounded-full text-sm font-medium"
             >
               Discuss a Project
               <ArrowRight size={14} />

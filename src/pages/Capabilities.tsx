@@ -71,14 +71,14 @@ const Capabilities = () => (
       <div className="grid md:grid-cols-2 gap-5">
         {capabilities.map(({ icon: Icon, title, text, note }) => (
           <div key={title} className="border border-gray-200/80 rounded-2xl p-6 md:p-8 flex gap-5">
-            <span className="w-11 h-11 shrink-0 rounded-xl bg-teal-tint text-teal-dark flex items-center justify-center">
+            <span className="w-11 h-11 shrink-0 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center">
               <Icon size={20} />
             </span>
             <div>
-              <h3 className="text-navy font-semibold text-lg leading-snug mb-2">{title}</h3>
+              <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{title}</h3>
               <p className="text-muted text-[15px] leading-relaxed">{text}</p>
               {note && (
-                <p className="mt-3 text-sm text-navy/80 leading-relaxed border-l-2 border-teal pl-3">{note}</p>
+                <p className="mt-3 text-sm text-plum/80 leading-relaxed border-l-2 border-magenta pl-3">{note}</p>
               )}
             </div>
           </div>

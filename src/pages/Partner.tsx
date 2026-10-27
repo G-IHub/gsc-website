@@ -64,7 +64,7 @@ const Partner = () => (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {models.map((m) => (
           <div key={m.title} className="border border-gray-200/80 rounded-2xl p-6 md:p-7">
-            <h3 className="text-navy font-semibold text-lg leading-snug mb-2">{m.title}</h3>
+            <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{m.title}</h3>
             <p className="text-muted text-[15px] leading-relaxed">{m.text}</p>
           </div>
         ))}
@@ -78,11 +78,11 @@ const Partner = () => (
           <Link
             key={p.id}
             to={`/contact?type=${p.id}`}
-            className="group bg-white border border-gray-200/80 rounded-2xl p-5 flex flex-col hover:border-teal/50 hover:shadow-lg hover:shadow-navy/5 transition-all"
+            className="group bg-white border border-gray-200/80 rounded-2xl p-5 flex flex-col hover:border-magenta/50 hover:shadow-lg hover:shadow-plum/5 transition-all"
           >
-            <h3 className="text-navy font-semibold leading-snug mb-2">{p.title}</h3>
+            <h3 className="text-plum font-semibold leading-snug mb-2">{p.title}</h3>
             <p className="text-muted text-sm leading-relaxed flex-1">{p.text}</p>
-            <span className="mt-4 inline-flex items-center gap-1.5 text-teal-dark text-sm font-medium">
+            <span className="mt-4 inline-flex items-center gap-1.5 text-magenta-dark text-sm font-medium">
               Start <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </span>
           </Link>

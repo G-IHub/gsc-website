@@ -3,7 +3,7 @@ import Logo from "./Logo";
 import { contact, nav, services } from "../data/site";
 
 const Footer = () => (
-  <footer className="bg-navy text-white/70 px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+  <footer className="bg-plum text-white/70 px-4 sm:px-6 lg:px-8 pt-16 pb-8">
     <div className="max-w-6xl mx-auto">
       <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>

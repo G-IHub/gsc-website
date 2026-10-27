@@ -66,10 +66,10 @@ const Projects = () => (
       <div className="grid md:grid-cols-2 gap-5">
         {categories.map((c) => (
           <div key={c.title} className="border border-gray-200/80 rounded-2xl p-6 md:p-8">
-            <span className="inline-block text-[11px] font-bold tracking-widest uppercase text-teal-dark bg-teal-tint px-2.5 py-1 rounded-full mb-4">
+            <span className="inline-block text-[11px] font-bold tracking-widest uppercase text-magenta-dark bg-magenta-tint px-2.5 py-1 rounded-full mb-4">
               Case studies coming soon
             </span>
-            <h3 className="text-navy font-semibold text-lg mb-2">{c.title}</h3>
+            <h3 className="text-plum font-semibold text-lg mb-2">{c.title}</h3>
             <p className="text-muted text-[15px] leading-relaxed">{c.text}</p>
           </div>
         ))}
@@ -89,8 +89,8 @@ const Projects = () => (
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {caseFormat.map(([title, text], i) => (
           <div key={title} className="bg-white border border-gray-200/80 rounded-2xl p-5">
-            <span className="block text-teal-dark font-semibold text-sm mb-2">{String(i + 1).padStart(2, "0")}</span>
-            <h3 className="text-navy font-semibold mb-1.5">{title}</h3>
+            <span className="block text-magenta-dark font-semibold text-sm mb-2">{String(i + 1).padStart(2, "0")}</span>
+            <h3 className="text-plum font-semibold mb-1.5">{title}</h3>
             <p className="text-muted text-sm leading-relaxed">{text}</p>
           </div>
         ))}

@@ -5,7 +5,7 @@ import { PageHero, Section } from "../components/ui";
 import { contact, enquiryEndpoint, engagementModels, pathways, serviceTypes } from "../data/site";
 
 const inputClass =
-  "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-[15px] text-ink placeholder:text-gray-400 focus:outline-none focus:border-teal focus:ring-2 focus:ring-teal/15 transition";
+  "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-[15px] text-ink placeholder:text-gray-400 focus:outline-none focus:border-magenta focus:ring-2 focus:ring-magenta/15 transition";
 
 const Field = ({
   label,
@@ -19,8 +19,8 @@ const Field = ({
   hint?: string;
 }) => (
   <label className="block">
-    <span className="block text-sm font-medium text-navy mb-1.5">
-      {label} {required ? <span className="text-teal-dark">*</span> : <span className="text-muted font-normal">(optional)</span>}
+    <span className="block text-sm font-medium text-plum mb-1.5">
+      {label} {required ? <span className="text-magenta-dark">*</span> : <span className="text-muted font-normal">(optional)</span>}
     </span>
     {children}
     {hint && <span className="block text-xs text-muted mt-1.5">{hint}</span>}
@@ -114,7 +114,7 @@ const Contact = () => {
         <div className="grid lg:grid-cols-[1.6fr_1fr] gap-8 lg:gap-10 items-start">
           {/* Enquiry form */}
           <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-10">
-            <h2 className="text-xl md:text-2xl font-bold text-navy mb-2">Project Enquiry</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-plum mb-2">Project Enquiry</h2>
             <p className="text-muted text-[15px] mb-8">
               After reviewing your enquiry, our team will determine whether the project aligns with GSC's
               capabilities and discuss appropriate next steps.
@@ -122,14 +122,14 @@ const Contact = () => {
 
             {status === "sent" ? (
               <div className="text-center py-12">
-                <CheckCircle2 size={44} className="mx-auto text-teal mb-4" />
-                <h3 className="text-navy font-semibold text-lg mb-2">Thank you for your enquiry</h3>
+                <CheckCircle2 size={44} className="mx-auto text-magenta mb-4" />
+                <h3 className="text-plum font-semibold text-lg mb-2">Thank you for your enquiry</h3>
                 <p className="text-muted max-w-sm mx-auto">
                   Our team will review your requirements and get back to you about next steps.
                 </p>
                 <button
                   onClick={() => setStatus("idle")}
-                  className="mt-6 text-teal-dark font-medium text-sm hover:underline"
+                  className="mt-6 text-magenta-dark font-medium text-sm hover:underline"
                 >
                   Submit another enquiry
                 </button>
@@ -206,8 +206,8 @@ const Contact = () => {
                   <textarea name="additional" rows={3} className={inputClass} />
                 </Field>
 
-                <div className="flex gap-3 bg-teal-tint rounded-2xl p-4 text-sm text-navy leading-relaxed">
-                  <ShieldCheck size={20} className="shrink-0 text-teal-dark mt-0.5" />
+                <div className="flex gap-3 bg-magenta-tint rounded-2xl p-4 text-sm text-plum leading-relaxed">
+                  <ShieldCheck size={20} className="shrink-0 text-magenta-dark mt-0.5" />
                   <p>
                     Please do not submit confidential research data, personal health information, unpublished
                     proprietary materials, or sensitive intellectual property through this form. We can discuss
@@ -220,7 +220,7 @@ const Contact = () => {
                 <button
                   type="submit"
                   disabled={status === "sending"}
-                  className="w-full sm:w-auto bg-teal hover:bg-teal-dark disabled:opacity-60 text-white px-8 py-3.5 rounded-full text-sm font-medium transition-colors shadow-md shadow-teal/20"
+                  className="w-full sm:w-auto bg-magenta hover:bg-magenta-dark disabled:opacity-60 text-white px-8 py-3.5 rounded-full text-sm font-medium transition-colors shadow-md shadow-magenta/20"
                 >
                   {status === "sending" ? "Sending…" : "Submit Project Enquiry"}
                 </button>
@@ -230,7 +230,7 @@ const Contact = () => {
 
           {/* General contact */}
           <aside className="space-y-5 lg:sticky lg:top-28">
-            <div className="bg-navy rounded-3xl p-6 md:p-8 text-white">
+            <div className="bg-plum rounded-3xl p-6 md:p-8 text-white">
               <h2 className="text-lg font-semibold mb-2">General Contact</h2>
               <p className="text-white/70 text-sm leading-relaxed mb-6">
                 For institutional partnerships, contract research, scientific consulting, and business enquiries.
@@ -240,30 +240,30 @@ const Contact = () => {
               <ul className="space-y-3 text-sm">
                 {contact.email && (
                   <li className="flex gap-3">
-                    <Mail size={17} className="text-teal shrink-0 mt-0.5" />
+                    <Mail size={17} className="text-lime shrink-0 mt-0.5" />
                     <a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a>
                   </li>
                 )}
                 {contact.website && (
                   <li className="flex gap-3">
-                    <Globe size={17} className="text-teal shrink-0 mt-0.5" />
+                    <Globe size={17} className="text-lime shrink-0 mt-0.5" />
                     <a href={contact.website} className="hover:underline">{contact.website.replace(/^https?:\/\//, "")}</a>
                   </li>
                 )}
                 {contact.address && (
                   <li className="flex gap-3">
-                    <MapPin size={17} className="text-teal shrink-0 mt-0.5" />
+                    <MapPin size={17} className="text-lime shrink-0 mt-0.5" />
                     <span>{contact.address}</span>
                   </li>
                 )}
               </ul>
             </div>
             <div className="bg-white rounded-3xl border border-gray-200/80 p-6 md:p-8">
-              <h2 className="text-navy font-semibold mb-4">Ways to start</h2>
+              <h2 className="text-plum font-semibold mb-4">Ways to start</h2>
               <ul className="space-y-3">
                 {pathways.map((p) => (
                   <li key={p.id}>
-                    <p className="text-navy text-sm font-medium">{p.title}</p>
+                    <p className="text-plum text-sm font-medium">{p.title}</p>
                     <p className="text-muted text-xs leading-relaxed">{p.text}</p>
                   </li>
                 ))}

@@ -45,7 +45,7 @@ const About = () => (
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         <div>
           <Eyebrow>Why GSC exists</Eyebrow>
-          <h2 className="text-2xl md:text-[28px] font-bold text-navy leading-tight tracking-tight">
+          <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
             Bridging the gap between research questions and delivered work
           </h2>
         </div>
@@ -56,7 +56,7 @@ const About = () => (
             expertise, technical capabilities, project coordination, or implementation support to achieve
             them.
           </p>
-          <p className="text-navy font-medium">We aim to bridge that gap.</p>
+          <p className="text-plum font-medium">We aim to bridge that gap.</p>
           <p>
             By combining scientific knowledge, computational methods, technical development, and project
             execution, GSC helps clients move from research requirements to clearly defined work and
@@ -68,7 +68,7 @@ const About = () => (
 
     <Section tone="mist">
       <div className="grid md:grid-cols-2 gap-5">
-        <div className="bg-navy rounded-3xl p-8 md:p-10">
+        <div className="bg-plum rounded-3xl p-8 md:p-10">
           <Eyebrow light>Our mission</Eyebrow>
           <p className="text-white text-lg md:text-xl leading-relaxed font-medium">
             To make scientific expertise, research execution, and technical innovation accessible to
@@ -77,7 +77,7 @@ const About = () => (
         </div>
         <div className="bg-white border border-gray-200/80 rounded-3xl p-8 md:p-10">
           <Eyebrow>Our vision</Eyebrow>
-          <p className="text-navy text-lg md:text-xl leading-relaxed font-medium">
+          <p className="text-plum text-lg md:text-xl leading-relaxed font-medium">
             To become a trusted international research and scientific consulting partner, connecting
             organizations with the expertise, capabilities, and execution capacity needed to advance
             scientific discovery and innovation.
@@ -139,10 +139,10 @@ const About = () => (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {principles.map((p, i) => (
           <div key={p.title} className="bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7">
-            <span className="block text-teal-dark font-semibold text-sm mb-3">
+            <span className="block text-magenta-dark font-semibold text-sm mb-3">
               {String(i + 1).padStart(2, "0")}
             </span>
-            <h3 className="text-navy font-semibold text-lg mb-2">{p.title}</h3>
+            <h3 className="text-plum font-semibold text-lg mb-2">{p.title}</h3>
             <p className="text-muted text-[15px] leading-relaxed">{p.text}</p>
           </div>
         ))}

@@ -58,11 +58,11 @@ const HowWeWork = () => (
       <ol className="relative border-l-2 border-gray-100 ml-4 md:ml-5 space-y-10">
         {steps.map((step, i) => (
           <li key={step.title} className="pl-8 md:pl-10 relative">
-            <span className="absolute -left-[19px] md:-left-[21px] top-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-navy text-teal text-sm font-semibold flex items-center justify-center ring-4 ring-white">
+            <span className="absolute -left-[19px] md:-left-[21px] top-0 w-9 h-9 md:w-10 md:h-10 rounded-full bg-plum text-lime text-sm font-semibold flex items-center justify-center ring-4 ring-white">
               {i + 1}
             </span>
-            <p className="text-xs font-bold tracking-widest uppercase text-teal-dark mb-1">Step {i + 1}</p>
-            <h3 className="text-navy font-semibold text-lg mb-2">{step.title}</h3>
+            <p className="text-xs font-bold tracking-widest uppercase text-magenta-dark mb-1">Step {i + 1}</p>
+            <h3 className="text-plum font-semibold text-lg mb-2">{step.title}</h3>
             <p className="text-muted text-[15px] leading-relaxed max-w-2xl">{step.text}</p>
           </li>
         ))}
@@ -74,14 +74,14 @@ const HowWeWork = () => (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {principles.map(([title, text]) => (
           <div key={title} className="bg-white border border-gray-200/80 rounded-2xl p-6">
-            <h3 className="text-navy font-semibold mb-2">{title}</h3>
+            <h3 className="text-plum font-semibold mb-2">{title}</h3>
             <p className="text-muted text-[15px] leading-relaxed">{text}</p>
           </div>
         ))}
       </div>
     </Section>
 
-    <Section tone="navy">
+    <Section tone="plum">
       <div className="grid lg:grid-cols-2 gap-10">
         <SectionHeading light eyebrow="Quality, data and confidentiality" title="Requirements identified and agreed before execution" />
         <div className="space-y-4 text-white/75 leading-relaxed">

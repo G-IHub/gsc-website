@@ -5,9 +5,9 @@ import { ArrowRight, Check } from "lucide-react";
 // Small uppercase label with an accent line (same pattern as the iGENE site)
 export const Eyebrow = ({ children, light = false }: { children: ReactNode; light?: boolean }) => (
   <div className="flex items-center gap-3 mb-4">
-    <div className={`w-8 h-0.5 ${light ? "bg-teal" : "bg-teal"}`}></div>
+    <div className={`w-8 h-0.5 ${light ? "bg-magenta" : "bg-magenta"}`}></div>
     <span
-      className={`font-bold text-xs tracking-widest uppercase ${light ? "text-teal-tint" : "text-teal-dark"}`}
+      className={`font-bold text-xs tracking-widest uppercase ${light ? "text-magenta-tint" : "text-magenta-dark"}`}
     >
       {children}
     </span>
@@ -30,7 +30,7 @@ export const SectionHeading = ({
   <div className={`mb-10 md:mb-12 max-w-3xl ${center ? "mx-auto text-center [&>div:first-child]:justify-center" : ""}`}>
     {eyebrow && <Eyebrow light={light}>{eyebrow}</Eyebrow>}
     <h2
-      className={`text-2xl md:text-[28px] font-bold leading-tight tracking-tight ${light ? "text-white" : "text-navy"}`}
+      className={`text-2xl md:text-[28px] font-bold leading-tight tracking-tight ${light ? "text-white" : "text-plum"}`}
     >
       {title}
     </h2>
@@ -48,10 +48,10 @@ export const Section = ({
   id,
 }: {
   children: ReactNode;
-  tone?: "white" | "mist" | "navy";
+  tone?: "white" | "mist" | "plum";
   id?: string;
 }) => {
-  const bg = tone === "mist" ? "bg-mist" : tone === "navy" ? "bg-navy" : "bg-white";
+  const bg = tone === "mist" ? "bg-mist" : tone === "plum" ? "bg-plum" : "bg-white";
   return (
     <section id={id} className={`${bg} py-16 md:py-24 px-4 sm:px-6 lg:px-8`}>
       <div className="max-w-6xl mx-auto">{children}</div>
@@ -67,8 +67,8 @@ type ButtonProps = {
 
 export const Button = ({ to, children, variant = "primary" }: ButtonProps) => {
   const styles = {
-    primary: "bg-teal hover:bg-teal-dark text-white shadow-md shadow-teal/20",
-    secondary: "bg-white border border-gray-200 hover:border-gray-300 text-navy",
+    primary: "bg-magenta hover:bg-magenta-dark text-white shadow-md shadow-magenta/20",
+    secondary: "bg-white border border-gray-200 hover:border-gray-300 text-plum",
     light: "bg-white/10 border border-white/25 hover:bg-white/20 text-white",
   }[variant];
   return (
@@ -94,8 +94,8 @@ export const PageHero = ({
   intro?: ReactNode;
   children?: ReactNode;
 }) => (
-  <header className="bg-navy pt-36 md:pt-44 pb-16 md:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-    <div className="absolute -top-40 -right-40 w-125 h-125 rounded-full bg-teal/20 blur-3xl pointer-events-none"></div>
+  <header className="bg-linear-to-br from-plum via-plum-soft to-magenta-dark pt-36 md:pt-44 pb-16 md:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="absolute -top-40 -right-40 w-125 h-125 rounded-full bg-magenta/20 blur-3xl pointer-events-none"></div>
     <div className="max-w-6xl mx-auto relative">
       <Eyebrow light>{eyebrow}</Eyebrow>
       <h1 className="text-3xl md:text-[44px] font-semibold text-white leading-tight tracking-tight max-w-3xl">
@@ -116,9 +116,9 @@ export const Card = ({
   children: ReactNode;
   index?: string;
 }) => (
-  <div className="bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 h-full hover:border-teal/40 hover:shadow-lg hover:shadow-navy/5 transition-all">
-    {index && <span className="block text-teal-dark font-semibold text-sm mb-3">{index}</span>}
-    <h3 className="text-navy font-semibold text-lg leading-snug mb-2">{title}</h3>
+  <div className="bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 h-full hover:border-magenta/40 hover:shadow-lg hover:shadow-plum/5 transition-all">
+    {index && <span className="block text-magenta-dark font-semibold text-sm mb-3">{index}</span>}
+    <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{title}</h3>
     <div className="text-muted text-[15px] leading-relaxed">{children}</div>
   </div>
 );
@@ -127,7 +127,7 @@ export const CheckList = ({ items, columns = 1 }: { items: string[]; columns?: 1
   <ul className={`grid gap-x-8 gap-y-3 ${columns === 2 ? "sm:grid-cols-2" : ""}`}>
     {items.map((item) => (
       <li key={item} className="flex gap-3 text-[15px] text-ink leading-snug">
-        <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-teal-tint text-teal-dark flex items-center justify-center">
+        <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-magenta-tint text-magenta-dark flex items-center justify-center">
           <Check size={13} strokeWidth={3} />
         </span>
         {item}
@@ -149,8 +149,8 @@ export const CtaBand = ({
   secondary?: { to: string; label: string };
 }) => (
   <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-20 bg-white">
-    <div className="max-w-6xl mx-auto bg-navy rounded-3xl px-6 py-12 md:px-14 md:py-16 relative overflow-hidden">
-      <div className="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-teal/25 blur-3xl pointer-events-none"></div>
+    <div className="max-w-6xl mx-auto bg-linear-to-br from-plum via-plum-soft to-magenta-dark rounded-3xl px-6 py-12 md:px-14 md:py-16 relative overflow-hidden">
+      <div className="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-magenta/25 blur-3xl pointer-events-none"></div>
       <div className="relative max-w-2xl">
         <h2 className="text-2xl md:text-[32px] font-semibold text-white leading-tight tracking-tight">{title}</h2>
         {text && <div className="mt-4 text-white/75 text-base leading-relaxed space-y-3">{text}</div>}

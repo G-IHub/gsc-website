@@ -63,8 +63,8 @@ const steps = [
 const Home = () => (
   <>
     {/* Hero */}
-    <header className="bg-navy relative overflow-hidden pt-36 md:pt-44 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
-      <div className="absolute -top-48 -right-40 w-150 h-150 rounded-full bg-teal/20 blur-3xl pointer-events-none"></div>
+    <header className="bg-linear-to-br from-plum via-plum-soft to-magenta-dark relative overflow-hidden pt-36 md:pt-44 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
+      <div className="absolute -top-48 -right-40 w-150 h-150 rounded-full bg-magenta/20 blur-3xl pointer-events-none"></div>
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
         style={{
@@ -76,12 +76,12 @@ const Home = () => (
       <div className="max-w-6xl mx-auto relative grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
         <div>
           <span className="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/80 text-xs px-3 py-1.5 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-magenta"></span>
             A Genomac Holdings Company
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-semibold text-white leading-[1.1] tracking-tight">
             Scientific Expertise. Research Execution.{" "}
-            <span className="text-teal">Measurable Impact.</span>
+            <span className="text-lime">Measurable Impact.</span>
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/75 leading-relaxed max-w-xl">
             We help organizations transform scientific questions, research ideas, and technical
@@ -103,7 +103,7 @@ const Home = () => (
           <ol className="space-y-4">
             {steps.map((step, i) => (
               <li key={step.title} className="flex items-center gap-4">
-                <span className="w-9 h-9 shrink-0 rounded-full bg-teal/15 border border-teal/40 text-teal text-sm font-semibold flex items-center justify-center">
+                <span className="w-9 h-9 shrink-0 rounded-full bg-lime/10 border border-lime/40 text-lime text-sm font-semibold flex items-center justify-center">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="text-white text-[15px] font-medium">{step.title}</span>
@@ -119,7 +119,7 @@ const Home = () => (
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
         <div>
           <Eyebrow>Who we are</Eyebrow>
-          <h2 className="text-2xl md:text-[28px] font-bold text-navy leading-tight tracking-tight">
+          <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
             Your Research Partner from Concept to Delivery
           </h2>
         </div>
@@ -164,14 +164,14 @@ const Home = () => (
             <Link
               key={s.title}
               to={`/services#${s.id}`}
-              className="group bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-teal/40 hover:shadow-lg hover:shadow-navy/5 transition-all"
+              className="group bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 hover:border-magenta/40 hover:shadow-lg hover:shadow-plum/5 transition-all"
             >
-              <span className="w-11 h-11 rounded-xl bg-teal-tint text-teal-dark flex items-center justify-center mb-5">
+              <span className="w-11 h-11 rounded-xl bg-magenta-tint text-magenta-dark flex items-center justify-center mb-5">
                 <Icon size={20} />
               </span>
-              <h3 className="text-navy font-semibold text-lg leading-snug mb-2">{s.title}</h3>
+              <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{s.title}</h3>
               <p className="text-muted text-[15px] leading-relaxed">{s.short}</p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-teal-dark text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="mt-4 inline-flex items-center gap-1.5 text-magenta-dark text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 Learn more <ArrowRight size={14} />
               </span>
             </Link>
@@ -194,7 +194,7 @@ const Home = () => (
             available data, required expertise, and technical feasibility.
           </p>
           <div className="mt-6">
-            <Link to="/capabilities" className="inline-flex items-center gap-1.5 text-teal-dark font-medium text-sm hover:gap-2.5 transition-all">
+            <Link to="/capabilities" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
               View research capabilities <ArrowRight size={15} />
             </Link>
           </div>
@@ -206,7 +206,7 @@ const Home = () => (
           />
           <CheckList items={partners} />
           <div className="mt-6">
-            <Link to="/industries" className="inline-flex items-center gap-1.5 text-teal-dark font-medium text-sm hover:gap-2.5 transition-all">
+            <Link to="/industries" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
               Industries &amp; partners <ArrowRight size={15} />
             </Link>
           </div>
@@ -215,7 +215,7 @@ const Home = () => (
     </Section>
 
     {/* Engagement models */}
-    <Section tone="navy">
+    <Section tone="plum">
       <SectionHeading
         light
         eyebrow="Flexible research engagements"
@@ -237,19 +237,19 @@ const Home = () => (
       <div className="grid md:grid-cols-5 gap-6">
         {steps.map((step, i) => (
           <div key={step.title} className="relative">
-            <span className="block text-teal-dark font-semibold text-sm mb-3">
+            <span className="block text-magenta-dark font-semibold text-sm mb-3">
               {String(i + 1).padStart(2, "0")}
             </span>
             <div className="h-0.5 bg-gray-200 mb-5">
-              <div className="h-full w-10 bg-teal"></div>
+              <div className="h-full w-10 bg-magenta"></div>
             </div>
-            <h3 className="text-navy font-semibold mb-2">{step.title}</h3>
+            <h3 className="text-plum font-semibold mb-2">{step.title}</h3>
             <p className="text-muted text-sm leading-relaxed">{step.text}</p>
           </div>
         ))}
       </div>
       <div className="mt-10">
-        <Link to="/how-we-work" className="inline-flex items-center gap-1.5 text-teal-dark font-medium text-sm hover:gap-2.5 transition-all">
+        <Link to="/how-we-work" className="inline-flex items-center gap-1.5 text-magenta-dark font-medium text-sm hover:gap-2.5 transition-all">
           See our full engagement process <ArrowRight size={15} />
         </Link>
       </div>
@@ -260,7 +260,7 @@ const Home = () => (
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start">
         <div>
           <Eyebrow>Part of Genomac Holdings</Eyebrow>
-          <h2 className="text-2xl md:text-[28px] font-bold text-navy leading-tight tracking-tight">
+          <h2 className="text-2xl md:text-[28px] font-bold text-plum leading-tight tracking-tight">
             A Research and Consulting Partner Built for Collaboration
           </h2>
         </div>
@@ -274,7 +274,7 @@ const Home = () => (
             This relationship can support access to relevant capabilities and collaborative
             opportunities, depending on the requirements of each engagement.
           </p>
-          <p className="text-navy font-medium">
+          <p className="text-plum font-medium">
             We believe effective research partnerships are built on clear expectations, scientific
             integrity, responsible data handling, and reliable execution.
           </p>

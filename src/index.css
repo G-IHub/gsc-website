@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
-/* GSC palette: deep navy, white, teal accent */
+/* GSC palette from the Genomac brand: deep purple, magenta accent, lime highlight */
 @theme {
-  --color-navy: #0b1f3a;
-  --color-navy-soft: #13294b;
-  --color-teal: #0e9f8e;
-  --color-teal-dark: #0b8577;
-  --color-teal-tint: #e8f6f4;
-  --color-mist: #f5f8fa;
+  --color-plum: #2a0f52;
+  --color-plum-soft: #3d1782;
+  --color-magenta: #b241b7;
+  --color-magenta-dark: #912996;
+  --color-magenta-tint: #f7ebf8;
+  --color-lime: #cde24a;
+  --color-mist: #f9f6fb;
   --color-ink: #1f2937;
   --color-muted: #5b6472;
 }
