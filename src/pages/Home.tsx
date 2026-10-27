@@ -86,8 +86,8 @@ const Home = () => (
           <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-semibold text-white leading-[1.1] tracking-tight">
             Your go-to partner for
             {/* Own line so the changing word never reflows the headline */}
-            <span className="block text-lime">
-              <RotatingWords words={["genomics", "bioinformatics", "drug discovery", "AI for science", "lab workflows"]} />
+            <span className="block text-lime whitespace-nowrap text-[30px] sm:text-5xl lg:text-[46px] xl:text-[56px]">
+              <RotatingWords words={["R&D", "contract research", "scientific consulting", "research execution", "innovation"]} />
             </span>
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/75 leading-relaxed max-w-xl">
