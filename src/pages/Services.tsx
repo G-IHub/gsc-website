@@ -48,30 +48,37 @@ const Services = () => (
             <Reveal key={s.id}>
               <article
                 id={s.id}
-                className="scroll-mt-40 group grid lg:grid-cols-[1fr_1.3fr] gap-8 lg:gap-12 border border-gray-200/80 rounded-3xl p-6 md:p-10 hover:border-magenta/30 hover:shadow-xl hover:shadow-plum/5 transition-all"
+                className="scroll-mt-40 group grid lg:grid-cols-2 border border-gray-200/80 rounded-3xl overflow-hidden bg-white hover:border-magenta/30 hover:shadow-xl hover:shadow-plum/5 transition-all"
               >
-                <div>
-                  <span className="inline-flex w-10 h-10 rounded-xl bg-plum text-lime font-semibold items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <h2 className="text-xl md:text-2xl font-bold text-plum leading-tight tracking-tight">{s.title}</h2>
-                  <p className="mt-3 text-muted leading-relaxed">{s.intro}</p>
-                  <div className="mt-6 h-40">
+                {/* Visual side (alternates left/right down the page) */}
+                <div className={`relative min-h-60 lg:min-h-full p-3 ${i % 2 ? "lg:order-last" : ""}`}>
+                  <div className="absolute inset-3 [&>div]:rounded-[20px] lg:[&_.top-7>*]:scale-[1.35]">
                     <Visual />
                   </div>
-                  <div className="mt-4 bg-magenta-tint rounded-2xl p-4">
-                    <p className="text-xs font-bold tracking-widest uppercase text-magenta-dark mb-1">Commercial model</p>
-                    <p className="text-plum text-sm leading-relaxed">{s.model}</p>
-                  </div>
+                  <span className="absolute top-6 right-6 z-10 inline-flex w-10 h-10 rounded-xl bg-lime text-plum font-bold items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    {String.fromCharCode(65 + i)}
+                  </span>
                 </div>
-                <div className="lg:pt-2">
-                  <CheckList items={s.items} columns={2} />
-                  <Link
-                    to={`/contact?service=${encodeURIComponent(s.title)}`}
-                    className="mt-8 inline-flex items-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
-                  >
-                    Enquire about this service <ArrowRight size={15} />
-                  </Link>
+
+                {/* Content side */}
+                <div className="flex flex-col p-6 md:p-10">
+                  <h2 className="text-xl md:text-2xl font-bold text-plum leading-tight tracking-tight">{s.title}</h2>
+                  <p className="mt-3 text-muted leading-relaxed">{s.intro}</p>
+                  <div className="mt-6">
+                    <CheckList items={s.items} />
+                  </div>
+                  <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row sm:items-end gap-4 sm:justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold tracking-widest uppercase text-magenta-dark mb-1">Commercial model</p>
+                      <p className="text-plum text-sm leading-relaxed max-w-xs">{s.model}</p>
+                    </div>
+                    <Link
+                      to={`/contact?service=${encodeURIComponent(s.title)}`}
+                      className="shrink-0 inline-flex items-center justify-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                    >
+                      Enquire about this service <ArrowRight size={15} />
+                    </Link>
+                  </div>
                 </div>
               </article>
             </Reveal>
