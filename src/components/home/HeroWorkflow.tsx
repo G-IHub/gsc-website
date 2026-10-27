@@ -281,19 +281,6 @@ const HeroWorkflow = () => {
           </defs>
         </svg>
       </div>
-
-      {/* Stage strip */}
-      <div className="mt-4 flex items-center gap-1.5">
-        {stages.map((s, i) => (
-          <div key={s} className="flex-1 min-w-0">
-            <div className={`h-1 rounded-full transition-colors duration-500 ${i <= stage ? "bg-lime" : "bg-white/15"}`} />
-            <p className={`mt-2 text-[10px] sm:text-[11px] leading-tight transition-colors ${i === stage ? "text-white font-semibold" : "text-white/45"}`}>
-              <span className="block">{String(i + 1).padStart(2, "0")}</span>
-              {s}
-            </p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
