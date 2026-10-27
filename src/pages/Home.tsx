@@ -83,11 +83,14 @@ const Home = () => (
             <span className="w-1.5 h-1.5 rounded-full bg-magenta"></span>
             A Genomac Holdings Company
           </span>
-          <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-semibold text-white leading-[1.1] tracking-tight">
-            Your go-to partner for
-            {/* Own line so the changing word never reflows the headline */}
-            <span className="block text-lime whitespace-nowrap text-[30px] sm:text-5xl lg:text-[46px] xl:text-[56px]">
-              <RotatingWords words={["R&D", "contract research", "scientific consulting", "research execution", "innovation"]} />
+          <h1 className="text-[28px] sm:text-5xl lg:text-[42px] xl:text-[52px] font-semibold text-white leading-[1.1] tracking-tight">
+            Your go-to partner
+            {/* "for" + the changing phrase share one line that never wraps or reflows */}
+            <span className="block whitespace-nowrap">
+              for{" "}
+              <span className="text-lime">
+                <RotatingWords words={["R&D", "contract research", "scientific consulting", "research execution", "innovation"]} />
+              </span>
             </span>
           </h1>
           <p className="mt-6 text-base md:text-lg text-white/75 leading-relaxed max-w-xl">
