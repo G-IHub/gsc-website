@@ -92,7 +92,7 @@ const HeroWorkflow = () => {
   }, [reduced]);
 
   return (
-    <div className="relative select-none" aria-hidden="true">
+    <div className="relative select-none w-full max-w-[340px] sm:max-w-[380px] mx-auto lg:mr-0" aria-hidden="true">
       <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-3 sm:p-4">
         <svg viewBox="0 0 440 390" className="w-full h-auto">
           {/* Flows */}
