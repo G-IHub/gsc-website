@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Button, CtaBand, Eyebrow, Section, SectionHeading } from "../components/ui";
 import { Reveal, RotatingWords } from "../components/motion";
-import HeroLab from "../components/home/HeroLab";
+import HeroWorkflow from "../components/home/HeroWorkflow";
 import ServicesShowcase from "../components/home/ServicesShowcase";
 import Pipeline from "../components/home/Pipeline";
 import NeedPicker from "../components/home/NeedPicker";
@@ -107,8 +107,8 @@ const Home = () => (
           </div>
         </div>
 
-        {/* Animated lab visual */}
-        <HeroLab />
+        {/* End-to-end workflow animation */}
+        <HeroWorkflow />
       </div>
     </header>
 

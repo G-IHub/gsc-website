@@ -85,6 +85,29 @@ body {
 @keyframes caret {
   50% { opacity: 0; }
 }
+/* Hero workflow: moving dashes, assembling parts, filling wells, growing bars */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+@keyframes part-in {
+  0%, 8% { opacity: 0; transform: translateY(6px) scale(0.6); }
+  18%, 85% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+@keyframes well-fill {
+  0%, 10% { fill: rgb(255 255 255 / 0.08); }
+  25%, 80% { fill: #cde24a; }
+  100% { fill: rgb(255 255 255 / 0.08); }
+}
+@keyframes bar-grow {
+  0%, 10% { transform: scaleY(0.1); }
+  35%, 85% { transform: scaleY(1); }
+  100% { transform: scaleY(0.1); }
+}
+@keyframes hub-ring {
+  0% { r: 34; opacity: 0.6; }
+  100% { r: 58; opacity: 0; }
+}
 /* Pipeline pulse travelling along the line */
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 rgb(205 226 74 / 0.55); }
