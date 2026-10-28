@@ -66,7 +66,11 @@ const ProfileModal = ({ m, onClose }: { m: TeamMember; onClose: () => void }) =>
             {m.credentials && <p className="text-muted text-sm mt-2">{m.credentials}</p>}
           </div>
         </div>
-        <p className="mt-6 text-ink leading-relaxed">{m.bio}</p>
+        <div className="mt-6 space-y-3 text-ink leading-relaxed">
+          {m.bio.split(/\n\s*\n/).map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
         {m.expertise && m.expertise.length > 0 && (
           <div className="mt-5 flex flex-wrap gap-2">
             {m.expertise.map((e) => (
@@ -137,7 +141,10 @@ const TeamSection = () => {
               <div className="px-1.5 pt-4 pb-1.5">
                 <h3 className="font-semibold text-plum leading-snug">{m.name}</h3>
                 <p className="text-sm text-magenta-dark mt-0.5 leading-snug">{m.role}</p>
-                <p className="hidden sm:block text-sm text-muted mt-2 leading-relaxed line-clamp-2">{m.bio}</p>
+                {/* Wrapper handles visibility so it doesn't override line-clamp's display value */}
+                <div className="hidden sm:block mt-2">
+                  <p className="text-sm text-muted leading-relaxed line-clamp-2">{m.bio.split(/\n\s*\n/)[0]}</p>
+                </div>
               </div>
             </button>
           </Reveal>

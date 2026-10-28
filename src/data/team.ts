@@ -39,6 +39,21 @@ export const team: TeamMember[] = [
     expertise: ["Bioinformatics", "Multi-omics data analysis", "AI integration", "Biotech entrepreneurship"],
     linkedin: "https://www.linkedin.com/in/oluwaseyi-olawale-b9310a82/",
   },
+  {
+    name: "Adewumi (Joy) Abass",
+    role: "Director of Operations & Research Partnerships",
+    // The US canine cancer biomarker project is left out until its contract is established
+    // and disclosure is authorized (per the GSC website brief).
+    bio: [
+      "Adewumi (Joy) Abass is an internationally trained research professional and laboratory quality and molecular diagnostics leader, with cross-cutting expertise across plant, animal, and human health research.",
+      "He is ICH-GCP certified in Clinical Research, BioReady GMP Fundamentals certified by BioTalent Canada, GCLP Mastery certified by The Global Health Network, Food Safety certified by British Columbia, and certified in Health Equity and Infection Prevention and Control (IPAC) by Public Health Ontario, Canada.",
+      "He serves as a Member of the Expert Panel at Empirica Research, India, was invited as a Roundtable Discussion Leader for \"Beyond the Bench\" by the Postgraduate Students' Union at Toronto Metropolitan University, Canada, and is an international collaborator on several clinical research initiatives. At Genomac Services & Consult, he leads operations, research partnerships, business development, and scientific delivery.",
+    ].join("\n\n"),
+    photo: "/team/adewumi-abass.jpg",
+    credentials: "ICH-GCP · GMP (BioTalent Canada) · GCLP · IPAC (Public Health Ontario)",
+    expertise: ["Virology", "Microbiology", "GCP / GCLP / GMP", "QA / QC", "SOP / CAPA", "LIMS", "Clinical research"],
+    linkedin: "https://www.linkedin.com/in/adewumi-abass-334465331/",
+  },
 ];
 
 // Shown only in local development so the layout can be reviewed before real profiles are added
