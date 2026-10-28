@@ -69,6 +69,16 @@ export const team: TeamMember[] = [
     linkedin: "https://www.linkedin.com/in/afolabi-blessing/",
   },
   {
+    name: "Oluwaseun (Oyekunle) Agboola",
+    role: "Director, Genomac Institute",
+    // Built from his LinkedIn headline and the note that Genomac Institute drives genomics and bioinformatics
+    // research and capacity building; no credentials or achievements added.
+    bio: "Oluwaseun (Oyekunle) Agboola is Director of Genomac Institute, which drives genomics and bioinformatics research and capacity building. A bioinformatics instructor and creative educator, Oluwaseun brings research and teaching together to build practical computational skills. The institute's work helps equip researchers and learners with the knowledge to take on genomics and bioinformatics projects.",
+    photo: "/team/oluwaseun-agboola.jpg",
+    expertise: ["Genomics", "Bioinformatics", "Bioinformatics training", "Capacity building", "Creative education"],
+    linkedin: "https://www.linkedin.com/in/oluwaseun-agboola-566061247/",
+  },
+  {
     name: "Ayomide Praise",
     role: "Director, Genomac Natural Therapeutics & Research",
     // Two-sentence bio expanded from the supplied tagline only; no credentials or achievements added.
