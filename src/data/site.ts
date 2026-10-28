@@ -11,7 +11,7 @@ export const contact = {
 
 // Optional: an endpoint that accepts the enquiry form as JSON (e.g. a form service or API route).
 // When empty, the form opens the visitor's email app addressed to contact.email instead.
-export const enquiryEndpoint = "";
+export const enquiryEndpoint = "/api/enquiry";
 
 export const nav = [
   { label: "About", to: "/about" },

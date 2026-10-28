@@ -62,11 +62,10 @@ const Contact = () => {
         if (!res.ok) throw new Error(String(res.status));
         setStatus("sent");
         form.reset();
+        return;
       } catch {
-        setStatus("error");
-        setMessage("Your enquiry could not be sent. Please try again in a moment.");
+        // The server could not send it (for example, email is not configured yet): open the visitor's email app instead
       }
-      return;
     }
 
     if (contact.email) {
@@ -144,6 +143,8 @@ const Contact = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Hidden spam trap: people never see it, bots fill it in */}
+                <input name="botcheck" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
                 <Stage n={1} title="About you" />
                 <Field label="Type of enquiry" required>
                   <select name="enquiryType" defaultValue={initialType} className={inputClass} required>
