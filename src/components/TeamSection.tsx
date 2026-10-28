@@ -107,6 +107,9 @@ const TeamSection = () => {
 
   if (members.length === 0) return null;
 
+  const n = members.length;
+  const perRow = n <= 4 ? n : n === 5 || n === 6 || n === 9 ? 3 : 4;
+
   return (
     <Section id="team">
       <Reveal>
@@ -123,8 +126,12 @@ const TeamSection = () => {
         </p>
       )}
       {/* Centred wrap so one or two profiles don't sit stranded on the left */}
-      {/* Two per row up to laptop width (neat 2×2), all in one row from xl up */}
-      <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-[560px] xl:max-w-none mx-auto">
+      {/* Two per row up to laptop width; from xl up, pick a row size that avoids a stranded last card
+          (5 -> 3+2, 6 -> 3+3, 9 -> 3+3+3, otherwise up to 4 across) */}
+      <div
+        className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-[560px] xl:max-w-(--xl-w) mx-auto"
+        style={{ ["--xl-w" as string]: `${perRow * 250 + (perRow - 1) * 24 + 2}px` }}
+      >
         {members.map((m, i) => (
           <Reveal key={m.name} delay={(i % 4) * 90} className="w-[calc(50%-8px)] sm:w-[260px] xl:w-[250px]">
             <button

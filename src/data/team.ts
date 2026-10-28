@@ -77,6 +77,15 @@ export const team: TeamMember[] = [
     expertise: ["Translational medicine", "Natural healing", "Natural therapeutics", "Research & innovation"],
     linkedin: "https://www.linkedin.com/in/praise-adesina-a52ab8334/",
   },
+  {
+    name: "Gloria Adegbole",
+    role: "Director, G-iHub / Omicsboard Lab",
+    // Two sentences drawn from lab.omicsboard.com's own description of the product; nothing personal added.
+    bio: "Gloria Adegbole is a Director at G-iHub and Omicsboard Lab, the AI-native scientific workspace for computational life sciences built by Genomac Holdings. Omicsboard Lab pairs students, researchers and labs with an AI partner to learn computational methods and analyze their own data.",
+    photo: "/team/gloria-adegbole.jpg",
+    expertise: ["AI-native workspace", "Computational sciences", "Omicsboard Lab"],
+    linkedin: "https://www.linkedin.com/in/gloria-adegbole/",
+  },
 ];
 
 // Shown only in local development so the layout can be reviewed before real profiles are added
