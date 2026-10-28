@@ -41,7 +41,7 @@ export const team: TeamMember[] = [
   },
   {
     name: "Adewumi (Joy) Abass",
-    role: "Director of Operations & Research Partnerships",
+    role: "Director of Operations & Research Partnerships, GSC",
     // The US canine cancer biomarker project is left out until its contract is established
     // and disclosure is authorized (per the GSC website brief).
     bio: [
