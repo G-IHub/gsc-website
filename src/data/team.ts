@@ -30,7 +30,16 @@ export type TeamMember = {
   },
 */
 
-export const team: TeamMember[] = [];
+export const team: TeamMember[] = [
+  {
+    name: "Oluwaseyi Abraham Olawale",
+    role: "Chief Executive Officer, GSC · Founder, Genomac Holdings",
+    bio: "Oluwaseyi Abraham Olawale is the Founder and CEO of Genomac Holdings, an African biotechnology organization headquartered in Ogbomoso, Nigeria. An experienced bioinformatician and biopreneur, he specializes in multi-omics data analysis and artificial intelligence integration. Alongside his wife, he scaled the company from a zero-capital startup in 2022 into an international research and innovation ecosystem focused on advancing life sciences.",
+    photo: "/team/oluwaseyi-olawale.jpg",
+    expertise: ["Bioinformatics", "Multi-omics data analysis", "AI integration", "Biotech entrepreneurship"],
+    linkedin: "https://www.linkedin.com/in/oluwaseyi-olawale-b9310a82/",
+  },
+];
 
 // Shown only in local development so the layout can be reviewed before real profiles are added
 export const sampleTeam: TeamMember[] = [

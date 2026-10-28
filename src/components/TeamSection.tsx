@@ -118,9 +118,10 @@ const TeamSection = () => {
           Preview only — sample profiles are hidden on the live site until real ones are added in src/data/team.ts
         </p>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      {/* Centred wrap so one or two profiles don't sit stranded on the left */}
+      <div className="flex flex-wrap justify-center gap-4 md:gap-6">
         {members.map((m, i) => (
-          <Reveal key={m.name} delay={(i % 4) * 90}>
+          <Reveal key={m.name} delay={(i % 4) * 90} className="w-[calc(50%-8px)] sm:w-[260px]">
             <button
               onClick={() => setOpen(m)}
               className="group w-full text-left rounded-3xl border border-gray-200/80 p-3 hover:border-magenta/40 hover:shadow-xl hover:shadow-plum/5 hover:-translate-y-1 transition-all"
