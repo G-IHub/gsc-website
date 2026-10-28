@@ -80,8 +80,9 @@ export const team: TeamMember[] = [
   {
     name: "Gloria Adegbole",
     role: "Director, G-iHub / Omicsboard Lab",
-    // Two sentences drawn from lab.omicsboard.com's own description of the product; nothing personal added.
-    bio: "Gloria Adegbole is a Director at G-iHub and Omicsboard Lab, the AI-native scientific workspace for computational life sciences built by Genomac Holdings. Omicsboard Lab pairs students, researchers and labs with an AI partner to learn computational methods and analyze their own data.",
+    // Product wording comes from lab.omicsboard.com. How Omicsboard supports GSC's delivery is inferred from the
+    // site's features and GSC's service list; confirm with Gloria before publishing.
+    bio: "Gloria Adegbole is a Director at G-iHub and Omicsboard Lab, the AI-native scientific workspace for computational life sciences built by Genomac Holdings. For GSC, Omicsboard Lab supports computational delivery, giving analysts one AI-assisted workspace for data analysis, cloud pipelines and exportable, report-ready notebooks.",
     photo: "/team/gloria-adegbole.jpg",
     expertise: ["AI-native workspace", "Computational sciences", "Omicsboard Lab"],
     linkedin: "https://www.linkedin.com/in/gloria-adegbole/",
