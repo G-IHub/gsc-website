@@ -3,6 +3,8 @@ export const contact = {
   company: "Genomac Services & Consult (GSC)",
   parent: "A Genomac Holdings Company",
   email: "info@genomacsc.com",
+  phone: "+2348077191794",
+  phoneDisplay: "+234 807 719 1794",
   website: "https://www.genomacsc.com",
   address: "Genomac Building, Under G, Ogbomoso, Oyo State, Nigeria",
 };

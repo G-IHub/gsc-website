@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ShieldCheck, CheckCircle2, Mail, MapPin, Globe } from "lucide-react";
+import { ShieldCheck, CheckCircle2, Mail, MapPin, Globe, Phone } from "lucide-react";
 import { PageHero, Section } from "../components/ui";
 import { contact, enquiryEndpoint, engagementModels, pathways, serviceTypes } from "../data/site";
 
@@ -253,6 +253,12 @@ const Contact = () => {
                   <li className="flex gap-3">
                     <Mail size={17} className="text-lime shrink-0 mt-0.5" />
                     <a href={`mailto:${contact.email}`} className="hover:underline">{contact.email}</a>
+                  </li>
+                )}
+                {contact.phone && (
+                  <li className="flex gap-3">
+                    <Phone size={17} className="text-lime shrink-0 mt-0.5" />
+                    <a href={`tel:${contact.phone}`} className="hover:underline">{contact.phoneDisplay}</a>
                   </li>
                 )}
                 {contact.website && (

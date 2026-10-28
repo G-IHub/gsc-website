@@ -65,6 +65,13 @@ const Footer = () => (
                 </a>
               </li>
             )}
+            {contact.phone && (
+              <li>
+                <a href={`tel:${contact.phone}`} className="hover:text-white transition-colors">
+                  {contact.phoneDisplay}
+                </a>
+              </li>
+            )}
             {contact.address && <li className="text-white/50">{contact.address}</li>}
           </ul>
         </div>
