@@ -123,9 +123,10 @@ const TeamSection = () => {
         </p>
       )}
       {/* Centred wrap so one or two profiles don't sit stranded on the left */}
-      <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+      {/* Two per row up to laptop width (neat 2×2), all in one row from xl up */}
+      <div className="flex flex-wrap justify-center gap-4 md:gap-6 max-w-[560px] xl:max-w-none mx-auto">
         {members.map((m, i) => (
-          <Reveal key={m.name} delay={(i % 4) * 90} className="w-[calc(50%-8px)] sm:w-[260px]">
+          <Reveal key={m.name} delay={(i % 4) * 90} className="w-[calc(50%-8px)] sm:w-[260px] xl:w-[250px]">
             <button
               onClick={() => setOpen(m)}
               className="group w-full h-full text-left rounded-3xl border border-gray-200/80 p-3 hover:border-magenta/40 hover:shadow-xl hover:shadow-plum/5 hover:-translate-y-1 transition-all"

@@ -68,6 +68,15 @@ export const team: TeamMember[] = [
     expertise: ["Oncology", "Genomics", "Precision medicine", "Translational research", "Bioinformatics", "Genomics education"],
     linkedin: "https://www.linkedin.com/in/afolabi-blessing/",
   },
+  {
+    name: "Ayomide Praise",
+    role: "Director, Genomac Natural Therapeutics & Research",
+    // Two-sentence bio expanded from the supplied tagline only; no credentials or achievements added.
+    bio: "Ayomide Praise is a Director at G-Natures, where research and innovation in translational medicine and natural healing are led. The work focuses on moving scientific discoveries from the laboratory toward practical, evidence-informed natural therapeutics that improve health outcomes.",
+    photo: "/team/ayomide-praise.jpg",
+    expertise: ["Translational medicine", "Natural healing", "Natural therapeutics", "Research & innovation"],
+    linkedin: "https://www.linkedin.com/in/praise-adesina-a52ab8334/",
+  },
 ];
 
 // Shown only in local development so the layout can be reviewed before real profiles are added
