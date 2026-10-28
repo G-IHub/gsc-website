@@ -2,7 +2,28 @@ import { useEffect, useState } from "react";
 import { X, Mail, ArrowUpRight } from "lucide-react";
 import { Section, SectionHeading } from "./ui";
 import { Reveal } from "./motion";
+import JsonLd from "./JsonLd";
 import { sampleTeam, team, type TeamMember } from "../data/team";
+
+const SITE = "https://www.genomacsc.com";
+const gscOrg = { "@type": "Organization", "@id": `${SITE}/#organization`, name: "Genomac Services & Consult" };
+
+// Machine-readable profile so search engines can tie each name to a role, photo and LinkedIn page.
+// Titles that name GSC (CEO, Director of Operations) are employment at GSC; the other directors lead
+// sister Genomac units, so they are listed as affiliated with GSC rather than employed by it.
+const personSchema = (m: TeamMember) => ({
+  "@type": "Person",
+  "@id": `${SITE}/about#${m.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`,
+  name: m.name,
+  jobTitle: m.role,
+  description: m.bio.split(/\n\s*\n/)[0],
+  url: `${SITE}/about#team`,
+  ...(m.photo && { image: `${SITE}${m.photo}` }),
+  ...(/\bGSC\b/.test(m.role) ? { worksFor: gscOrg } : { affiliation: gscOrg }),
+  ...(m.linkedin && { sameAs: [m.linkedin] }),
+  ...(m.expertise?.length && { knowsAbout: m.expertise }),
+  ...(m.email && { email: m.email }),
+});
 
 // The icon set has no brand logos, so draw LinkedIn's "in" mark directly
 const LinkedinIcon = ({ size = 15 }: { size?: number }) => (
@@ -112,6 +133,7 @@ const TeamSection = () => {
 
   return (
     <Section id="team">
+      {!isSample && <JsonLd id="team-jsonld" data={{ "@context": "https://schema.org", "@graph": members.map(personSchema) }} />}
       <Reveal>
         <SectionHeading
           center
