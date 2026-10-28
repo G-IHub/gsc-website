@@ -54,6 +54,20 @@ export const team: TeamMember[] = [
     expertise: ["Virology", "Microbiology", "GCP / GCLP / GMP", "QA / QC", "SOP / CAPA", "LIMS", "Clinical research"],
     linkedin: "https://www.linkedin.com/in/adewumi-abass-334465331/",
   },
+  {
+    name: "Blessing Afolabi",
+    role: "Director, Genomac Labs",
+    bio: [
+      "Blessing Afolabi works at the intersection of oncology, genomics, precision medicine, and translational research, with a strong interest in turning scientific knowledge into solutions that improve health outcomes.",
+      "As Director of Genomac Labs, Blessing drives initiatives in genomics education, bioinformatics, and precision medicine, helping equip African researchers and healthcare professionals with the skills and access to advance genomic research and healthcare innovation. The role also spans programme execution, strategic partnerships, and operational excellence, with a focus on turning ideas into measurable outcomes.",
+      "Blessing's scientific journey includes the Queen Elizabeth Commonwealth Scholarship, which funded MSc studies and research at the Institute of Biochemistry, Molecular Biology and Biotechnology (IBMBB), University of Colombo, graduating as Best Student at both undergraduate (First Class) and postgraduate (Distinction) levels. Fellowship awards followed to the African Genomics Short Course in South Africa (2025) and the African Rare Disease Clinical and Genomic Workshop in Kinshasa, DRC (2026), strengthening experience in genomic analysis, variant interpretation, and clinical genomics.",
+      "Beyond research, Blessing is passionate about academic and career excellence, is the author of two books, Academic Excellence Blueprint and Scholarship Application Companion Workbook, and is committed to transforming lives through scientific innovation and social enterprise.",
+    ].join("\n\n"),
+    photo: "/team/blessing-afolabi.jpg",
+    credentials: "MSc (Distinction), IBMBB, University of Colombo · Queen Elizabeth Commonwealth Scholar",
+    expertise: ["Oncology", "Genomics", "Precision medicine", "Translational research", "Bioinformatics", "Genomics education"],
+    linkedin: "https://www.linkedin.com/in/afolabi-blessing/",
+  },
 ];
 
 // Shown only in local development so the layout can be reviewed before real profiles are added

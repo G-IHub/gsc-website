@@ -128,7 +128,7 @@ const TeamSection = () => {
           <Reveal key={m.name} delay={(i % 4) * 90} className="w-[calc(50%-8px)] sm:w-[260px]">
             <button
               onClick={() => setOpen(m)}
-              className="group w-full text-left rounded-3xl border border-gray-200/80 p-3 hover:border-magenta/40 hover:shadow-xl hover:shadow-plum/5 hover:-translate-y-1 transition-all"
+              className="group w-full h-full text-left rounded-3xl border border-gray-200/80 p-3 hover:border-magenta/40 hover:shadow-xl hover:shadow-plum/5 hover:-translate-y-1 transition-all"
             >
               <div className="relative overflow-hidden rounded-2xl">
                 <div className="group-hover:scale-105 transition-transform duration-500">
