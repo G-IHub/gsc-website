@@ -21,6 +21,7 @@ export const nav = [
   { label: "How We Work", to: "/how-we-work" },
   { label: "Projects", to: "/projects" },
   { label: "Partner", to: "/partner" },
+  { label: "Research Clinic", to: "/research-programme" },
 ];
 
 // The five conversion pathways; each pre-selects the enquiry type on the contact page.

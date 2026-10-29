@@ -221,6 +221,27 @@ const Home = () => (
       <NeedPicker />
     </Section>
 
+    {/* Research-to-Publication Programme */}
+    <Section>
+      <Reveal>
+        <div className="rounded-3xl bg-linear-to-br from-plum via-plum-soft to-magenta-dark p-8 md:p-12 text-white grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
+          <div>
+            <Eyebrow light>Research-to-Publication Programme</Eyebrow>
+            <h2 className="text-2xl md:text-[28px] font-semibold leading-tight tracking-tight">
+              Got a research idea? Start at the Research Clinic.
+            </h2>
+            <p className="mt-4 text-white/75 leading-relaxed">
+              We help researchers design the study, analyse the data and prepare the manuscript. You lead the
+              science, and you pay when the work is done.
+            </p>
+          </div>
+          <div className="md:justify-self-end">
+            <Button to="/research-programme">Join the Research Clinic</Button>
+          </div>
+        </div>
+      </Reveal>
+    </Section>
+
     {/* Genomac ecosystem */}
     <Section>
       <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 items-center">
