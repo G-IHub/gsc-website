@@ -21,7 +21,40 @@ export const nav = [
   { label: "How We Work", to: "/how-we-work" },
   { label: "Projects", to: "/projects" },
   { label: "Partner", to: "/partner" },
-  { label: "Research Clinic", to: "/research-programme" },
+  { label: "Programs", to: "/programs" },
+];
+
+// The grouped menu shown in the top navigation: five items, three of them with a dropdown.
+// The flat `nav` list above is still used by the footer.
+type NavItem = { label: string; to: string; items?: { label: string; to: string }[] };
+
+export const navMenu: NavItem[] = [
+  {
+    label: "About",
+    to: "/about",
+    items: [
+      { label: "About GSC", to: "/about" },
+      { label: "How We Work", to: "/how-we-work" },
+    ],
+  },
+  {
+    label: "Services",
+    to: "/services",
+    items: [
+      { label: "Our Services", to: "/services" },
+      { label: "Capabilities", to: "/capabilities" },
+    ],
+  },
+  { label: "Projects", to: "/projects" },
+  {
+    label: "Partner",
+    to: "/partner",
+    items: [
+      { label: "Partner With GSC", to: "/partner" },
+      { label: "Industries We Serve", to: "/industries" },
+    ],
+  },
+  { label: "Programs", to: "/programs" },
 ];
 
 // The five conversion pathways; each pre-selects the enquiry type on the contact page.

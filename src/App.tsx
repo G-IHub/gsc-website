@@ -10,6 +10,7 @@ import Industries from "./pages/Industries";
 import HowWeWork from "./pages/HowWeWork";
 import Projects from "./pages/Projects";
 import Partner from "./pages/Partner";
+import Programs from "./pages/Programs";
 import ResearchProgramme from "./pages/ResearchProgramme";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -23,6 +24,7 @@ const titles: Record<string, string> = {
   "/how-we-work": "How We Work — GSC",
   "/projects": "Projects & Case Studies — GSC",
   "/partner": "Partner With Us — GSC",
+  "/programs": "Programs — Genomac Services & Consult",
   "/research-programme": "Research-to-Publication Programme — GSC",
   "/contact": "Contact & Request a Proposal — GSC",
 };
@@ -38,6 +40,7 @@ const descriptions: Record<string, string> = {
   "/how-we-work": "GSC's seven-step engagement process, from first consultation to delivery: scope, proposal, contracting, execution, quality review and follow-up.",
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
+  "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Programme (Research Clinic) and internships.",
   "/research-programme": "Bring a research idea to the GSC Research Clinic. We design, analyse and prepare your study for publication, and you pay when the work is done.",
   "/contact": "Send a project enquiry or request a proposal from Genomac Services & Consult, based in Ogbomoso, Nigeria.",
 };
@@ -108,6 +111,7 @@ const App = () => (
         <Route path="/how-we-work" element={<HowWeWork />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/partner" element={<Partner />} />
+        <Route path="/programs" element={<Programs />} />
         <Route path="/research-programme" element={<ResearchProgramme />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
