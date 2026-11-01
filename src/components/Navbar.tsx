@@ -35,13 +35,16 @@ const Navbar = () => {
             <Logo />
           </Link>
 
-          <div className="hidden xl:flex items-center gap-8 whitespace-nowrap text-sm font-medium text-muted">
+          {/* Menu and button sit together on the right; the hamburger takes over below the lg breakpoint */}
+          <div className="hidden lg:flex items-center gap-5 xl:gap-8">
+          <div className="flex items-center gap-5 xl:gap-8 whitespace-nowrap text-sm font-medium text-muted">
             {navMenu.map((item) => {
               if (!item.items) {
                 return (
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    end={item.to === "/"}
                     className={({ isActive }) =>
                       `transition-colors hover:text-plum ${isActive ? "text-plum" : ""}`
                     }
@@ -102,14 +105,15 @@ const Navbar = () => {
 
           <Link
             to="/contact"
-            className="hidden xl:inline-flex whitespace-nowrap items-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
+            className="inline-flex whitespace-nowrap items-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2 rounded-full text-sm font-medium transition-colors"
           >
             Discuss a Project
             <ArrowRight size={14} />
           </Link>
+          </div>
 
           <button
-            className="xl:hidden p-2 text-muted hover:text-plum"
+            className="lg:hidden p-2 text-muted hover:text-plum"
             onClick={() => setOpen(!open)}
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
@@ -119,7 +123,7 @@ const Navbar = () => {
         </div>
 
         {open && (
-          <div className="xl:hidden flex flex-col gap-1 pt-3 mt-3 border-t border-gray-100">
+          <div className="lg:hidden flex flex-col gap-1 pt-3 mt-3 border-t border-gray-100">
             {navMenu.map((item) =>
               item.items ? (
                 <div key={item.to} className="pt-1">
@@ -141,6 +145,7 @@ const Navbar = () => {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.to === "/"}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
                     `px-2 py-2 rounded-lg text-sm font-medium ${isActive ? "text-plum bg-mist" : "text-muted"}`

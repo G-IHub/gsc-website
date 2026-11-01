@@ -29,6 +29,7 @@ export const nav = [
 type NavItem = { label: string; to: string; items?: { label: string; to: string }[] };
 
 export const navMenu: NavItem[] = [
+  { label: "Home", to: "/" },
   {
     label: "About",
     to: "/about",
