@@ -1,7 +1,11 @@
 import nodemailer from "nodemailer";
+import { dbConfigured, saveEnquiry } from "./_lib.js";
 
-// Receives the Contact page enquiry and emails it to the GSC inbox over Zoho SMTP.
-// Needs these Vercel environment variables (see the setup notes in the project README / chat):
+// Receives enquiries from the Contact and Research Clinic forms. Each one is saved to the database
+// (read it in the admin page) and, if SMTP is set up, also emailed to the GSC inbox.
+// Either one is enough for the visitor to see "Thank you". Environment variables:
+//   DATABASE_URL  Neon Postgres connection (see api/_lib.js)
+// Optional email alert over SMTP:
 //   SMTP_USER  the Zoho mailbox that sends and receives, e.g. info@genomacsc.com
 //   SMTP_PASS  a Zoho app-specific password for that mailbox
 //   SMTP_HOST  optional, defaults to smtp.zoho.com (use smtp.zoho.eu / smtp.zoho.in for those data centres)
@@ -30,8 +34,9 @@ export default async function handler(req, res) {
   }
 
   const { SMTP_USER, SMTP_PASS, SMTP_HOST = "smtp.zoho.com", ENQUIRY_TO } = process.env;
-  if (!SMTP_USER || !SMTP_PASS) {
-    // Not configured yet: the page falls back to opening the visitor's email app
+  const canEmail = Boolean(SMTP_USER && SMTP_PASS);
+  if (!canEmail && !dbConfigured()) {
+    // Nothing is configured yet: the page falls back to opening the visitor's email app
     return res.status(503).json({ error: "Enquiries are not connected yet" });
   }
 
@@ -86,25 +91,42 @@ export default async function handler(req, res) {
     f.additional || "—",
   ].join("\n");
 
-  try {
-    const transport = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: 465,
-      secure: true,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-    await transport.sendMail({
-      from: `"GSC Website" <${SMTP_USER}>`,
-      to: ENQUIRY_TO || SMTP_USER,
-      replyTo: `"${f.name.replace(/"/g, "")}" <${f.email}>`,
-      subject: `Website enquiry: ${f.enquiryType}: ${f.title}`.slice(0, 200),
-      text,
-    });
-    return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error("Enquiry email failed:", err?.message);
-    return res.status(502).json({ error: "Your enquiry could not be sent." });
+  let saved = false;
+  let emailed = false;
+
+  if (dbConfigured()) {
+    try {
+      await saveEnquiry(f);
+      saved = true;
+    } catch (err) {
+      console.error("Enquiry save failed:", err?.message);
+    }
   }
+
+  if (canEmail) {
+    try {
+      const transport = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: 465,
+        secure: true,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+      });
+      await transport.sendMail({
+        from: `"GSC Website" <${SMTP_USER}>`,
+        to: ENQUIRY_TO || SMTP_USER,
+        replyTo: `"${f.name.replace(/"/g, "")}" <${f.email}>`,
+        subject: `Website enquiry: ${f.enquiryType}: ${f.title}`.slice(0, 200),
+        text,
+      });
+      emailed = true;
+    } catch (err) {
+      console.error("Enquiry email failed:", err?.message);
+    }
+  }
+
+  // Saved or emailed is a success for the visitor; only if both failed do they get the fallback
+  if (!saved && !emailed) return res.status(502).json({ error: "Your enquiry could not be sent." });
+  return res.status(200).json({ ok: true, saved, emailed });
 }
 
 function safeParse(s) {

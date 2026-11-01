@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -14,6 +14,9 @@ import Programs from "./pages/Programs";
 import ResearchProgramme from "./pages/ResearchProgramme";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+
+// Loaded only when someone opens /admin, so visitors never download it
+const Admin = lazy(() => import("./pages/Admin"));
 
 const titles: Record<string, string> = {
   "/": "Genomac Services & Consult — Scientific Research & Consulting",
@@ -97,10 +100,13 @@ const ScrollManager = () => {
   return null;
 };
 
-const App = () => (
+const App = () => {
+  const { pathname } = useLocation();
+  const bare = pathname.startsWith("/admin"); // the admin page has no site header or footer
+  return (
   <>
     <ScrollManager />
-    <Navbar />
+    {!bare && <Navbar />}
     <main>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -114,11 +120,20 @@ const App = () => (
         <Route path="/programs" element={<Programs />} />
         <Route path="/research-programme" element={<ResearchProgramme />} />
         <Route path="/contact" element={<Contact />} />
+        <Route
+          path="/admin"
+          element={
+            <Suspense fallback={null}>
+              <Admin />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
-    <Footer />
+    {!bare && <Footer />}
   </>
-);
+  );
+};
 
 export default App;
