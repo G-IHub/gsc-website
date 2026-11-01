@@ -2,10 +2,14 @@ import nodemailer from "nodemailer";
 import { dbConfigured, saveEnquiry } from "./_lib.js";
 
 // Receives enquiries from the Contact and Research Clinic forms. Each one is saved to the database
-// (read it in the admin page) and, if SMTP is set up, also emailed to the GSC inbox.
+// (read it in the admin page) and, if an email service is set up, also emailed to the GSC inbox.
 // Either one is enough for the visitor to see "Thank you". Environment variables:
-//   DATABASE_URL  Neon Postgres connection (see api/_lib.js)
-// Optional email alert over SMTP:
+//   DATABASE_URL    Neon Postgres connection (see api/_lib.js)
+// Email alert through Resend (recommended; the domain must be verified in Resend):
+//   RESEND_API_KEY  an API key with sending access
+//   ALERT_FROM      optional, defaults to "GSC Website <notifications@genomacsc.com>"
+//   ENQUIRY_TO      optional, where alerts are delivered; defaults to info@genomacsc.com
+// Or, instead, an email alert over SMTP:
 //   SMTP_USER  the Zoho mailbox that sends and receives, e.g. info@genomacsc.com
 //   SMTP_PASS  a Zoho app-specific password for that mailbox
 //   SMTP_HOST  optional, defaults to smtp.zoho.com (use smtp.zoho.eu / smtp.zoho.in for those data centres)
@@ -33,8 +37,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { SMTP_USER, SMTP_PASS, SMTP_HOST = "smtp.zoho.com", ENQUIRY_TO } = process.env;
-  const canEmail = Boolean(SMTP_USER && SMTP_PASS);
+  const { RESEND_API_KEY, ALERT_FROM, SMTP_USER, SMTP_PASS, SMTP_HOST = "smtp.zoho.com", ENQUIRY_TO } = process.env;
+  const canEmail = Boolean(RESEND_API_KEY || (SMTP_USER && SMTP_PASS));
   if (!canEmail && !dbConfigured()) {
     // Nothing is configured yet: the page falls back to opening the visitor's email app
     return res.status(503).json({ error: "Enquiries are not connected yet" });
@@ -89,6 +93,8 @@ export default async function handler(req, res) {
     "",
     "Additional information:",
     f.additional || "—",
+    "",
+    "Manage this enquiry: https://www.genomacsc.com/admin",
   ].join("\n");
 
   let saved = false;
@@ -104,20 +110,33 @@ export default async function handler(req, res) {
   }
 
   if (canEmail) {
+    const subject = `Website enquiry: ${f.enquiryType}: ${f.title}`.slice(0, 200);
+    const replyTo = `"${f.name.replace(/"/g, "")}" <${f.email}>`;
     try {
-      const transport = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: 465,
-        secure: true,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-      });
-      await transport.sendMail({
-        from: `"GSC Website" <${SMTP_USER}>`,
-        to: ENQUIRY_TO || SMTP_USER,
-        replyTo: `"${f.name.replace(/"/g, "")}" <${f.email}>`,
-        subject: `Website enquiry: ${f.enquiryType}: ${f.title}`.slice(0, 200),
-        text,
-      });
+      if (RESEND_API_KEY) {
+        await sendWithResend({
+          key: RESEND_API_KEY,
+          from: ALERT_FROM || "GSC Website <notifications@genomacsc.com>",
+          to: ENQUIRY_TO || "info@genomacsc.com",
+          replyTo,
+          subject,
+          text,
+        });
+      } else {
+        const transport = nodemailer.createTransport({
+          host: SMTP_HOST,
+          port: 465,
+          secure: true,
+          auth: { user: SMTP_USER, pass: SMTP_PASS },
+        });
+        await transport.sendMail({
+          from: `"GSC Website" <${SMTP_USER}>`,
+          to: ENQUIRY_TO || SMTP_USER,
+          replyTo,
+          subject,
+          text,
+        });
+      }
       emailed = true;
     } catch (err) {
       console.error("Enquiry email failed:", err?.message);
@@ -127,6 +146,16 @@ export default async function handler(req, res) {
   // Saved or emailed is a success for the visitor; only if both failed do they get the fallback
   if (!saved && !emailed) return res.status(502).json({ error: "Your enquiry could not be sent." });
   return res.status(200).json({ ok: true, saved, emailed });
+}
+
+// Resend's HTTP API; no extra library needed
+async function sendWithResend({ key, from, to, replyTo, subject, text }) {
+  const r = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to: [to], reply_to: replyTo, subject, text }),
+  });
+  if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
 }
 
 function safeParse(s) {
