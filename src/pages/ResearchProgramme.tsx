@@ -18,38 +18,14 @@ const Field = ({ label, required = false, children }: { label: string; required?
   </label>
 );
 
-// The journey in two lanes, so it is clear the researcher stays the lead at every step
-const journey = [
-  {
-    title: "Free feasibility review",
-    you: "Share your area of interest, aims and objectives.",
-    we: "Review feasibility and reply within 3–5 working days. The review is free.",
-  },
-  {
-    title: "Proposal and agreement",
-    you: "Review the scope, price and authorship plan, and agree the NDA.",
-    we: "Prepare the scope, price, authorship plan and NDA before any work begins.",
-  },
-  {
-    title: "Research and analysis",
-    you: "Review and interpret the results.",
-    we: "Expand your idea into a protocol, gather data and run reproducible analysis.",
-  },
-  {
-    title: "Manuscript",
-    you: "Revise the draft, approve it and remain accountable for it as lead researcher.",
-    we: "Prepare a manuscript draft from the agreed results.",
-  },
-  {
-    title: "Submission and review",
-    you: "Approve the target journal and respond to reviewers, with our support.",
-    we: "Select the journal, format and submit, and support you with reviewers' comments.",
-  },
-  {
-    title: "Payment on delivery",
-    you: "Pay when the agreed work is delivered.",
-    we: "No upfront or stage payments. Payment is not tied to whether a journal accepts the paper.",
-  },
+// The six steps, each a headline and one short sentence
+const steps = [
+  { title: "Free feasibility review", text: "Share your idea. We check it is feasible and reply within 3 to 5 working days." },
+  { title: "Proposal and agreement", text: "You receive the scope, price, authorship plan and NDA before any work begins." },
+  { title: "Research and analysis", text: "We build the protocol and run the analysis. You review and interpret the results." },
+  { title: "Manuscript", text: "We draft the paper from the agreed results. You revise and approve it." },
+  { title: "Submission and review", text: "We select the journal, submit, and support you with reviewers' comments." },
+  { title: "Payment on delivery", text: "No upfront or stage payments. You pay when the agreed work is delivered." },
 ];
 
 const packageItems = [
@@ -59,8 +35,6 @@ const packageItems = [
   "Journal selection",
   "Submission support",
 ];
-
-const proofPoints = ["Free feasibility review", "Reply in 3–5 working days", "Pay only on delivery", "NDA and written authorship"];
 
 const fields = ["Genomics", "Bioinformatics", "Biotechnology", "Microbiology", "Antimicrobial resistance", "Medicinal plant research", "Public health"];
 const people = ["Lecturers", "Postdoctoral researchers", "Research groups", "Postgraduate supervisors"];
@@ -300,18 +274,7 @@ const ResearchProgramme = () => {
               >
                 Submit your research idea <ArrowRight size={15} />
               </a>
-              <a href="#how" className="px-4 py-3 text-sm font-medium text-plum transition-colors hover:text-magenta-dark">
-                See the six steps
-              </a>
             </div>
-            <ul className="mt-8 flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm text-ink">
-              {proofPoints.map((p) => (
-                <li key={p} className="flex items-center gap-2">
-                  <Check size={15} className="text-magenta-dark" strokeWidth={3} />
-                  {p}
-                </li>
-              ))}
-            </ul>
           </div>
 
           <div className="relative mt-14 md:mt-16">
@@ -359,32 +322,41 @@ const ResearchProgramme = () => {
           <Heading
             eyebrow="How it works"
             title="Six steps from idea to submission"
-            intro="Every researcher starts with a free feasibility review. At each step, you and GSC each have a clear part."
+            intro="Every researcher starts with a free feasibility review."
           />
         </Reveal>
-        <div className="hidden gap-x-10 border-b border-ink/15 pb-3 text-xs font-bold uppercase tracking-widest text-muted md:grid md:grid-cols-[240px_1fr_1fr]">
-          <span>Step</span>
-          <span>What you do</span>
-          <span>What GSC does</span>
-        </div>
-        {journey.map((s, i) => (
-          <Reveal key={s.title} delay={i * 40}>
-            <div className="grid gap-x-10 gap-y-3 border-b border-ink/10 py-6 md:grid-cols-[240px_1fr_1fr]">
-              <div className="flex items-baseline gap-4">
-                <span className="font-journal text-3xl text-magenta/60">0{i + 1}</span>
-                <h3 className="font-journal text-xl text-plum">{s.title}</h3>
-              </div>
-              <p className="text-[15px] leading-relaxed text-ink">
-                <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-magenta-dark md:hidden">You</span>
-                {s.you}
-              </p>
-              <p className="text-[15px] leading-relaxed text-ink">
-                <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-magenta-dark md:hidden">GSC</span>
-                {s.we}
-              </p>
-            </div>
-          </Reveal>
-        ))}
+        <ol className="relative mx-auto max-w-4xl">
+          {/* One line runs through every step, so they read as a single connected path */}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-12 left-5 top-12 w-px bg-linear-to-b from-magenta/60 via-plum/25 to-lime md:left-1/2"
+          />
+          {steps.map((s, i) => {
+            const left = i % 2 === 0;
+            return (
+              <li
+                key={s.title}
+                className="relative grid grid-cols-[40px_1fr] items-center gap-x-4 pb-6 last:pb-0 md:grid-cols-[1fr_64px_1fr] md:gap-x-0"
+              >
+                <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-plum font-journal text-lg text-lime ring-4 ring-white md:col-start-2 md:row-start-1 md:mx-auto">
+                  {i + 1}
+                </span>
+                <div
+                  className={`relative rounded-2xl border border-gray-200/80 bg-paper p-5 transition-all hover:-translate-y-0.5 hover:border-magenta/40 hover:shadow-lg hover:shadow-plum/5 md:row-start-1 md:p-6 ${
+                    left ? "md:col-start-1 md:text-right" : "md:col-start-3"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`absolute top-1/2 hidden h-px w-8 bg-plum/25 md:block ${left ? "-right-8" : "-left-8"}`}
+                  />
+                  <h3 className="font-journal text-xl text-plum">{s.title}</h3>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted">{s.text}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       </Band>
 
       <Band>
