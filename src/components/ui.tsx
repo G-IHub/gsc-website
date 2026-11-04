@@ -30,7 +30,7 @@ export const SectionHeading = ({
   <div className={`mb-10 md:mb-12 max-w-3xl ${center ? "mx-auto text-center [&>div:first-child]:justify-center" : ""}`}>
     {eyebrow && <Eyebrow light={light}>{eyebrow}</Eyebrow>}
     <h2
-      className={`text-2xl md:text-[28px] font-bold leading-tight tracking-tight ${light ? "text-white" : "text-plum"}`}
+      className={`text-3xl md:text-[38px] leading-tight tracking-tight ${light ? "text-white" : "text-plum"}`}
     >
       {title}
     </h2>
@@ -51,7 +51,8 @@ export const Section = ({
   tone?: "white" | "mist" | "plum";
   id?: string;
 }) => {
-  const bg = tone === "mist" ? "bg-mist" : tone === "plum" ? "bg-plum" : "bg-white";
+  // Paper (cream) and white alternate down the page; "mist" now means the white band
+  const bg = tone === "mist" ? "bg-white" : tone === "plum" ? "bg-plum" : "bg-paper";
   return (
     <section id={id} className={`${bg} py-16 md:py-24 px-4 sm:px-6 lg:px-8`}>
       <div className="max-w-6xl mx-auto">{children}</div>
@@ -94,7 +95,8 @@ export const PageHero = ({
   intro?: ReactNode;
   children?: ReactNode;
 }) => (
-  <header className="bg-linear-to-br from-plum via-plum-soft to-magenta-dark pt-36 md:pt-44 pb-16 md:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+  <header className="bg-paper px-4 pb-8 pt-28 sm:px-6 md:pb-12 md:pt-36 lg:px-8">
+    <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-linear-to-br from-plum via-plum-soft to-magenta-dark px-6 pb-14 pt-14 md:rounded-[40px] md:px-14 md:pb-20 md:pt-20">
     <div className="absolute -top-40 -right-40 w-125 h-125 rounded-full bg-magenta/20 blur-3xl pointer-events-none"></div>
     <div
       className="absolute inset-0 opacity-[0.06] pointer-events-none"
@@ -121,13 +123,14 @@ export const PageHero = ({
         );
       })}
     </div>
-    <div className="max-w-6xl mx-auto relative" style={{ animation: "word-in 0.6s ease both" }}>
+    <div className="relative" style={{ animation: "word-in 0.6s ease both" }}>
       <Eyebrow light>{eyebrow}</Eyebrow>
-      <h1 className="text-3xl md:text-[44px] font-semibold text-white leading-tight tracking-tight max-w-3xl">
+      <h1 className="text-[34px] md:text-[54px] text-white leading-[1.1] tracking-tight max-w-3xl">
         {title}
       </h1>
       {intro && <div className="mt-5 text-base md:text-lg text-white/75 leading-relaxed max-w-2xl space-y-3">{intro}</div>}
       {children && <div className="mt-8 flex flex-col sm:flex-row gap-3">{children}</div>}
+    </div>
     </div>
   </header>
 );
@@ -143,7 +146,7 @@ export const Card = ({
 }) => (
   <div className="bg-white border border-gray-200/80 rounded-2xl p-6 md:p-7 h-full hover:border-magenta/40 hover:shadow-lg hover:shadow-plum/5 transition-all">
     {index && <span className="block text-magenta-dark font-semibold text-sm mb-3">{index}</span>}
-    <h3 className="text-plum font-semibold text-lg leading-snug mb-2">{title}</h3>
+    <h3 className="text-plum font-semibold text-xl leading-snug mb-2">{title}</h3>
     <div className="text-muted text-[15px] leading-relaxed">{children}</div>
   </div>
 );
@@ -173,11 +176,11 @@ export const CtaBand = ({
   primary: { to: string; label: string };
   secondary?: { to: string; label: string };
 }) => (
-  <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-20 bg-white">
+  <section className="px-4 sm:px-6 lg:px-8 py-16 md:py-20 bg-paper">
     <div className="max-w-6xl mx-auto bg-linear-to-br from-plum via-plum-soft to-magenta-dark rounded-3xl px-6 py-12 md:px-14 md:py-16 relative overflow-hidden">
       <div className="absolute -bottom-32 -left-24 w-96 h-96 rounded-full bg-magenta/25 blur-3xl pointer-events-none"></div>
       <div className="relative max-w-2xl">
-        <h2 className="text-2xl md:text-[32px] font-semibold text-white leading-tight tracking-tight">{title}</h2>
+        <h2 className="text-3xl md:text-[40px] text-white leading-tight tracking-tight">{title}</h2>
         {text && <div className="mt-4 text-white/75 text-base leading-relaxed space-y-3">{text}</div>}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <Button to={primary.to}>{primary.label}</Button>

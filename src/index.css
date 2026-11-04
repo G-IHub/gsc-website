@@ -23,7 +23,18 @@ html {
 
 body {
   color: var(--color-ink);
-  background: #ffffff;
+  background: var(--color-paper);
+}
+
+/* Journal-style headings: serif, in regular weight (unlayered so it also wins over font-bold on headings) */
+h1,
+h2,
+h3 {
+  font-family: var(--font-journal);
+}
+h1,
+h2 {
+  font-weight: 400;
 }
 
 /* ---------- Lab-style motion ---------- */

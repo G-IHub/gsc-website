@@ -67,7 +67,8 @@ const values = [
 const Home = () => (
   <>
     {/* Hero */}
-    <header className="bg-linear-to-br from-plum via-plum-soft to-magenta-dark relative overflow-hidden pt-36 md:pt-44 pb-20 md:pb-28 px-4 sm:px-6 lg:px-8">
+    <header className="bg-paper px-4 pb-6 pt-28 sm:px-6 md:pt-36 lg:px-8">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-linear-to-br from-plum via-plum-soft to-magenta-dark px-6 py-12 md:rounded-[40px] md:px-12 md:py-16 lg:px-14">
       <div className="absolute -top-48 -right-40 w-150 h-150 rounded-full bg-magenta/20 blur-3xl pointer-events-none"></div>
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
@@ -77,13 +78,13 @@ const Home = () => (
           backgroundSize: "56px 56px",
         }}
       ></div>
-      <div className="max-w-6xl mx-auto relative grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
+      <div className="relative grid lg:grid-cols-[1.25fr_1fr] gap-12 items-center">
         <div>
           <span className="inline-flex items-center gap-2 bg-white/10 border border-white/15 text-white/80 text-xs px-3 py-1.5 rounded-full mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-magenta"></span>
             A Genomac Holdings Company
           </span>
-          <h1 className="text-[28px] sm:text-5xl lg:text-[42px] xl:text-[52px] font-semibold text-white leading-[1.1] tracking-tight">
+          <h1 className="text-[27px] min-[390px]:text-[30px] sm:text-5xl lg:text-[38px] xl:text-[46px] text-white leading-[1.1] tracking-tight">
             Your go-to partner
             {/* "for" + the changing phrase share one line that never wraps or reflows */}
             <span className="block whitespace-nowrap">
@@ -108,13 +109,14 @@ const Home = () => (
         {/* End-to-end workflow animation */}
         <HeroWorkflow />
       </div>
+      </div>
     </header>
 
     {/* Sector strip */}
-    <div className="bg-plum border-t border-white/10 py-4 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+    <div className="bg-paper py-5 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
       <div className="flex w-max gap-3" style={{ animation: "marquee 40s linear infinite" }}>
         {[...sectors, ...sectors].map((s, i) => (
-          <span key={i} className="shrink-0 text-sm text-white/70 border border-white/15 rounded-full px-4 py-1.5">
+          <span key={i} className="shrink-0 text-sm text-plum/70 border border-plum/15 bg-white/70 rounded-full px-4 py-1.5">
             {s}
           </span>
         ))}
