@@ -67,8 +67,8 @@ const faqs = [
 ];
 
 // Serif section heading in the journal style
-const Heading = ({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) => (
-  <div className="mb-10 md:mb-12 max-w-3xl">
+const Heading = ({ eyebrow, title, intro, center = false }: { eyebrow: string; title: string; intro?: string; center?: boolean }) => (
+  <div className={`mb-10 md:mb-12 max-w-3xl ${center ? "mx-auto text-center" : ""}`}>
     <p className="mb-3 text-xs font-bold uppercase tracking-widest text-magenta-dark">{eyebrow}</p>
     <h2 className="font-journal text-3xl leading-tight text-plum md:text-[40px]">{title}</h2>
     {intro && <p className="mt-4 text-base leading-relaxed text-muted">{intro}</p>}
@@ -551,9 +551,9 @@ const ResearchProgramme = () => {
 
       <Band tone="white">
         <Reveal>
-          <Heading eyebrow="Questions" title="Before you apply" />
+          <Heading eyebrow="Questions" title="Before you apply" center />
         </Reveal>
-        <div className="max-w-3xl">
+        <div className="mx-auto max-w-3xl">
           {faqs.map((f) => (
             <details key={f.q} className="border-b border-gray-200 py-4 group">
               <summary className="cursor-pointer font-journal text-lg text-plum">{f.q}</summary>
