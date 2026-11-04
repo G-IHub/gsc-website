@@ -35,7 +35,7 @@ const statusStyle: Record<Status, string> = {
 
 const sourceLabel: Record<Enquiry["source"], string> = {
   contact: "Contact form",
-  "research-clinic": "Research Clinic",
+  "research-clinic": "Research-to-Publication Lab",
 };
 
 const fieldLabels: [string, string][] = [
@@ -368,7 +368,7 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
         <select value={source} onChange={(e) => setSource(e.target.value)} className={`${inputClass} sm:w-52`} aria-label="Filter by form">
           <option value="">All forms</option>
           <option value="contact">Contact form</option>
-          <option value="research-clinic">Research Clinic</option>
+          <option value="research-clinic">Research-to-Publication Lab</option>
         </select>
       </div>
 

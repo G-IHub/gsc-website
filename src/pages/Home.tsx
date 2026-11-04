@@ -223,12 +223,12 @@ const Home = () => (
       <NeedPicker />
     </Section>
 
-    {/* Research-to-Publication Programme */}
+    {/* Research-to-Publication Lab */}
     <Section>
       <Reveal>
         <div className="rounded-3xl bg-linear-to-br from-plum via-plum-soft to-magenta-dark p-8 md:p-12 text-white grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
           <div>
-            <Eyebrow light>Research-to-Publication Programme</Eyebrow>
+            <Eyebrow light>Research-to-Publication Lab</Eyebrow>
             <h2 className="text-2xl md:text-[28px] font-semibold leading-tight tracking-tight">
               Have a research idea? Take it all the way to journal submission.
             </h2>
@@ -238,7 +238,7 @@ const Home = () => (
             </p>
           </div>
           <div className="md:justify-self-end">
-            <Button to="/research-programme">Explore the programme</Button>
+            <Button to="/research-to-publication-lab">Visit the Lab</Button>
           </div>
         </div>
       </Reveal>

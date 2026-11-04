@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { dbConfigured, saveEnquiry } from "./_lib.js";
 
-// Receives enquiries from the Contact and Research Clinic forms. Each one is saved to the database
+// Receives enquiries from the Contact and Research-to-Publication Lab forms. Each one is saved to the database
 // (read it in the admin page) and, if an email service is set up, also emailed to the GSC inbox.
 // Either one is enough for the visitor to see "Thank you". Environment variables:
 //   DATABASE_URL    Neon Postgres connection (see api/_lib.js)

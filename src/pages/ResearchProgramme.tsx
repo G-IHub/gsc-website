@@ -4,7 +4,7 @@ import { CheckList } from "../components/ui";
 import { Reveal } from "../components/motion";
 import { contact, enquiryEndpoint } from "../data/site";
 
-const programmeName = "Research-to-Publication Programme (Research Clinic)";
+const programmeName = "Research-to-Publication Lab";
 
 const inputClass =
   "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-[15px] text-ink placeholder:text-gray-400 focus:outline-none focus:border-magenta focus:ring-2 focus:ring-magenta/15 transition";
@@ -79,15 +79,17 @@ const excluded = [
   "Promising acceptance or publication in any journal",
   "Hiding who contributed to the work",
   "Fabricating or manipulating data or results",
+  "Running bench or wet-lab experiments. The Lab is computational and editorial",
 ];
 
 const faqs = [
-  { q: "Does it cost anything to apply?", a: "No. The Research Clinic feasibility review is free. You only pay if you accept a proposal and the agreed work is delivered." },
+  { q: "Does it cost anything to apply?", a: "No. The feasibility review is free. You only pay if you accept a proposal and the agreed work is delivered." },
   { q: "When do I pay?", a: "After the agreed work is done, as defined in your agreement. There are no upfront or stage payments, and payment is not linked to whether a journal accepts the paper." },
   { q: "Will my name be on the paper?", a: "You lead the research, so you take part in design, interpretation, revision and final approval. Authorship is agreed in writing before work starts and reflects who contributed what, including GSC staff where their contribution is substantial." },
   { q: "Can you guarantee publication?", a: "No. Acceptance is decided by journals and peer reviewers. We support you through submission and revision." },
   { q: "Who owns the results?", a: "You own your results and manuscript once the agreement is fulfilled. GSC and Omicsboard Lab keep ownership of their methods, code and pipelines." },
   { q: "Is my idea kept confidential?", a: "Yes, under a signed NDA. The NDA protects your ideas and data. It does not hide anyone's contribution to the work." },
+  { q: "Is it a physical lab?", a: "No. The Lab is a computational and writing service. We work with your data or with data sourced from public repositories, and we do not run bench experiments." },
 ];
 
 // Serif section heading in the journal style
@@ -236,7 +238,7 @@ const ResearchProgramme = () => {
       email: data.email,
       country: data.country,
       title: data.topic.slice(0, 120),
-      service: "Research-to-Publication Programme",
+      service: "Research-to-Publication Lab",
       engagement: "Pay on completion",
       timeline: data.timeline,
       budget: "",
@@ -282,13 +284,13 @@ const ResearchProgramme = () => {
           <div style={{ animation: "word-in 0.6s ease both" }}>
             <span className="inline-flex items-center gap-2 rounded-full border border-plum/15 bg-white/80 px-4 py-1.5 text-sm text-plum">
               <span className="h-2 w-2 rounded-full bg-magenta" />
-              Research-to-Publication Programme
+              Research-to-Publication Lab
             </span>
             <h1 className="mx-auto mt-7 max-w-3xl font-journal text-[36px] leading-[1.08] tracking-tight text-plum sm:text-[44px] md:text-[64px]">
               From research idea to <em className="text-magenta-dark md:whitespace-nowrap">journal submission.</em>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
-              A guided programme for researchers. We design the study, run the analysis and prepare the manuscript with
+              A guided lab for researchers. We design the study, run the analysis and prepare the manuscript with
               you. You lead the science, and you pay when the agreed work is delivered.
             </p>
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
