@@ -6,13 +6,13 @@ import { Reveal } from "../components/motion";
 const programs = [
   {
     icon: FlaskConical,
-    tag: "Research Clinic",
+    tag: "For researchers",
     title: "Research-to-Publication Programme",
     status: "Applications open",
-    text: "Bring a research idea to the Research Clinic. We help you design the study, run the analysis and prepare the manuscript, and you pay when the agreed work is delivered.",
+    text: "Take a research idea all the way to journal submission. We design the study, run the analysis and prepare the manuscript with you, and you pay when the agreed work is delivered.",
     points: ["Free feasibility review", "Reply within 3–5 working days", "You stay the lead researcher"],
     primary: { to: "/research-programme", label: "View the programme" },
-    secondary: { to: "/research-programme#apply", label: "Apply at the Research Clinic" },
+    secondary: { to: "/research-programme#apply", label: "Submit your research idea" },
   },
   {
     icon: GraduationCap,
@@ -94,7 +94,7 @@ const Programs = () => (
       title="Not sure which program fits?"
       text={<p>Tell us about your goals and we will point you to the right place to start.</p>}
       primary={{ to: "/contact?type=consultation", label: "Talk to us" }}
-      secondary={{ to: "/research-programme", label: "Visit the Research Clinic" }}
+      secondary={{ to: "/research-programme", label: "Explore the programme" }}
     />
   </>
 );

@@ -44,7 +44,7 @@ const descriptions: Record<string, string> = {
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
   "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Programme (Research Clinic) and internships.",
-  "/research-programme": "Bring a research idea to the GSC Research Clinic. We design, analyse and prepare your study for publication, and you pay when the work is done.",
+  "/research-programme": "From research idea to journal submission. GSC designs the study, runs the analysis and prepares the manuscript with you. You lead the science and pay when the agreed work is delivered.",
   "/contact": "Send a project enquiry or request a proposal from Genomac Services & Consult, based in Ogbomoso, Nigeria.",
 };
 

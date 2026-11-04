@@ -228,7 +228,7 @@ const Home = () => (
           <div>
             <Eyebrow light>Research-to-Publication Programme</Eyebrow>
             <h2 className="text-2xl md:text-[28px] font-semibold leading-tight tracking-tight">
-              Got a research idea? Start at the Research Clinic.
+              Have a research idea? Take it all the way to journal submission.
             </h2>
             <p className="mt-4 text-white/75 leading-relaxed">
               We help researchers design the study, analyse the data and prepare the manuscript. You lead the
@@ -236,7 +236,7 @@ const Home = () => (
             </p>
           </div>
           <div className="md:justify-self-end">
-            <Button to="/research-programme">Join the Research Clinic</Button>
+            <Button to="/research-programme">Explore the programme</Button>
           </div>
         </div>
       </Reveal>

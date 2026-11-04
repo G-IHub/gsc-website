@@ -11,6 +11,9 @@
   --color-mist: #f9f6fb;
   --color-ink: #1f2937;
   --color-muted: #5b6472;
+  /* Warm paper tone and a serif for the journal-style Research-to-Publication page */
+  --color-paper: #faf8f3;
+  --font-journal: "Source Serif 4", Georgia, "Times New Roman", serif;
 }
 
 /* Keep anchor jumps clear of the fixed navbar */
