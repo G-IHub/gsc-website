@@ -54,7 +54,12 @@ export const db = async () => {
 
 export const saveEnquiry = async (f) => {
   const sql = await db();
-  const source = /research-to-publication/i.test(f.enquiryType) ? "research-clinic" : "contact";
+  // "research-clinic" is the older name for the Research-to-Publication Lab forms; "clinic" is the free Research Clinic
+  const source = /research-to-publication/i.test(f.enquiryType)
+    ? "research-clinic"
+    : /research clinic/i.test(f.enquiryType)
+      ? "clinic"
+      : "contact";
   await sql.query(
     `INSERT INTO enquiries (source, enquiry_type, name, organization, email, country, title, service, data)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,

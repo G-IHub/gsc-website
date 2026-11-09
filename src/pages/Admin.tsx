@@ -10,7 +10,7 @@ type Status = (typeof STATUSES)[number];
 type Enquiry = {
   id: number;
   created_at: string;
-  source: "contact" | "research-clinic";
+  source: "contact" | "research-clinic" | "clinic";
   enquiry_type: string;
   name: string;
   organization: string;
@@ -36,6 +36,7 @@ const statusStyle: Record<Status, string> = {
 const sourceLabel: Record<Enquiry["source"], string> = {
   contact: "Contact form",
   "research-clinic": "Research-to-Publication Lab",
+  clinic: "Research Clinic",
 };
 
 const fieldLabels: [string, string][] = [
@@ -369,6 +370,7 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
           <option value="">All forms</option>
           <option value="contact">Contact form</option>
           <option value="research-clinic">Research-to-Publication Lab</option>
+          <option value="clinic">Research Clinic</option>
         </select>
       </div>
 

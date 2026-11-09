@@ -1,9 +1,19 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, FlaskConical, GraduationCap } from "lucide-react";
+import { ArrowRight, FlaskConical, GraduationCap, Lightbulb } from "lucide-react";
 import { CheckList, CtaBand, PageHero, Section, SectionHeading } from "../components/ui";
 import { Reveal } from "../components/motion";
 
 const programs = [
+  {
+    icon: Lightbulb,
+    tag: "Free · one day",
+    title: "Research Clinic",
+    status: "Dates announced soon",
+    text: "A free one-day clinic on publishing genomics and bioinformatics research from public data. Open to all, and designed for researchers in resource-limited settings.",
+    points: ["No wet lab needed", "Small-group feedback on your idea", "Optional free feasibility review"],
+    primary: { to: "/research-clinic", label: "Visit the clinic" },
+    secondary: { to: "/research-clinic#register", label: "Join the list" },
+  },
   {
     icon: FlaskConical,
     tag: "For researchers",
@@ -42,7 +52,7 @@ const Programs = () => (
       <Reveal>
         <SectionHeading eyebrow="Available programs" title="Choose the program that fits you" />
       </Reveal>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {programs.map((p, i) => {
           const Icon = p.icon;
           return (

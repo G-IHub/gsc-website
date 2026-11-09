@@ -11,6 +11,7 @@ import HowWeWork from "./pages/HowWeWork";
 import Projects from "./pages/Projects";
 import Partner from "./pages/Partner";
 import Programs from "./pages/Programs";
+import ResearchClinic from "./pages/ResearchClinic";
 import ResearchProgramme from "./pages/ResearchProgramme";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const titles: Record<string, string> = {
   "/projects": "Projects & Case Studies — GSC",
   "/partner": "Partner With Us — GSC",
   "/programs": "Programs — Genomac Services & Consult",
+  "/research-clinic": "Free Research Clinic — GSC",
   "/research-to-publication-lab": "Research-to-Publication Lab — GSC",
   "/contact": "Contact & Request a Proposal — GSC",
 };
@@ -44,6 +46,7 @@ const descriptions: Record<string, string> = {
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
   "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Lab and internships.",
+  "/research-clinic": "A free one-day clinic for lecturers, MSc and PhD researchers on turning public genomics and bioinformatics data into a publishable study. No wet lab needed.",
   "/research-to-publication-lab": "From research idea to journal submission. GSC designs the study, runs the analysis and prepares the manuscript with you. You lead the science and pay when the agreed work is delivered.",
   "/contact": "Send a project enquiry or request a proposal from Genomac Services & Consult, based in Ogbomoso, Nigeria.",
 };
@@ -118,6 +121,7 @@ const App = () => {
         <Route path="/projects" element={<Projects />} />
         <Route path="/partner" element={<Partner />} />
         <Route path="/programs" element={<Programs />} />
+        <Route path="/research-clinic" element={<ResearchClinic />} />
         <Route path="/research-to-publication-lab" element={<ResearchProgramme />} />
         <Route path="/contact" element={<Contact />} />
         <Route
