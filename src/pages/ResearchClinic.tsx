@@ -207,7 +207,7 @@ const ResearchClinic = () => {
               Free Research Clinic
             </span>
             <h1 className="mx-auto mt-7 max-w-3xl font-journal text-[36px] leading-[1.08] tracking-tight text-plum sm:text-[44px] md:text-[64px]">
-              From public data to <em className="text-magenta-dark md:whitespace-nowrap">publication.</em>
+              From public data to <em className="text-magenta-dark md:whitespace-nowrap">faster publication.</em>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
               A free one-day clinic for lecturers, MSc and PhD researchers. Learn to turn public genomics and
