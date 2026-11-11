@@ -89,14 +89,17 @@ export const db = async () => {
   return client;
 };
 
-export const saveEnquiry = async (f) => {
+// Pass `forcedSource` for forms with their own endpoint (e.g. "young-researchers" from api/apply.js)
+export const saveEnquiry = async (f, forcedSource) => {
   const sql = await db();
   // "research-clinic" is the older name for the Research-to-Publication Lab forms; "clinic" is the free Research Clinic
-  const source = /research-to-publication/i.test(f.enquiryType)
-    ? "research-clinic"
-    : /research clinic/i.test(f.enquiryType)
-      ? "clinic"
-      : "contact";
+  const source = forcedSource
+    ? forcedSource
+    : /research-to-publication/i.test(f.enquiryType)
+      ? "research-clinic"
+      : /research clinic/i.test(f.enquiryType)
+        ? "clinic"
+        : "contact";
   await sql.query(
     `INSERT INTO enquiries (source, enquiry_type, name, organization, email, country, title, service, data)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,
