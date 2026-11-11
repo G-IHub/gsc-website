@@ -13,7 +13,7 @@ type Status = (typeof STATUSES)[number];
 type Enquiry = {
   id: number;
   created_at: string;
-  source: "contact" | "research-clinic" | "clinic";
+  source: "contact" | "research-clinic" | "clinic" | "young-researchers";
   enquiry_type: string;
   name: string;
   organization: string;
@@ -40,6 +40,7 @@ const sourceLabel: Record<Enquiry["source"], string> = {
   contact: "Contact form",
   "research-clinic": "Research-to-Publication Lab",
   clinic: "Research Clinic",
+  "young-researchers": "Young Researchers",
 };
 
 const fieldLabels: [string, string][] = [
@@ -56,6 +57,14 @@ const fieldLabels: [string, string][] = [
   ["description", "Description"],
   ["deliverables", "Expected deliverables"],
   ["additional", "Additional information"],
+  // Young Researchers Launchpad applications
+  ["phone", "Phone / WhatsApp"],
+  ["childName", "Child's first name"],
+  ["schoolLevel", "School level"],
+  ["interests", "Child's interests"],
+  ["callTime", "Best time for a call"],
+  ["heardFrom", "How they heard about us"],
+  ["consent", "Consent"],
 ];
 
 type Result<T> = { ok: boolean; status: number; data: (T & { error?: string }) | null };
@@ -374,6 +383,7 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
           <option value="contact">Contact form</option>
           <option value="research-clinic">Research-to-Publication Lab</option>
           <option value="clinic">Research Clinic</option>
+          <option value="young-researchers">Young Researchers</option>
         </select>
       </div>
 
