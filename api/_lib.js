@@ -44,6 +44,43 @@ export const db = async () => {
         ip TEXT NOT NULL,
         at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`);
+    // Billing: one settings row, the services catalogue and the invoices
+    await client.query(`CREATE TABLE IF NOT EXISTS billing_settings (id INT PRIMARY KEY, data JSONB NOT NULL)`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS services (
+        id BIGSERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        category TEXT NOT NULL DEFAULT '',
+        unit TEXT NOT NULL DEFAULT 'unit',
+        pricing TEXT NOT NULL DEFAULT 'unit',
+        unit_price NUMERIC(14,2) NOT NULL DEFAULT 0,
+        extra_per_sample NUMERIC(14,2),
+        tiers JSONB NOT NULL DEFAULT '[]',
+        active BOOLEAN NOT NULL DEFAULT true,
+        sort INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS invoices (
+        id BIGSERIAL PRIMARY KEY,
+        number TEXT NOT NULL UNIQUE,
+        doc_type TEXT NOT NULL DEFAULT 'invoice',
+        status TEXT NOT NULL DEFAULT 'Draft',
+        issue_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        due_date DATE,
+        client JSONB NOT NULL DEFAULT '{}',
+        reference TEXT NOT NULL DEFAULT '',
+        items JSONB NOT NULL DEFAULT '[]',
+        discount JSONB,
+        tax_rate NUMERIC(6,3) NOT NULL DEFAULT 0,
+        notes TEXT NOT NULL DEFAULT '',
+        terms TEXT NOT NULL DEFAULT '',
+        subtotal NUMERIC(16,2) NOT NULL DEFAULT 0,
+        total NUMERIC(16,2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`);
   })().catch((err) => {
     ready = undefined; // try again on the next request
     throw err;

@@ -1,5 +1,8 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
 import { Download, LogOut, Mail, RefreshCw, Search, Trash2, X } from "lucide-react";
+
+// The Billing tab (invoices, prices, PDF) loads only when it is opened
+const Billing = lazy(() => import("../admin/Billing"));
 
 // Private page for reading and managing form enquiries. It is not linked anywhere on the site, is kept
 // out of search results, and every call goes through /api/admin, which checks a signed login cookie.
@@ -441,6 +444,34 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
   );
 };
 
+// Two sections once signed in: the form enquiries, and billing
+const Shell = ({ onSignedOut }: { onSignedOut: () => void }) => {
+  const [tab, setTab] = useState<"enquiries" | "billing">("enquiries");
+  return (
+    <div className="w-full max-w-6xl">
+      <div className="mb-6 flex gap-2 border-b border-gray-200 pb-3">
+        {(["enquiries", "billing"] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={`rounded-full px-5 py-2 text-sm font-medium ${tab === t ? "bg-plum text-white" : "text-plum hover:bg-white"}`}
+          >
+            {t === "enquiries" ? "Enquiries" : "Billing"}
+          </button>
+        ))}
+      </div>
+      {tab === "enquiries" ? (
+        <Dashboard onSignedOut={onSignedOut} />
+      ) : (
+        <Suspense fallback={<p className="text-muted py-10">Loading billing…</p>}>
+          <Billing onSignedOut={onSignedOut} />
+        </Suspense>
+      )}
+    </div>
+  );
+};
+
 type Auth = "checking" | "out" | "in" | "unconfigured";
 
 const Admin = () => {
@@ -469,7 +500,7 @@ const Admin = () => {
           <Login onDone={() => setAuth("in")} />
         </div>
       )}
-      {auth === "in" && <Dashboard onSignedOut={signedOut} />}
+      {auth === "in" && <Shell onSignedOut={signedOut} />}
     </div>
   );
 };
