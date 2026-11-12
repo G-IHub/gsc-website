@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight, CheckCircle2, Dna, FlaskConical, Layers, Microscope, ShieldCheck, Sprout } from "lucide-react";
 import { Band, Heading, StepTimeline } from "../components/journal";
 import { Reveal } from "../components/motion";
+import { SequencingRun } from "../components/SequencingAnimations";
 import { contact, enquiryEndpoint } from "../data/site";
 
 const inputClass =
@@ -201,6 +202,18 @@ const Sequencing = () => {
             <a href="#what" className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-7 py-3.5 text-sm font-medium text-plum transition-colors hover:border-gray-300">
               See what we offer
             </a>
+          </div>
+
+          <div className="relative mt-14 md:mt-16">
+            <div className="relative overflow-hidden rounded-[28px] bg-linear-to-br from-plum via-plum-soft to-magenta-dark px-4 py-8 md:rounded-[40px] md:px-12 md:py-12">
+              <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-magenta/25 blur-3xl" />
+              <div className="relative z-10">
+                <SequencingRun />
+              </div>
+              <p className="relative z-10 mt-6 text-center text-xs text-white/60">
+                Illustration of a sequencing run. The numbers and signals are examples, not real data.
+              </p>
+            </div>
           </div>
         </div>
       </header>

@@ -3,7 +3,12 @@ import { ArrowRight } from "lucide-react";
 import { CheckList, CtaBand, PageHero, Section, SectionHeading } from "../components/ui";
 import { Reveal } from "../components/motion";
 import { serviceVisuals } from "../components/home/ServiceVisuals";
-import { additionalServices, services } from "../data/site";
+import { additionalServices, sequencingService, services } from "../data/site";
+
+type ServiceCard = (typeof services)[number] & { cta?: { to: string; label: string }; model: string };
+
+// The sequencing card sits after Bioinformatics, since the two go together
+const list: ServiceCard[] = [...services.slice(0, 2), sequencingService as unknown as ServiceCard, ...services.slice(2)];
 
 const Services = () => (
   <>
@@ -28,7 +33,7 @@ const Services = () => (
     {/* Quick index */}
     <section className="sticky top-[78px] md:top-[86px] z-30 bg-white/90 backdrop-blur border-b border-gray-100 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto flex gap-2 overflow-x-auto py-3 text-sm">
-        {services.map((s, i) => (
+        {list.map((s, i) => (
           <a
             key={s.id}
             href={`#${s.id}`}
@@ -42,7 +47,7 @@ const Services = () => (
 
     <Section id="services-list">
       <div className="space-y-6">
-        {services.map((s, i) => {
+        {list.map((s, i) => {
           const Visual = serviceVisuals[s.id];
           return (
             <Reveal key={s.id}>
@@ -73,10 +78,10 @@ const Services = () => (
                       <p className="text-plum text-sm leading-relaxed max-w-xs">{s.model}</p>
                     </div>
                     <Link
-                      to={`/contact?service=${encodeURIComponent(s.title)}`}
+                      to={s.cta?.to ?? `/contact?service=${encodeURIComponent(s.title)}`}
                       className="shrink-0 inline-flex items-center justify-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
                     >
-                      Enquire about this service <ArrowRight size={15} />
+                      {s.cta?.label ?? "Enquire about this service"} <ArrowRight size={15} />
                     </Link>
                   </div>
                 </div>

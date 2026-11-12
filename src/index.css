@@ -57,6 +57,25 @@ h2 {
   from { transform: translateY(0); }
   to { transform: translateY(-50%); }
 }
+/* Sequencing: a flow-cell cluster flashing one colour per base, and a signal trace scrolling past */
+@keyframes cluster-cycle {
+  0% { background-color: #cde24a; opacity: 0.1; }
+  8% { opacity: 1; }
+  22% { opacity: 0.1; }
+  25% { background-color: #b241b7; opacity: 0.1; }
+  33% { opacity: 1; }
+  47% { opacity: 0.1; }
+  50% { background-color: #ffffffd9; opacity: 0.1; }
+  58% { opacity: 1; }
+  72% { opacity: 0.1; }
+  75% { background-color: #8b5cf6; opacity: 0.1; }
+  83% { opacity: 1; }
+  97%, 100% { background-color: #8b5cf6; opacity: 0.1; }
+}
+@keyframes trace-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-400px); }
+}
 /* Sector strip */
 @keyframes marquee {
   from { transform: translateX(0); }

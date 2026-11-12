@@ -1,3 +1,5 @@
+import { BaseStream, FlowCell } from "../SequencingAnimations";
+
 // Small looping "lab screen" animations, one per service
 
 const Screen = ({ children }: { children: React.ReactNode }) => (
@@ -185,7 +187,19 @@ const PMVisual = () => (
   </Screen>
 );
 
+// Sequencing: flow-cell clusters flashing, with base calls streaming past
+const SequencingVisual = () => (
+  <Screen>
+    <div className="w-full max-w-[280px] space-y-3">
+      <FlowCell cols={14} rows={5} />
+      <BaseStream seed={4} seconds={24} />
+      <BaseStream seed={9} seconds={30} reverse />
+    </div>
+  </Screen>
+);
+
 export const serviceVisuals: Record<string, () => React.JSX.Element> = {
+  sequencing: SequencingVisual,
   "contract-research": ResearchVisual,
   bioinformatics: BioinformaticsVisual,
   consulting: ConsultingVisual,

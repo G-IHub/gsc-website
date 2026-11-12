@@ -200,6 +200,25 @@ export const services = [
   },
 ];
 
+// Shown on the Services page only (not in the home page showcase or footer), and links to its own request form
+export const sequencingService = {
+  id: "sequencing",
+  title: "Sequencing Services",
+  intro:
+    "Target-based, whole genome and other sequencing, planned with you and delivered with our partner laboratory, with analysis if you need it.",
+  items: [
+    "Target-based sequencing (16S, ITS, genes and panels)",
+    "Whole genome sequencing",
+    "Shotgun metagenomics",
+    "RNA sequencing and transcriptomics",
+    "Sanger sequencing",
+    "Sample advice, DNA extraction and quality checks",
+    "Bioinformatics analysis of your data",
+  ],
+  model: "Quoted per request: you receive a pro-forma invoice before any work begins.",
+  cta: { to: "/sequencing", label: "Request a sequencing quote" },
+};
+
 export const additionalServices = [
   "Human, animal and plant genomics research",
   "Cancer genomics and computational oncology",
