@@ -15,12 +15,12 @@ const ALLOWED_ORIGINS = [
 ];
 
 const LEVELS = ["100 Level", "200 Level", "300 Level", "400 Level", "500 Level", "Postgraduate"];
+// The fellowship's four research tracks (12-week curriculum)
 const AREAS = [
-  "AI for Genomics & Bioinformatics",
-  "Cancer Research & Drug Discovery",
-  "Microbial Genomics & Antimicrobial Resistance",
-  "Agricultural & Plant Biotechnology",
-  "Research Software & AI Innovation",
+  "Clinical & Diagnostic Genomics",
+  "Molecular & Pharmaceutical Sciences",
+  "Systems, Omics & Human Biology",
+  "Population & Life Sciences",
 ];
 const MAX = { short: 200, long: 3000 };
 const WINDOW_MS = 10 * 60 * 1000;
