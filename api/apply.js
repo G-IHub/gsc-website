@@ -1,9 +1,13 @@
+import nodemailer from "nodemailer";
 import { dbConfigured, saveEnquiry } from "./_lib.js";
 
 // Receives applications from the Young Researchers Launchpad landing page (youngresearchers.genomachub.com).
 // That page lives on another site, so this endpoint answers cross-site requests from the origins below only.
 // Applications are saved to the same enquiries table as the other forms, with source "young-researchers",
 // so they appear in the admin page under their own filter. Needs DATABASE_URL (see api/_lib.js).
+// Email alerts use the same settings as api/enquiry.js (RESEND_API_KEY + ALERT_FROM, or SMTP_USER + SMTP_PASS
+// [+ SMTP_HOST]). Alerts go to APPLY_TO if set, else ENQUIRY_TO, else info@genomacsc.com (Resend) / SMTP_USER.
+// A failed alert never fails the application: it is already saved.
 
 const ALLOWED_ORIGINS = [
   "https://youngresearchers.genomachub.com",
@@ -92,7 +96,72 @@ export default async function handler(req, res) {
     console.error("Application save failed:", err?.message);
     return res.status(502).json({ error: "Your application could not be sent." });
   }
-  return res.status(200).json({ ok: true });
+
+  let emailed = false;
+  try {
+    emailed = await sendAlert(f);
+  } catch (err) {
+    console.error("Application alert failed:", err?.message);
+  }
+  return res.status(200).json({ ok: true, emailed });
+}
+
+// Emails the team about a new application, if an email service is set up. Returns whether it sent.
+async function sendAlert(f) {
+  const { RESEND_API_KEY, ALERT_FROM, SMTP_USER, SMTP_PASS, SMTP_HOST = "smtp.zoho.com", APPLY_TO, ENQUIRY_TO } = process.env;
+  if (!RESEND_API_KEY && !(SMTP_USER && SMTP_PASS)) return false;
+
+  const subject = `New Young Researchers application: ${f.childName} (${f.schoolLevel})`.slice(0, 200);
+  const replyTo = `"${f.name.replace(/"/g, "")}" <${f.email}>`;
+  const text = [
+    "A parent has applied for the Young Researchers Launchpad.",
+    "",
+    `Parent or guardian: ${f.name}`,
+    `Email: ${f.email}`,
+    `Phone / WhatsApp: ${f.phone}`,
+    `Country: ${f.country}`,
+    `Child's first name: ${f.childName}`,
+    `School level: ${f.schoolLevel}`,
+    `Best time for a call: ${f.callTime || "—"}`,
+    `How they heard about us: ${f.heardFrom || "—"}`,
+    "",
+    "Child's interests:",
+    f.interests || "—",
+    "",
+    "Reply to this email to answer the parent directly.",
+    "Manage applications: https://www.genomacsc.com/admin (filter: Young Researchers)",
+  ].join("\n");
+
+  if (RESEND_API_KEY) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: ALERT_FROM || "GSC Website <notifications@genomacsc.com>",
+        to: [APPLY_TO || ENQUIRY_TO || "info@genomacsc.com"],
+        reply_to: replyTo,
+        subject,
+        text,
+      }),
+    });
+    if (!r.ok) throw new Error(`Resend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    return true;
+  }
+
+  const transport = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: 465,
+    secure: true,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+  await transport.sendMail({
+    from: `"GSC Website" <${SMTP_USER}>`,
+    to: APPLY_TO || ENQUIRY_TO || SMTP_USER,
+    replyTo,
+    subject,
+    text,
+  });
+  return true;
 }
 
 function safeParse(s) {
