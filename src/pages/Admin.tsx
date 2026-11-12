@@ -13,7 +13,7 @@ type Status = (typeof STATUSES)[number];
 type Enquiry = {
   id: number;
   created_at: string;
-  source: "contact" | "research-clinic" | "clinic" | "sequencing" | "young-researchers";
+  source: "contact" | "research-clinic" | "clinic" | "sequencing" | "young-researchers" | "fellowship";
   enquiry_type: string;
   name: string;
   organization: string;
@@ -42,6 +42,7 @@ const sourceLabel: Record<Enquiry["source"], string> = {
   clinic: "Research Clinic",
   sequencing: "Sequencing request",
   "young-researchers": "Young Researchers",
+  fellowship: "Fellowship",
 };
 
 const fieldLabels: [string, string][] = [
@@ -66,6 +67,16 @@ const fieldLabels: [string, string][] = [
   ["callTime", "Best time for a call"],
   ["heardFrom", "How they heard about us"],
   ["consent", "Consent"],
+  // Genomac Fellowship applications
+  ["university", "University"],
+  ["department", "Faculty and department"],
+  ["level", "Level of study"],
+  ["researchArea", "Research area"],
+  ["priorResearch", "Previous research"],
+  ["motivation", "Why they want to be a Genomac Fellow"],
+  ["goals", "What they hope to achieve"],
+  ["cvLink", "CV link"],
+  ["linkedin", "LinkedIn"],
 ];
 
 type Result<T> = { ok: boolean; status: number; data: (T & { error?: string }) | null };
@@ -397,6 +408,7 @@ const Dashboard = ({ onSignedOut, onCreateProforma }: { onSignedOut: () => void;
           <option value="clinic">Research Clinic</option>
           <option value="sequencing">Sequencing request</option>
           <option value="young-researchers">Young Researchers</option>
+          <option value="fellowship">Fellowship</option>
         </select>
       </div>
 

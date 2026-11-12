@@ -8,7 +8,7 @@ import { adminConfigured, clearCookie, db, hasSession, passwordOk, sessionCookie
 // which together with the SameSite=Strict cookie blocks requests forged from other websites.
 
 const STATUSES = ["New", "Contacted", "In progress", "Won", "Closed"];
-const SOURCES = ["contact", "research-clinic", "clinic", "sequencing", "young-researchers"];
+const SOURCES = ["contact", "research-clinic", "clinic", "sequencing", "young-researchers", "fellowship"];
 const COLUMNS =
   "id::int AS id, created_at, source, enquiry_type, name, organization, email, country, title, service, status, notes, data";
 
