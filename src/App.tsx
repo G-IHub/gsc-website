@@ -12,6 +12,7 @@ import Projects from "./pages/Projects";
 import Partner from "./pages/Partner";
 import Programs from "./pages/Programs";
 import Sequencing from "./pages/Sequencing";
+import Bioinformatics from "./pages/Bioinformatics";
 import ResearchClinic from "./pages/ResearchClinic";
 import ResearchProgramme from "./pages/ResearchProgramme";
 import Contact from "./pages/Contact";
@@ -30,6 +31,7 @@ const titles: Record<string, string> = {
   "/projects": "Projects & Case Studies — GSC",
   "/partner": "Partner With Us — GSC",
   "/sequencing": "Sequencing Services — Genomac Services & Consult",
+  "/bioinformatics": "Bioinformatics Services — Genomac Services & Consult",
   "/programs": "Programs — Genomac Services & Consult",
   "/research-clinic": "Free Research Clinic — GSC",
   "/research-to-publication-lab": "Research-to-Publication Lab — GSC",
@@ -48,6 +50,7 @@ const descriptions: Record<string, string> = {
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
   "/sequencing": "Target-based, whole genome, metagenomics and RNA sequencing from Genomac Services & Consult, planned with you and analysed if you need it. Request a quote online.",
+  "/bioinformatics": "Genome, transcriptome, metagenome and phylogenetic analysis from Genomac Services & Consult, run in reproducible pipelines and explained clearly. Request a quote online.",
   "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Lab and internships.",
   "/research-clinic": "A free one-day online clinic for lecturers, MSc and PhD researchers on turning public genomics and bioinformatics data into a publishable study. No wet lab needed.",
   "/research-to-publication-lab": "From research idea to journal submission. GSC designs the study, runs the analysis and prepares the manuscript with you. You lead the science and pay when the agreed work is delivered.",
@@ -124,6 +127,7 @@ const App = () => {
         <Route path="/projects" element={<Projects />} />
         <Route path="/partner" element={<Partner />} />
         <Route path="/sequencing" element={<Sequencing />} />
+        <Route path="/bioinformatics" element={<Bioinformatics />} />
         <Route path="/programs" element={<Programs />} />
         <Route path="/research-clinic" element={<ResearchClinic />} />
         <Route path="/research-to-publication-lab" element={<ResearchProgramme />} />

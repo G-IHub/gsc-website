@@ -101,7 +101,9 @@ export const saveEnquiry = async (f, forcedSource) => {
         ? "clinic"
         : /sequencing request/i.test(f.enquiryType)
           ? "sequencing"
-          : "contact";
+          : /bioinformatics request/i.test(f.enquiryType)
+            ? "bioinformatics"
+            : "contact";
   await sql.query(
     `INSERT INTO enquiries (source, enquiry_type, name, organization, email, country, title, service, data)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)`,

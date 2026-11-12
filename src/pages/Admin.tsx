@@ -13,7 +13,7 @@ type Status = (typeof STATUSES)[number];
 type Enquiry = {
   id: number;
   created_at: string;
-  source: "contact" | "research-clinic" | "clinic" | "sequencing" | "young-researchers" | "fellowship";
+  source: "contact" | "research-clinic" | "clinic" | "sequencing" | "bioinformatics" | "young-researchers" | "fellowship";
   enquiry_type: string;
   name: string;
   organization: string;
@@ -41,6 +41,7 @@ const sourceLabel: Record<Enquiry["source"], string> = {
   "research-clinic": "Research-to-Publication Lab",
   clinic: "Research Clinic",
   sequencing: "Sequencing request",
+  bioinformatics: "Bioinformatics request",
   "young-researchers": "Young Researchers",
   fellowship: "Fellowship",
 };
@@ -221,7 +222,7 @@ const Detail = ({
               <option key={s}>{s}</option>
             ))}
           </select>
-          {enquiry.source === "sequencing" && (
+          {(enquiry.source === "sequencing" || enquiry.source === "bioinformatics") && (
             <button
               type="button"
               onClick={onCreateProforma}
@@ -407,6 +408,7 @@ const Dashboard = ({ onSignedOut, onCreateProforma }: { onSignedOut: () => void;
           <option value="research-clinic">Research-to-Publication Lab</option>
           <option value="clinic">Research Clinic</option>
           <option value="sequencing">Sequencing request</option>
+          <option value="bioinformatics">Bioinformatics request</option>
           <option value="young-researchers">Young Researchers</option>
           <option value="fellowship">Fellowship</option>
         </select>

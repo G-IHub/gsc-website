@@ -84,6 +84,24 @@ export default async function handler(req, res) {
     };
   }
 
+  // Bioinformatics requests carry the analyses wanted and details of the data, in the same way
+  const bq = body.bioinformatics && typeof body.bioinformatics === "object" ? body.bioinformatics : null;
+  if (bq) {
+    f.bioinformatics = {
+      items: (Array.isArray(bq.items) ? bq.items : []).slice(0, 12).map((i) => ({
+        key: oneLine(i?.key, 40),
+        name: oneLine(i?.name, MAX.short),
+        qty: Math.min(Math.max(Math.round(Number(i?.qty)) || 1, 1), 100000),
+      })),
+      dataType: oneLine(bq.dataType, MAX.short),
+      dataStatus: oneLine(bq.dataStatus, MAX.short),
+      organism: oneLine(bq.organism, MAX.short),
+      dataSize: oneLine(bq.dataSize, MAX.short),
+      deliverable: oneLine(bq.deliverable, MAX.short),
+      deadline: oneLine(bq.deadline, MAX.short),
+    };
+  }
+
   const missing = ["name", "organization", "email", "country", "title", "service", "description"].filter((k) => !f[k]);
   if (missing.length || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) {
     return res.status(400).json({ error: "Please complete the required fields with a valid email." });

@@ -8,7 +8,9 @@ import { additionalServices, sequencingService, services } from "../data/site";
 type ServiceCard = (typeof services)[number] & { cta?: { to: string; label: string }; model: string };
 
 // The sequencing card sits after Bioinformatics, since the two go together
-const list: ServiceCard[] = [...services.slice(0, 2), sequencingService as unknown as ServiceCard, ...services.slice(2)];
+const list: ServiceCard[] = [...services.slice(0, 2), sequencingService as unknown as ServiceCard, ...services.slice(2)].map((s) =>
+  s.id === "bioinformatics" ? { ...s, cta: { to: "/bioinformatics", label: "Request an analysis quote" } } : s,
+);
 
 const Services = () => (
   <>
