@@ -262,7 +262,6 @@ export const starterServices = [
   { name: "DNA/library QC for SBB sequencing", category: "Sequencing", unit: "sample", pricing: "unit", unitPrice: 21184.5 },
   { name: "MiSeq library preparation (gDNA, amplicon, plasmids)", category: "Sequencing", unit: "library", pricing: "unit", unitPrice: 130891.5 },
   { name: "Sequencing, AVITI24 run, 2x150 bp, 225 GB output", category: "Sequencing", unit: "run", pricing: "unit", unitPrice: 663019.17 },
-  { name: "NGS DNA sequence analysis", category: "Sequencing", unit: "hour", pricing: "unit", unitPrice: 54998.5 },
   {
     name: "Bioinformatics analysis (volume pricing)",
     category: "Analysis",
