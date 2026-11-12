@@ -46,7 +46,7 @@ const descriptions: Record<string, string> = {
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
   "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Lab and internships.",
-  "/research-clinic": "A free one-day clinic for lecturers, MSc and PhD researchers on turning public genomics and bioinformatics data into a publishable study. No wet lab needed.",
+  "/research-clinic": "A free one-day online clinic for lecturers, MSc and PhD researchers on turning public genomics and bioinformatics data into a publishable study. No wet lab needed.",
   "/research-to-publication-lab": "From research idea to journal submission. GSC designs the study, runs the analysis and prepares the manuscript with you. You lead the science and pay when the agreed work is delivered.",
   "/contact": "Send a project enquiry or request a proposal from Genomac Services & Consult, based in Ogbomoso, Nigeria.",
 };

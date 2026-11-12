@@ -21,12 +21,12 @@ const Field = ({ label, required = false, children }: { label: string; required?
 // Registrants are sent here once they have registered
 const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/IP29hDnYYYWEkK0077R1V0?s=cl&p=a&iam=2";
 
-// Fill these in once the date and format are confirmed
+// The clinic is online; fill in the date once it is confirmed
 const eventDetails = [
   { label: "Cost", value: "Free" },
   { label: "Length", value: "One day" },
   { label: "Date", value: "To be announced" },
-  { label: "Format", value: "To be confirmed" },
+  { label: "Format", value: "Online" },
 ];
 
 const sessions = [
@@ -61,7 +61,7 @@ const faqs = [
   { q: "What should I bring?", a: "A research interest or a rough idea, and a laptop if you have one." },
   { q: "Will you do my analysis or write my paper?", a: "Not at the clinic. You will learn how, and get feedback on your idea. Guided help with analysis and writing is available separately through the Research-to-Publication Lab." },
   { q: "Can you guarantee I will publish?", a: "No. Journals and peer reviewers decide. The clinic helps you ask a stronger question and plan a sound study." },
-  { q: "Is it online or in person?", a: "That will be announced with the date. Tell us your preference when you register." },
+  { q: "Is it online?", a: "Yes. The clinic runs fully online, so you can join from anywhere. We share the date and joining details in the WhatsApp group." },
   { q: "Is my idea kept confidential?", a: "Please describe your idea at a high level. Do not send confidential data through the form." },
 ];
 
@@ -150,7 +150,6 @@ const ResearchClinic = () => {
       `Role: ${data.role}`,
       `Research area: ${data.area}`,
       `Used public data before: ${data.experience}`,
-      `Preferred format: ${data.format}`,
       "",
       "Research idea or area:",
       data.idea || "—",
@@ -170,24 +169,31 @@ const ResearchClinic = () => {
       budget: "",
       description,
       deliverables: "",
-      additional: data.phone ? `Phone / WhatsApp: ${data.phone}` : "",
+      additional: `Phone / WhatsApp: ${data.phone}`,
     };
 
     if (enquiryEndpoint) {
       setStatus("sending");
       try {
-        const res = await fetch(enquiryEndpoint, {
+        // keepalive lets the save finish even though the page is about to leave for WhatsApp
+        const request = fetch(enquiryEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify(payload),
+          keepalive: true,
         });
-        if (!res.ok) throw new Error(String(res.status));
-        setStatus("sent");
-        form.reset();
-        // Show the confirmation for a moment, then take them to the WhatsApp group
-        setRedirecting(true);
-        window.setTimeout(() => window.location.assign(WHATSAPP_GROUP_URL), 1800);
-        return;
+        // Wait a moment for the answer so a failed save is noticed, but never hold the visitor up
+        const result = await Promise.race([
+          request.then((res) => (res.ok ? "saved" : "failed")),
+          new Promise<"pending">((resolve) => window.setTimeout(() => resolve("pending"), 1500)),
+        ]);
+        if (result !== "failed") {
+          setStatus("sent");
+          setRedirecting(true);
+          form.reset();
+          window.location.assign(WHATSAPP_GROUP_URL);
+          return;
+        }
       } catch {
         // The server could not save it: open the visitor's email app instead
       }
@@ -217,7 +223,7 @@ const ResearchClinic = () => {
               From public data to <em className="text-magenta-dark md:whitespace-nowrap">faster publication.</em>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted md:text-lg">
-              A free one-day clinic for lecturers, MSc and PhD researchers. Learn to turn public genomics and
+              A free one-day online clinic for lecturers, MSc and PhD researchers. Learn to turn public genomics and
               bioinformatics data into a publishable study, with no wet lab needed.
             </p>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted">Open to all, and designed for researchers in resource-limited settings.</p>
@@ -276,7 +282,7 @@ const ResearchClinic = () => {
           <Heading
             eyebrow="The day"
             title="Six sessions, one clear path"
-            intro="A free one-day clinic on turning public genomics and bioinformatics data into a study you can publish."
+            intro="A free one-day online clinic on turning public genomics and bioinformatics data into a study you can publish."
           />
         </Reveal>
         <StepTimeline steps={sessions} />
@@ -335,7 +341,7 @@ const ResearchClinic = () => {
             <Heading
               eyebrow="Register your interest"
               title="Join the list for the next clinic"
-              intro="Registering is free and carries no obligation. Once you register, you are taken to our WhatsApp group, where we share the date and format as soon as they are confirmed."
+              intro="Registering is free and carries no obligation. As soon as you register, you are taken to our WhatsApp group, where we share the date and joining details."
               center
             />
           </Reveal>
@@ -365,14 +371,14 @@ const ResearchClinic = () => {
               <div className="py-12 text-center">
                 <CheckCircle2 size={44} className="mx-auto mb-4 text-magenta" />
                 <h3 className="mb-2 font-journal text-2xl text-plum">You are on the list</h3>
-                <p className="mx-auto max-w-sm text-muted">Join our WhatsApp group to hear the date and format first, and to ask questions before the clinic.</p>
+                <p className="mx-auto max-w-sm text-muted">Join our WhatsApp group to hear the date and joining details first, and to ask questions before the clinic.</p>
                 <a
                   href={WHATSAPP_GROUP_URL}
                   className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-magenta px-7 py-3 text-sm font-medium text-white shadow-md shadow-magenta/20 transition-colors hover:bg-magenta-dark"
                 >
                   Join the WhatsApp group <ArrowRight size={15} />
                 </a>
-                {redirecting && <p className="mt-3 text-xs text-muted">Taking you there in a moment…</p>}
+                {redirecting && <p className="mt-3 text-xs text-muted">Opening WhatsApp…</p>}
                 <div>
                   <button onClick={() => { setStatus("idle"); setRedirecting(false); }} className="mt-5 text-sm font-medium text-magenta-dark hover:underline">
                     Register someone else
@@ -421,21 +427,23 @@ const ResearchClinic = () => {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Preferred format" required>
-                    <select name="format" defaultValue="" className={inputClass} required>
-                      <option value="" disabled>Select…</option>
-                      {["Online", "In person", "Either is fine"].map((o) => (
-                        <option key={o}>{o}</option>
-                      ))}
-                    </select>
+                  <Field label="WhatsApp phone number" required>
+                    <input
+                      name="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      required
+                      pattern="[+\(\)0-9\s\-]{7,}"
+                      title="Enter the number you use on WhatsApp, with the country code, for example +234 800 000 0000"
+                      placeholder="+234 800 000 0000"
+                      className={inputClass}
+                    />
                   </Field>
                 </div>
 
                 <Field label="Your research idea or area, in a sentence or two">
                   <textarea name="idea" rows={3} className={inputClass} />
-                </Field>
-                <Field label="Phone / WhatsApp">
-                  <input name="phone" className={inputClass} autoComplete="tel" />
                 </Field>
 
                 <label className="flex items-start gap-3 text-sm text-muted">
@@ -450,7 +458,7 @@ const ResearchClinic = () => {
                   disabled={status === "sending"}
                   className="w-full rounded-full bg-magenta px-8 py-3.5 text-sm font-medium text-white shadow-md shadow-magenta/20 transition-colors hover:bg-magenta-dark disabled:opacity-60 sm:w-auto"
                 >
-                  {status === "sending" ? "Sending…" : "Join the list"}
+                  {status === "sending" ? "Registering…" : "Register and join the WhatsApp group"}
                 </button>
               </form>
             )}

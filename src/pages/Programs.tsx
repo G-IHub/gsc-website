@@ -6,10 +6,10 @@ import { Reveal } from "../components/motion";
 const programs = [
   {
     icon: Lightbulb,
-    tag: "Free · one day",
+    tag: "Free · online · one day",
     title: "Research Clinic",
     status: "Dates announced soon",
-    text: "A free one-day clinic on publishing genomics and bioinformatics research from public data. Open to all, and designed for researchers in resource-limited settings.",
+    text: "A free one-day online clinic on publishing genomics and bioinformatics research from public data. Open to all, and designed for researchers in resource-limited settings.",
     points: ["No wet lab needed", "Small-group feedback on your idea", "Optional free feasibility review"],
     primary: { to: "/research-clinic", label: "Visit the clinic" },
     secondary: { to: "/research-clinic#register", label: "Join the list" },
