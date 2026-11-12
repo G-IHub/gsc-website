@@ -37,7 +37,7 @@ const copyOf = (inv: Invoice, settings: Settings): Invoice => {
   return { ...inv, id: undefined, number: "", status: "Draft", issueDate, dueDate: dueFor(settings, inv.docType, issueDate), items: inv.items.map((l) => withKey(l)) };
 };
 
-const lineFromService = (s: Service, markup: number): Line =>
+export const lineFromService = (s: Service, markup: number): Line =>
   withKey({
     description: s.description ? `${s.name}\n${s.description}` : s.name,
     qty: 1,
@@ -164,6 +164,7 @@ function LineCard({
 export default function InvoiceEditor({
   id,
   template,
+  notice,
   settings,
   services,
   onBack,
@@ -173,6 +174,7 @@ export default function InvoiceEditor({
 }: {
   id: number | null;
   template?: Invoice;
+  notice?: string;
   settings: Settings;
   services: Service[];
   onBack: () => void;
@@ -184,7 +186,7 @@ export default function InvoiceEditor({
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState("");
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState(notice ?? "");
   const [error, setError] = useState("");
   const [preview, setPreview] = useState("");
   const [pasteText, setPasteText] = useState("");

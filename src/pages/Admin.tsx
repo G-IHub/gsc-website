@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState, type FormEvent } from "react";
-import { Download, LogOut, Mail, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { Download, FileText, LogOut, Mail, RefreshCw, Search, Trash2, X } from "lucide-react";
 
 // The Billing tab (invoices, prices, PDF) loads only when it is opened
 const Billing = lazy(() => import("../admin/Billing"));
@@ -148,11 +148,13 @@ const Detail = ({
   onClose,
   onChange,
   onDelete,
+  onCreateProforma,
 }: {
   enquiry: Enquiry;
   onClose: () => void;
   onChange: (row: Enquiry) => void;
   onDelete: (id: number) => void;
+  onCreateProforma: () => void;
 }) => {
   const [notes, setNotes] = useState(enquiry.notes);
   const [saving, setSaving] = useState(false);
@@ -208,6 +210,15 @@ const Detail = ({
               <option key={s}>{s}</option>
             ))}
           </select>
+          {enquiry.source === "sequencing" && (
+            <button
+              type="button"
+              onClick={onCreateProforma}
+              className="inline-flex items-center gap-2 border border-magenta text-magenta-dark hover:bg-magenta-tint px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            >
+              <FileText size={15} /> Create pro-forma
+            </button>
+          )}
           <a
             href={`mailto:${enquiry.email}?subject=${encodeURIComponent(`Re: ${enquiry.title}`)}`}
             className="ml-auto inline-flex items-center gap-2 bg-magenta hover:bg-magenta-dark text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
@@ -273,7 +284,7 @@ const Detail = ({
   );
 };
 
-const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
+const Dashboard = ({ onSignedOut, onCreateProforma }: { onSignedOut: () => void; onCreateProforma: (e: Enquiry) => void }) => {
   const [rows, setRows] = useState<Enquiry[]>([]);
   const [total, setTotal] = useState(0);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -444,6 +455,7 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
             }
             setRows((prev) => prev.map((r) => (r.id === row.id ? row : r)));
           }}
+          onCreateProforma={() => onCreateProforma(open)}
           onDelete={(id) => {
             setOpenId(null);
             setCounts((c) => c && { ...c, [open.status]: c[open.status] - 1 });
@@ -459,6 +471,7 @@ const Dashboard = ({ onSignedOut }: { onSignedOut: () => void }) => {
 // Two sections once signed in: the form enquiries, and billing
 const Shell = ({ onSignedOut }: { onSignedOut: () => void }) => {
   const [tab, setTab] = useState<"enquiries" | "billing">("enquiries");
+  const [request, setRequest] = useState<{ row: Enquiry; k: number } | null>(null);
   return (
     <div className="w-full max-w-6xl">
       <div className="mb-6 flex gap-2 border-b border-gray-200 pb-3">
@@ -466,7 +479,10 @@ const Shell = ({ onSignedOut }: { onSignedOut: () => void }) => {
           <button
             key={t}
             type="button"
-            onClick={() => setTab(t)}
+            onClick={() => {
+              setTab(t);
+              setRequest(null);
+            }}
             className={`rounded-full px-5 py-2 text-sm font-medium ${tab === t ? "bg-plum text-white" : "text-plum hover:bg-white"}`}
           >
             {t === "enquiries" ? "Enquiries" : "Billing"}
@@ -474,10 +490,16 @@ const Shell = ({ onSignedOut }: { onSignedOut: () => void }) => {
         ))}
       </div>
       {tab === "enquiries" ? (
-        <Dashboard onSignedOut={onSignedOut} />
+        <Dashboard
+          onSignedOut={onSignedOut}
+          onCreateProforma={(row) => {
+            setRequest({ row, k: Date.now() });
+            setTab("billing");
+          }}
+        />
       ) : (
         <Suspense fallback={<p className="text-muted py-10">Loading billing…</p>}>
-          <Billing onSignedOut={onSignedOut} />
+          <Billing onSignedOut={onSignedOut} request={request} />
         </Suspense>
       )}
     </div>

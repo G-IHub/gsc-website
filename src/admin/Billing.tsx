@@ -1,17 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FileText, Settings as SettingsIcon, Tag } from "lucide-react";
 import { billing } from "./billingApi";
 import BillingSettings from "./BillingSettings";
 import Catalogue from "./Catalogue";
 import InvoiceEditor from "./InvoiceEditor";
 import InvoiceList from "./InvoiceList";
+import { proformaFromRequest, type RequestRow } from "./fromRequest";
 import type { Invoice, Service, Settings } from "./types";
 
 // The Billing tab of the admin page: invoices, the services-and-prices dashboard, and settings.
 
 type View =
   | { name: "list" }
-  | { name: "edit"; id: number | null; template?: Invoice; k: number }
+  | { name: "edit"; id: number | null; template?: Invoice; notice?: string; k: number }
   | { name: "services" }
   | { name: "settings" };
 
@@ -21,17 +22,20 @@ const tabs = [
   { name: "settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
-export default function Billing({ onSignedOut }: { onSignedOut: () => void }) {
+export default function Billing({ onSignedOut, request }: { onSignedOut: () => void; request?: { row: RequestRow; k: number } | null }) {
   const [view, setView] = useState<View>({ name: "list" });
   const [settings, setSettings] = useState<Settings | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [servicesReady, setServicesReady] = useState(false);
+  const handled = useRef(0);
 
   const loadServices = useCallback(async () => {
     const r = await billing<{ services: Service[] }>("services_list");
     if (r.status === 401) return onSignedOut();
     if (r.ok && r.data) setServices(r.data.services);
+    setServicesReady(true);
   }, [onSignedOut]);
 
   useEffect(() => {
@@ -42,6 +46,14 @@ export default function Billing({ onSignedOut }: { onSignedOut: () => void }) {
     });
     loadServices();
   }, [loadServices, onSignedOut]);
+
+  // Opened from a website sequencing request: start a draft pro-forma filled in from it
+  useEffect(() => {
+    if (!request || !settings || !servicesReady || handled.current === request.k) return;
+    handled.current = request.k;
+    const { invoice, notice } = proformaFromRequest(request.row, services, settings);
+    setView({ name: "edit", id: null, template: invoice, notice, k: Date.now() });
+  }, [request, settings, services, servicesReady]);
 
   if (error) return <p className="text-red-600">{error}</p>;
   if (!settings) return <p className="text-muted py-10">Loading billing…</p>;
@@ -77,6 +89,7 @@ export default function Billing({ onSignedOut }: { onSignedOut: () => void }) {
           key={view.k}
           id={view.id}
           template={view.template}
+          notice={view.notice}
           settings={settings}
           services={services}
           onBack={() => { setRefresh((n) => n + 1); setView({ name: "list" }); }}
