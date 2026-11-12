@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { cleanTiers, formatMoney } from "../../shared/billing.js";
+import { applyMarkup, cleanTiers, formatMoney, isSequencing } from "../../shared/billing.js";
 import { billing } from "./billingApi";
 import TierEditor from "./TierEditor";
 import { Btn, Card, Field, inputClass } from "./ui";
@@ -27,6 +27,7 @@ export default function Catalogue({
   const [error, setError] = useState("");
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const symbol = settings.currency.symbol;
+  const markup = Number(settings.markup?.sequencing) || 0;
 
   const save = async () => {
     if (!editing) return;
@@ -57,6 +58,9 @@ export default function Catalogue({
     if (s.pricing === "tier") {
       const t = cleanTiers(s.tiers);
       return t.length ? `Volume pricing, ${t.length} rows, from ${formatMoney(t[0].total, symbol)}` : "Volume pricing (no rows yet)";
+    }
+    if (isSequencing(s.category)) {
+      return `Lab price ${formatMoney(Number(s.unitPrice) || 0, symbol)} + ${markup}% = ${formatMoney(applyMarkup(s.unitPrice, markup), symbol)} per ${s.unit || "unit"}`;
     }
     return `${formatMoney(Number(s.unitPrice) || 0, symbol)} per ${s.unit || "unit"}`;
   };
@@ -101,7 +105,10 @@ export default function Catalogue({
               </select>
             </Field>
             {editing.pricing === "unit" ? (
-              <Field label={`Price per ${editing.unit || "unit"} (${settings.currency.code})`}>
+              <Field
+                label={isSequencing(editing.category) ? `Partner lab's price per ${editing.unit || "unit"} (${settings.currency.code})` : `Price per ${editing.unit || "unit"} (${settings.currency.code})`}
+                hint={isSequencing(editing.category) ? `Our price on invoices: ${formatMoney(applyMarkup(editing.unitPrice, markup), symbol)} (this plus ${markup}%)` : undefined}
+              >
                 <input className={inputClass} type="number" min="0" step="any" value={editing.unitPrice} onChange={(e) => setEditing({ ...editing, unitPrice: e.target.value })} />
               </Field>
             ) : (

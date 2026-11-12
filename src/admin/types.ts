@@ -59,6 +59,7 @@ export type Settings = {
   company: { name: string; tagline: string; address: string; email: string; phone: string; website: string; regNo: string; taxNo: string };
   bank: { accountName: string; bankName: string; accountNumber: string; extra: string };
   currency: { code: string; symbol: string };
+  markup: { sequencing: Num };
   defaultTaxRate: Num;
   taxLabel: string;
   dueDays: Num;

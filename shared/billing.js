@@ -14,6 +14,12 @@ const num = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
+// Our price from a supplier's price, with our markup (a percentage) added on top
+export const applyMarkup = (price, percent) => round2(num(price) * (1 + Math.max(num(percent), 0) / 100));
+
+// Services in this category are bought from a partner lab, so the price entered for them is our cost
+export const isSequencing = (category) => /sequenc/i.test(String(category || ""));
+
 const roundTo = (n, step) => Math.round(n / step) * step;
 
 // ---- Volume pricing ------------------------------------------------------------------------
@@ -210,6 +216,8 @@ export const defaultSettings = {
   },
   bank: { accountName: "", bankName: "", accountNumber: "", extra: "" },
   currency: { code: "NGN", symbol: "₦" },
+  // Added on top of a partner lab's price for sequencing services (percent)
+  markup: { sequencing: 25 },
   defaultTaxRate: 0,
   taxLabel: "VAT",
   dueDays: 14,
@@ -241,6 +249,7 @@ export function mergeSettings(saved) {
     bank: { ...defaultSettings.bank, ...(s.bank || {}) },
     currency: { ...defaultSettings.currency, ...(s.currency || {}) },
     prefixes: { ...defaultSettings.prefixes, ...(s.prefixes || {}) },
+    markup: { ...defaultSettings.markup, ...(s.markup || {}) },
     counters: { ...defaultSettings.counters, ...(s.counters || {}) },
     replacements: Array.isArray(s.replacements) ? s.replacements : defaultSettings.replacements,
   };

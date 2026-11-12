@@ -53,6 +53,7 @@ const cleanSettings = (input, existing) => {
       extra: str(b.extra, 300),
     },
     currency: { code: str(cur.code, 8) || "NGN", symbol: str(cur.symbol, 4) || "₦" },
+    markup: { sequencing: Math.min(Math.max(num(s.markup?.sequencing, 25), 0), 500) },
     defaultTaxRate: Math.min(Math.max(num(s.defaultTaxRate), 0), 100),
     taxLabel: str(s.taxLabel, 20) || "VAT",
     dueDays: Math.min(Math.max(Math.round(num(s.dueDays, 14)), 0), 365),

@@ -84,6 +84,17 @@ export default function BillingSettings({
         </div>
       </Card>
 
+      <Card title="Our markup on sequencing">
+        <p className="text-sm text-muted mb-4">
+          For services in the Sequencing category, the price you enter on Services &amp; prices is what the partner lab charges you. This percentage is added on top, and the client sees only the total.
+        </p>
+        <div className="max-w-xs">
+          <Field label="Markup on the partner lab's price (%)">
+            <input className={inputClass} type="number" min="0" max="500" step="any" value={s.markup.sequencing} onChange={(e) => setS({ ...s, markup: { ...s.markup, sequencing: e.target.value } })} />
+          </Field>
+        </div>
+      </Card>
+
       <Card title="Numbering">
         <p className="text-sm text-muted mb-4">Numbers look like PF-2026-0004. Change the starting letters, or set the last number used so the next one continues from it.</p>
         <div className="grid sm:grid-cols-3 gap-4">

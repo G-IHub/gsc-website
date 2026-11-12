@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowUp, ClipboardPaste, Copy, Download, Eraser, Eye, Plus, Save, Trash2, X } from "lucide-react";
-import { DOC_TYPES, STATUSES, applyReplacements, findLeftovers, formatMoney, invoiceTotals, lineAmount, parsePastedText } from "../../shared/billing.js";
+import { DOC_TYPES, STATUSES, applyMarkup, applyReplacements, isSequencing, findLeftovers, formatMoney, invoiceTotals, lineAmount, parsePastedText } from "../../shared/billing.js";
 import { billing } from "./billingApi";
 import { downloadPdf, previewUrl } from "./pdfClient.js";
 import TierEditor from "./TierEditor";
@@ -37,12 +37,12 @@ const copyOf = (inv: Invoice, settings: Settings): Invoice => {
   return { ...inv, id: undefined, number: "", status: "Draft", issueDate, dueDate: dueFor(settings, inv.docType, issueDate), items: inv.items.map((l) => withKey(l)) };
 };
 
-const lineFromService = (s: Service): Line =>
+const lineFromService = (s: Service, markup: number): Line =>
   withKey({
     description: s.description ? `${s.name}\n${s.description}` : s.name,
     qty: 1,
     mode: s.pricing === "tier" ? "tier" : "unit",
-    unitPrice: s.unitPrice,
+    unitPrice: s.pricing === "unit" && isSequencing(s.category) ? applyMarkup(s.unitPrice, markup) : s.unitPrice,
     tiers: s.pricing === "tier" ? s.tiers.map((t) => ({ ...t })) : undefined,
     extraPerSample: s.pricing === "tier" ? (s.extraPerSample ?? "") : undefined,
     unit: s.unit,
@@ -189,6 +189,7 @@ export default function InvoiceEditor({
   const [preview, setPreview] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [showPaste, setShowPaste] = useState(false);
+  const [pasteMarkup, setPasteMarkup] = useState<string>(String(settings.markup?.sequencing ?? 25));
   const [clients, setClients] = useState<Client[]>([]);
   const dueTouched = useRef(Boolean(id));
   const symbol = settings.currency.symbol;
@@ -234,11 +235,18 @@ export default function InvoiceEditor({
 
   const addService = (value: string) => {
     const s = services.find((x) => String(x.id) === value);
-    if (s) addLines([lineFromService(s)]);
+    if (s) addLines([lineFromService(s, Number(settings.markup?.sequencing) || 0)]);
   };
 
   const importPasted = () => {
-    const lines = parsePastedText(pasteText, settings.replacements).map((l: Partial<Line>) => withKey(l));
+    const pct = Number(pasteMarkup) || 0;
+    const lines = parsePastedText(pasteText, settings.replacements).map((l: Partial<Line>) =>
+      withKey({
+        ...l,
+        ...(l.mode === "unit" && l.unitPrice !== "" ? { unitPrice: applyMarkup(l.unitPrice, pct) } : {}),
+        ...(l.mode === "fixed" ? { fixedAmount: applyMarkup(l.fixedAmount, pct) } : {}),
+      }),
+    );
     if (!lines.length) return setMsg("Nothing recognised in that text.");
     addLines(lines);
     setPasteText("");
@@ -420,6 +428,11 @@ export default function InvoiceEditor({
                   Settings (their name and product codes) are removed.
                 </p>
                 <textarea className={inputClass} rows={6} value={pasteText} onChange={(e) => setPasteText(e.target.value)} placeholder="Paste here" />
+                <label className="mt-3 flex items-center gap-2 text-sm text-ink">
+                  Add our markup of
+                  <input className={smallInput} type="number" min="0" step="any" value={pasteMarkup} onChange={(e) => setPasteMarkup(e.target.value)} />
+                  % to each price (use 0 if the prices are already ours)
+                </label>
                 <div className="mt-3 flex gap-2">
                   <Btn variant="primary" onClick={importPasted} disabled={!pasteText.trim()}>Add these lines</Btn>
                   <Btn variant="ghost" onClick={() => setShowPaste(false)}>Cancel</Btn>
