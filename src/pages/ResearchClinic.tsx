@@ -18,6 +18,9 @@ const Field = ({ label, required = false, children }: { label: string; required?
   </label>
 );
 
+// Registrants are sent here once they have registered
+const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/IP29hDnYYYWEkK0077R1V0?s=cl&p=a&iam=2";
+
 // Fill these in once the date and format are confirmed
 const eventDetails = [
   { label: "Cost", value: "Free" },
@@ -135,6 +138,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 const ResearchClinic = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -180,6 +184,9 @@ const ResearchClinic = () => {
         if (!res.ok) throw new Error(String(res.status));
         setStatus("sent");
         form.reset();
+        // Show the confirmation for a moment, then take them to the WhatsApp group
+        setRedirecting(true);
+        window.setTimeout(() => window.location.assign(WHATSAPP_GROUP_URL), 1800);
         return;
       } catch {
         // The server could not save it: open the visitor's email app instead
@@ -328,7 +335,7 @@ const ResearchClinic = () => {
             <Heading
               eyebrow="Register your interest"
               title="Join the list for the next clinic"
-              intro="Registering is free and carries no obligation. We will email you the date and format as soon as they are confirmed."
+              intro="Registering is free and carries no obligation. Once you register, you are taken to our WhatsApp group, where we share the date and format as soon as they are confirmed."
               center
             />
           </Reveal>
@@ -358,10 +365,19 @@ const ResearchClinic = () => {
               <div className="py-12 text-center">
                 <CheckCircle2 size={44} className="mx-auto mb-4 text-magenta" />
                 <h3 className="mb-2 font-journal text-2xl text-plum">You are on the list</h3>
-                <p className="mx-auto max-w-sm text-muted">We will email you as soon as the date and format are confirmed.</p>
-                <button onClick={() => setStatus("idle")} className="mt-6 text-sm font-medium text-magenta-dark hover:underline">
-                  Register someone else
-                </button>
+                <p className="mx-auto max-w-sm text-muted">Join our WhatsApp group to hear the date and format first, and to ask questions before the clinic.</p>
+                <a
+                  href={WHATSAPP_GROUP_URL}
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-magenta px-7 py-3 text-sm font-medium text-white shadow-md shadow-magenta/20 transition-colors hover:bg-magenta-dark"
+                >
+                  Join the WhatsApp group <ArrowRight size={15} />
+                </a>
+                {redirecting && <p className="mt-3 text-xs text-muted">Taking you there in a moment…</p>}
+                <div>
+                  <button onClick={() => { setStatus("idle"); setRedirecting(false); }} className="mt-5 text-sm font-medium text-magenta-dark hover:underline">
+                    Register someone else
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
