@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { dbConfigured, saveEnquiry } from "./_lib.js";
 
-// Receives enquiries from the Contact and Research-to-Publication Lab forms. Each one is saved to the database
+// Receives enquiries from the Contact, Research Clinic, Sequencing request and Research-to-Publication Lab forms. Each one is saved to the database
 // (read it in the admin page) and, if an email service is set up, also emailed to the GSC inbox.
 // Either one is enough for the visitor to see "Thank you". Environment variables:
 //   DATABASE_URL    Neon Postgres connection (see api/_lib.js)
@@ -67,6 +67,22 @@ export default async function handler(req, res) {
     deliverables: clean(body.deliverables, MAX.long),
     additional: clean(body.additional, MAX.long),
   };
+
+  // Sequencing requests also carry the chosen services and counts in a structured form, kept for building a pro-forma
+  const sq = body.sequencing && typeof body.sequencing === "object" ? body.sequencing : null;
+  if (sq) {
+    f.sequencing = {
+      items: (Array.isArray(sq.items) ? sq.items : []).slice(0, 12).map((i) => ({
+        key: oneLine(i?.key, 40),
+        name: oneLine(i?.name, MAX.short),
+        qty: Math.min(Math.max(Math.round(Number(i?.qty)) || 1, 1), 100000),
+      })),
+      sampleType: oneLine(sq.sampleType, MAX.short),
+      organism: oneLine(sq.organism, MAX.short),
+      extracted: oneLine(sq.extracted, 40),
+      analysis: oneLine(sq.analysis, MAX.short),
+    };
+  }
 
   const missing = ["name", "organization", "email", "country", "title", "service", "description"].filter((k) => !f[k]);
   if (missing.length || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) {

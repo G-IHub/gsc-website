@@ -43,6 +43,7 @@ export const navMenu: NavItem[] = [
     to: "/services",
     items: [
       { label: "Our Services", to: "/services" },
+      { label: "Sequencing Services", to: "/sequencing" },
       { label: "Capabilities", to: "/capabilities" },
     ],
   },

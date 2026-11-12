@@ -11,6 +11,7 @@ import HowWeWork from "./pages/HowWeWork";
 import Projects from "./pages/Projects";
 import Partner from "./pages/Partner";
 import Programs from "./pages/Programs";
+import Sequencing from "./pages/Sequencing";
 import ResearchClinic from "./pages/ResearchClinic";
 import ResearchProgramme from "./pages/ResearchProgramme";
 import Contact from "./pages/Contact";
@@ -28,6 +29,7 @@ const titles: Record<string, string> = {
   "/how-we-work": "How We Work — GSC",
   "/projects": "Projects & Case Studies — GSC",
   "/partner": "Partner With Us — GSC",
+  "/sequencing": "Sequencing Services — Genomac Services & Consult",
   "/programs": "Programs — Genomac Services & Consult",
   "/research-clinic": "Free Research Clinic — GSC",
   "/research-to-publication-lab": "Research-to-Publication Lab — GSC",
@@ -45,6 +47,7 @@ const descriptions: Record<string, string> = {
   "/how-we-work": "GSC's seven-step engagement process, from first consultation to delivery: scope, proposal, contracting, execution, quality review and follow-up.",
   "/projects": "Selected projects and the case study format from Genomac Services & Consult, published as engagements are completed and approved.",
   "/partner": "Partner with GSC for contract research, subcontracting, international collaborations, consulting and long-term research partnerships.",
+  "/sequencing": "Target-based, whole genome, metagenomics and RNA sequencing from Genomac Services & Consult, planned with you and analysed if you need it. Request a quote online.",
   "/programs": "GSC programs for researchers and emerging scientists, including the Research-to-Publication Lab and internships.",
   "/research-clinic": "A free one-day online clinic for lecturers, MSc and PhD researchers on turning public genomics and bioinformatics data into a publishable study. No wet lab needed.",
   "/research-to-publication-lab": "From research idea to journal submission. GSC designs the study, runs the analysis and prepares the manuscript with you. You lead the science and pay when the agreed work is delivered.",
@@ -120,6 +123,7 @@ const App = () => {
         <Route path="/how-we-work" element={<HowWeWork />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/partner" element={<Partner />} />
+        <Route path="/sequencing" element={<Sequencing />} />
         <Route path="/programs" element={<Programs />} />
         <Route path="/research-clinic" element={<ResearchClinic />} />
         <Route path="/research-to-publication-lab" element={<ResearchProgramme />} />
