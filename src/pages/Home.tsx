@@ -238,7 +238,7 @@ const Home = () => (
             </p>
           </div>
           <div className="md:justify-self-end">
-            <Button to="/research-to-publication-lab">Visit the Lab</Button>
+            <Button to="/research-lab">Visit the Lab</Button>
           </div>
         </div>
       </Reveal>

@@ -1,6 +1,7 @@
 {
   "redirects": [
-    { "source": "/research-programme", "destination": "/research-to-publication-lab", "permanent": true }
+    { "source": "/research-programme", "destination": "/research-lab", "permanent": true },
+    { "source": "/research-to-publication-lab", "destination": "/research-lab", "permanent": true }
   ],
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }],
   "headers": [

@@ -57,7 +57,16 @@ export const navMenu: NavItem[] = [
       { label: "Industries We Serve", to: "/industries" },
     ],
   },
-  { label: "Programs", to: "/programs" },
+  {
+    label: "Programs",
+    to: "/programs",
+    items: [
+      { label: "All Programs", to: "/programs" },
+      { label: "Research Clinic (free)", to: "/research-clinic" },
+      { label: "Research-to-Publication Lab", to: "/research-lab" },
+      { label: "Internship Programme", to: "/internship" },
+    ],
+  },
 ];
 
 // The five conversion pathways; each pre-selects the enquiry type on the contact page.

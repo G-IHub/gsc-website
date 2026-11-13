@@ -359,7 +359,7 @@ const ResearchClinic = () => {
             <ShieldCheck size={20} className="mt-0.5 shrink-0 text-magenta-dark" />
             <p>
               At the end of the day we briefly introduce the{" "}
-              <Link to="/research-to-publication-lab" className="font-medium underline underline-offset-2">
+              <Link to="/research-lab" className="font-medium underline underline-offset-2">
                 Research-to-Publication Lab
               </Link>
               , our paid, guided service. It is optional, and the clinic is useful whether or not you ever use it.

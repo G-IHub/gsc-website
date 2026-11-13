@@ -21,17 +21,17 @@ const programs = [
     status: "Applications open",
     text: "Take a research idea all the way to journal submission. We design the study, run the analysis and prepare the manuscript with you, and you pay when the agreed work is delivered.",
     points: ["Free feasibility review", "Reply within 3–5 working days", "You stay the lead researcher"],
-    primary: { to: "/research-to-publication-lab", label: "Visit the Lab" },
-    secondary: { to: "/research-to-publication-lab#apply", label: "Submit your research idea" },
+    primary: { to: "/research-lab", label: "Visit the Lab" },
+    secondary: { to: "/research-lab#apply", label: "Submit your research idea" },
   },
   {
     icon: GraduationCap,
     tag: "Internship",
     title: "Internship Programme",
     status: "Enquire for details",
-    text: "Gain hands-on experience alongside the GSC team. Get in touch to ask about current openings and how to apply.",
+    text: "Gain hands-on experience alongside the GSC team on real research and project work. Apply online and we reply by email.",
     points: [],
-    primary: { to: "/contact", label: "Ask about internships" },
+    primary: { to: "/internship", label: "Apply for an internship" },
   },
 ];
 
@@ -104,7 +104,7 @@ const Programs = () => (
       title="Not sure which program fits?"
       text={<p>Tell us about your goals and we will point you to the right place to start.</p>}
       primary={{ to: "/contact?type=consultation", label: "Talk to us" }}
-      secondary={{ to: "/research-to-publication-lab", label: "Visit the Lab" }}
+      secondary={{ to: "/research-lab", label: "Visit the Lab" }}
     />
   </>
 );
