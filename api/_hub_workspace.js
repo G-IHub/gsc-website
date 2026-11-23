@@ -8,10 +8,10 @@ export const FOLDERS = ["Protocol", "Data lists", "Analysis", "Figures", "Drafts
 export const FILE_KINDS = ["Word", "Excel", "PDF", "Notebook", "Zip", "Link", "Other"];
 export const FILE_STATUSES = ["in_progress", "final"];
 const HTTPS = /^https:\/\/\S+$/i;
-const WORKSPACE_EVENTS = ["file_added", "file_version", "comment_added", "task_added", "task_done", "member_added", "member_removed"];
+const WORKSPACE_EVENTS = ["file_added", "file_version", "file_opened", "comment_added", "task_added", "task_done", "member_added", "member_removed"];
 
 export async function handleWorkspace({ action, method, body, query, user, store, memberIds, projectOr404, deny, out, str, isoDate }) {
-  const ws = ["files", "file-add", "file-version", "file-editing", "file-status", "comments", "comment-add", "comment-delete",
+  const ws = ["files", "file-add", "file-version", "file-editing", "file-status", "file-open", "comments", "comment-add", "comment-delete",
     "tasks", "task-add", "task-done", "task-delete", "activity", "my-tasks"];
   if (!ws.includes(action)) return null;
 
@@ -72,6 +72,13 @@ export async function handleWorkspace({ action, method, body, query, user, store
       if (f.editing_id && f.editing_id !== user.id && !isLead) return deny("clear someone else's editing mark", { project: p.id });
       await store.setFileEditing(f.id, null);
     }
+    return out(200, { ok: true });
+  }
+  if (action === "file-open" && method === "POST") {
+    const f = await fileOf();
+    if (!f) return out(404, { error: "Not found" });
+    const latest = (await store.listFiles(p.id)).find((x) => x.id === f.id);
+    await log("file_opened", { name: f.name, version: latest?.version ?? null });
     return out(200, { ok: true });
   }
   if (action === "file-status" && method === "POST") {

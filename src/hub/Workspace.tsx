@@ -20,12 +20,14 @@ const KINDS = ["Word", "Excel", "PDF", "Notebook", "Zip", "Link", "Other"];
 const ACT: Record<string, (a: Activity) => string> = {
   file_added: (a) => `added ${a.name}`,
   file_version: (a) => `saved ${a.name} v${a.version ?? ""}`,
+  file_opened: (a) => `opened ${a.name}${a.version ? ` (v${a.version})` : ""}`,
   comment_added: () => "posted in the discussion",
   task_added: (a) => `added the task "${a.name}"`,
   task_done: (a) => `finished "${a.name}"`,
   member_added: (a) => `added ${a.name || "someone"} to the project`,
   member_removed: (a) => `removed ${a.name || "someone"} from the project`,
 };
+const day = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—");
 const when = (iso: string) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: number; onActivity: () => void }) => {
@@ -78,7 +80,7 @@ const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: numbe
   );
 
   return (
-    <Card title="Files" action={!adding ? <Btn variant="primary" onClick={() => setAdding(true)}>Add a file</Btn> : undefined}>
+    <Card title="Files" action={!adding ? <Btn variant="primary" onClick={() => setAdding(true)}>Upload file</Btn> : undefined}>
       {adding && (
         <form onSubmit={addFile} className="grid gap-3 sm:grid-cols-2 mb-4 rounded-2xl bg-mist p-4">
           <Field label="Name"><input className={smallInput} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
@@ -108,13 +110,14 @@ const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: numbe
                   <tr key={x.id} className="align-top">
                     <td className="py-2.5 pr-3"><b className="text-plum font-medium">{x.name}</b><div className="text-xs text-muted">{x.kind} · {x.folder}</div>{x.note && <div className="text-xs text-muted">{x.note}</div>}</td>
                     <td className="py-2.5 pr-3">v{x.version}</td>
-                    <td className="py-2.5 pr-3">{x.by_name ?? "—"}<div className="text-xs text-muted">{x.at}</div></td>
+                    <td className="py-2.5 pr-3">{x.by_name ?? "—"}<div className="text-xs text-muted">{day(x.at)}</div></td>
                     <td className="py-2.5 pr-3">
                       {x.editing_id ? <Pill cls="bg-amber-100 text-amber-800">{editingByMe ? "You are editing" : `${x.editing_name} is editing`}</Pill>
-                        : <select className="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs" value={x.status} onChange={(e) => act("file-status", { file_id: x.id, status: e.target.value })} aria-label="File status"><option value="in_progress">In progress</option><option value="final">Final</option></select>}
+                        : x.status === "final" ? <Pill cls="bg-lime text-plum">Final</Pill> : <Pill cls="bg-blue-100 text-blue-800">In progress</Pill>}
+                      {!x.editing_id && <button className="block mt-1 text-[11px] text-muted hover:text-plum" onClick={() => act("file-status", { file_id: x.id, status: x.status === "final" ? "in_progress" : "final" })}>{x.status === "final" ? "Reopen" : "Mark final"}</button>}
                     </td>
                     <td className="py-2.5 whitespace-nowrap space-x-2">
-                      <a href={x.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-magenta-dark hover:underline">Open <ExternalLink size={12} aria-hidden="true" /></a>
+                      <a href={x.link} target="_blank" rel="noopener noreferrer" onClick={() => { hub("file-open", { method: "POST", body: { project_id: projectId, file_id: x.id } }).then(onActivity); }} className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs text-plum hover:border-gray-300">Open <ExternalLink size={12} aria-hidden="true" /></a>
                       {!x.editing_id && <button className="text-xs text-muted hover:text-plum" onClick={() => act("file-editing", { file_id: x.id, editing: true })}>I'm editing</button>}
                       {(editingByMe || !x.editing_id) && <button className="text-xs text-muted hover:text-plum" onClick={() => setNewVersion({ id: x.id, link: "", note: "" })}>New version</button>}
                       {x.editing_id && x.canClearEditing && <button className="text-xs text-muted hover:text-plum" onClick={() => act("file-editing", { file_id: x.id, editing: false })}>{editingByMe ? "Stop editing" : "Clear mark"}</button>}
@@ -278,7 +281,7 @@ const Workspace = ({ projectId, meId, members }: { projectId: number; meId: numb
   const bump = () => setTick((t) => t + 1);
   return (
     <div className="space-y-5">
-      <p className="text-sm text-muted">Only the {members.length} {members.length === 1 ? "person" : "people"} on this project and management can see this workspace.</p>
+      <p className="text-sm text-muted">Only the {members.length} {members.length === 1 ? "person" : "people"} on this project (and management) can see this workspace.</p>
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
           <Files projectId={projectId} meId={meId} onActivity={bump} />
