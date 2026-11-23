@@ -204,6 +204,10 @@ test("FINANCE: all projects and all money, sets the payment flag, cannot manage 
   assert.equal(m.body.money.fee, FEE.P1);
   assert.equal((await post("fin", "money-set", { project_id: proj.P1, fee: 1000000, paid: 500000 })).status, 200);
   assert.equal((await get("fin", "money", { id: proj.P1 })).body.money.paid, 500000);
+  assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "balance_due" })).status, 400); // not cleared yet
+  for (const key of ["budget", "min_fee", "sheet_fee", "funds", "feasibility"]) {
+    assert.equal((await post("fin", "clearance-set", { project_id: proj.P1, key, done: true })).status, 200);
+  }
   assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "balance_due" })).status, 200); // the flag only
   assert.equal((await post("fin", "project-update", { id: proj.P1, health: "red" })).status, 403); // not a project editor
   assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "cleared", stage: "x" })).status, 403);

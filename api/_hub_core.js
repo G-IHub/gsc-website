@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
+import { CLEARANCE_ITEMS, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
 // This file holds ALL the access decisions. It never talks to a database directly: it is given a `store`
@@ -194,6 +194,15 @@ export async function handleHub(req, store, env = {}) {
   };
   const needMgmt = async (what) => (user.role === "management" ? null : deny(what));
   const memberIds = new Set(await store.projectIdsForUser(user.id));
+  const clearanceOf = async (pid) => {
+    const rows = await store.listClearance(pid);
+    const items = CLEARANCE_ITEMS.map((c) => {
+      const r = rows.find((x) => x.key === c.key);
+      return { key: c.key, label: c.label, done: Boolean(r?.done), by: r?.done ? r.by_name || "" : "", at: r?.done ? r.at : null };
+    });
+    const done = items.filter((i) => i.done).length;
+    return { items, done, total: items.length, allDone: done === items.length };
+  };
   const projectOr404 = async (id) => {
     const p = Number.isInteger(Number(id)) ? await store.getProject(Number(id)) : null;
     // Someone who cannot see a project gets the same answer as for one that does not exist
@@ -313,6 +322,11 @@ export async function handleHub(req, store, env = {}) {
       // Only money roles set the payment flag
       if (!mayPay) return deny("set payment status", { project: p.id });
       if (!PAYMENT_STATUSES.includes(body.payment_status)) return out(400, { error: "Bad payment status" });
+      // No work without financial clearance: the flag cannot move on until every check is ticked
+      if (body.payment_status !== "not_cleared") {
+        const c = await clearanceOf(p.id);
+        if (!c.allDone) return out(400, { error: `Financial clearance is not complete (${c.done} of ${c.total} checks)` });
+      }
       patch.payment_status = body.payment_status;
     }
     await store.updateProject(p.id, patch);
@@ -429,6 +443,31 @@ export async function handleHub(req, store, env = {}) {
     await store.deleteUpdate(u.id);
     await store.log({ user_id: user.id, event: "update_deleted", detail: { project: p.id } });
     return out(200, { ok: true });
+  }
+
+  // ---- financial clearance checklist: Finance and management only ----
+  if (action === "clearance" && method === "GET") {
+    const p = await projectOr404(req.query?.id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!MONEY_ROLES.includes(user.role)) return deny("read clearance", { project: p.id });
+    const state = await clearanceOf(p.id);
+    return out(200, state);
+  }
+
+  if (action === "clearance-set" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!MONEY_ROLES.includes(user.role)) return deny("set clearance", { project: p.id });
+    if (!CLEARANCE_ITEMS.some((c) => c.key === body.key)) return out(400, { error: "Unknown check" });
+    const done = Boolean(body.done);
+    await store.setClearance(p.id, body.key, done, user.id);
+    await store.log({ user_id: user.id, event: "clearance_set", detail: { project: p.id, key: body.key, done } });
+    // Unticking a check after clearance puts the project back to "not cleared"
+    if (!done && p.payment_status !== "not_cleared") {
+      await store.updateProject(p.id, { payment_status: "not_cleared" });
+      await store.log({ user_id: user.id, event: "clearance_reverted", detail: { project: p.id, key: body.key } });
+    }
+    return out(200, await clearanceOf(p.id));
   }
 
   // ---- who is on a project ----

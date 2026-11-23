@@ -18,6 +18,14 @@ export const DEFAULT_MILESTONES = [
   { n: 13, name: "Support period ended", owner: "Lead", signoff: false },
   { n: 14, name: "Close-out form completed", owner: "Coordinator", signoff: false },
 ];
+// "No work without financial clearance": the payment flag cannot leave "not cleared" until all five are ticked
+export const CLEARANCE_ITEMS = [
+  { key: "budget", label: "Budget approved by Finance" },
+  { key: "min_fee", label: "Fee at or above the minimum fee" },
+  { key: "sheet_fee", label: "Project Sheet signed; commitment fee received" },
+  { key: "funds", label: "Source of funds for research costs identified" },
+  { key: "feasibility", label: "Feasibility review done" },
+];
 export const MILESTONE_STATUSES = ["not_started", "in_progress", "done"];
 
 // audience: all = every signed-in staff member; money = management and finance; management = management only
