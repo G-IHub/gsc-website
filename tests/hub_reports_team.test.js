@@ -141,7 +141,8 @@ test("team: the matrix check, who sees it, who edits it", async () => {
 
   for (const who of ["memE", "coord"]) assert.equal((await get(who, "team")).status, 403, who);
   const t = (await get("lead", "team")).body;
-  assert.equal(t.raci.length, 17);
+  assert.equal(t.raci.length, 36);
+  assert.equal(t.raci[0].section, "Acquisition");
   assert.equal(t.columns.length, 11);
   assert.ok(t.raci.every((r) => r.check === "OK"));
   assert.equal(t.canEdit, false);
@@ -159,8 +160,40 @@ test("team: the matrix check, who sees it, who edits it", async () => {
   const added = await post("mgmt", "raci-add", { name: "New activity" });
   assert.equal((await get("mgmt", "team")).body.raci.find((r) => r.id === added.body.id).check, "No one accountable");
   assert.equal((await post("mgmt", "raci-delete", { id: added.body.id })).status, 200);
-  assert.equal((await get("mgmt", "team")).body.raci.length, 17);
+  assert.equal((await get("mgmt", "team")).body.raci.length, 36);
   assert.equal((await post("lead", "raci-add", { name: "x" })).status, 403);
+});
+
+test("an untouched old 17-row matrix is upgraded to all 36; an edited one is left alone", async () => {
+  const { DEFAULT_RACI } = await import("../api/_hub_team.js");
+  const fresh = async () => {
+    const d = new PGlite();
+    const s = { query: async (t, p) => (await d.query(t, p)).rows };
+    await ensureSchema(s);
+    return makeStore(s);
+  };
+  // the old 17 rows exactly as first seeded
+  const old17 = [
+    ["Feasibility review (2 to 5 working days)", "C,A/R,C,C,,,I,,,,"], ["Decide: accept, refine or decline", "I,R,,,,,A,I,,,"],
+    ["Prepare the project budget", ",R,C,,,A,I,,,,"], ["Approve pricing and the fee", ",C,,,,R,C,A,,,"],
+    ["Client agreement and Project Sheet signed", "R,R,,,,,,A,,,"], ["Commitment fee received; confirmed in writing", "R,I,,,I,A/R,,,,,"],
+    ["Financial clearance before any work starts", ",C,,,I,A/R,,,,,"], ["Write and agree the research protocol", "C,A/R,C,C,,I,,,,,"],
+    ["Run the analysis", "I,A,R,I,,,,,,,"], ["Independent quality review", ",C,C,A/R,,,,,,,"],
+    ["Review meeting and client approval", "R,A/R,,I,R,,,,,,"], ["Balance received; final files released", "R,C,,,R,A,,,,,"],
+    ["Reviewer-response support", "C,A/R,R,,,,,,,,"], ["Submit the manuscript to the journal", "A/R,I,,,,,,,,,"],
+    ["Project close-out form", "C,A/R,,,R,R,,,,,"], ["Weekly report and KPIs", ",C,,,A/R,,C,I,,,"],
+    ["Buy and manage QA tools", ",,,C,,C,,I,,,A/R"],
+  ].map(([name, s]) => ({ name, cells: s.split(",") }));
+  const a = await fresh();
+  await a.seedRaci(old17); // as the live site may have it
+  await a.seedRaci(DEFAULT_RACI, old17);
+  assert.equal((await a.listRaci()).length, 36);
+  const b = await fresh();
+  await b.seedRaci(old17);
+  const first = (await b.listRaci())[0];
+  await b.setRaci(first.id, first.cells.map((c, i) => (i === 0 ? "I" : c))); // management changed a cell
+  await b.seedRaci(DEFAULT_RACI, old17);
+  assert.equal((await b.listRaci()).length, 17); // kept as edited
 });
 
 test("directory: everyone fills in their own profile; capacity comes from projects", async () => {

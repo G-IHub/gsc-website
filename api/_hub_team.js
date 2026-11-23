@@ -7,7 +7,48 @@ export const TEAM_ROLES = ["management", "finance", "director", "lead"];
 export const RACI_COLUMNS = ["Client", "Lead", "Support", "Quality", "Coord.", "Finance", "Sub. dir.", "Mgmt", "Victor", "Farouk", "IT"];
 export const RACI_CODES = ["", "A", "R", "C", "I", "A/R"];
 export const AVAILABILITY = ["available", "limited", "unavailable"];
+// All 36 activities from the Responsibilities Matrix workbook, in its sections
 export const DEFAULT_RACI = [
+  ["Acquisition", "Run free research clinics and outreach", ",,,,,,C,I,A/R,,"],
+  ["Acquisition", "Build the Competition Lab pipeline", ",,,,,,,C,A/R,C,"],
+  ["Acquisition", "Keep the prospect list; convert prospects to clients", ",,,,,,I,I,A/R,,"],
+  ["Intake and feasibility", "Receive the intake form and log the project", ",A,,,R,,,,C,,"],
+  ["Intake and feasibility", "Feasibility review (2 to 5 working days)", "C,A/R,C,C,,,I,,,,"],
+  ["Intake and feasibility", "Decide: accept, refine or decline", "I,R,,,,,A,I,,,"],
+  ["Commercial", "Write the project proposal", "I,A/R,,,C,C,,,,,"],
+  ["Commercial", "Prepare the project budget", ",R,C,,,A,I,,,,"],
+  ["Commercial", "Approve pricing and the fee", ",C,,,,R,C,A,,,"],
+  ["Commercial", "Client agreement and Project Sheet signed", "R,R,,,,,,A,,,"],
+  ["Commercial", "Receive the commitment fee; confirm payment in writing", "R,I,,,I,A/R,,,,,"],
+  ["Commercial", "Financial clearance before any work starts", ",C,,,I,A/R,,,,,"],
+  ["Delivery", "Assign the team and the project coordinator", ",C,,,I,,A/R,I,,,"],
+  ["Delivery", "Kick-off call and weekly client calls", "R,A/R,I,,R,,,,,,"],
+  ["Delivery", "Write and agree the research protocol", "C,A/R,C,C,,I,,,,,"],
+  ["Delivery", "Source and check the data", "C,A,R,C,,,,,,,"],
+  ["Delivery", "Run the analysis", "I,A,R,I,,,,,,,"],
+  ["Delivery", "Figures, tables and Source Data", ",A,R,C,,,,,,,"],
+  ["Delivery", "Write the manuscript draft", "C,A,R,,,,,,,,"],
+  ["Delivery", "Independent quality review (rerun, number trace, references)", ",C,C,A/R,,,,,,,"],
+  ["Delivery", "Similarity screening and the AI-use statement", ",C,,A/R,,,,,,,C"],
+  ["Delivery", "Review meeting and client approval", "R,A/R,,I,R,,,,,,"],
+  ["Delivery", "Balance received; final files released", "R,C,,,R,A,,,,,"],
+  ["After delivery", "Journal selection guidance", "C,A/R,C,,,,,,,,"],
+  ["After delivery", "Reviewer-response support (in the support period)", "C,A/R,R,,,,,,,,"],
+  ["After delivery", "Submit the manuscript to the journal", "A/R,I,,,,,,,,,"],
+  ["After delivery", "Project close-out form", "C,A/R,,,R,R,,,,,"],
+  ["Management and governance", "Update the project tracker and updates log", ",C,I,,A/R,,,,,,"],
+  ["Management and governance", "Monday, Wednesday and Friday reviews", ",R,,,R,,R,A,,,"],
+  ["Management and governance", "Weekly report and KPIs", ",C,,,A/R,,C,I,,,"],
+  ["Management and governance", "Escalations and unblocking projects", ",R,,,,C,A/R,C,,,"],
+  ["Management and governance", "Keep the SOP and prompt library up to date", ",C,C,C,,,,A,,R,"],
+  ["Management and governance", "Training and standardisation sessions", ",I,I,I,I,,,,,A/R,"],
+  ["Management and governance", "Buy and manage QA tools (plagiarism, access)", ",,,C,,C,,I,,,A/R"],
+  ["Management and governance", "Keep the expertise directory and capacity up to date", ",,,,R,,A/R,I,,,"],
+  ["Management and governance", "Appoint coordinators and quality reviewers", ",,,,,,C,A/R,,,"],
+].map(([section, name, s]) => ({ section, name, cells: s.split(",") }));
+
+// The 17-row starter used before 2026-11-23 (only to upgrade an untouched copy to all 36)
+const FIRST_SEED = [
   ["Feasibility review (2 to 5 working days)", "C,A/R,C,C,,,I,,,,"],
   ["Decide: accept, refine or decline", "I,R,,,,,A,I,,,"],
   ["Prepare the project budget", ",R,C,,,A,I,,,,"],
@@ -58,7 +99,7 @@ export async function handleTeam({ action, method, body, user, store, out, deny,
   if (!TEAM_ROLES.includes(user.role)) return deny(`team ${action}`);
 
   if (action === "team" && method === "GET") {
-    await store.seedRaci(DEFAULT_RACI);
+    await store.seedRaci(DEFAULT_RACI, FIRST_SEED);
     const raci = (await store.listRaci()).map((r) => ({ ...r, check: raciCheck(r.cells) }));
     const people = (await store.listUsers()).filter((u) => u.active);
     const profiles = await store.listDirectory();

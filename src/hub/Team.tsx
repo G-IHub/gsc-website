@@ -3,7 +3,7 @@ import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
 
-type RaciRow = { id: number; name: string; cells: string[]; check: string };
+type RaciRow = { id: number; section: string; name: string; cells: string[]; check: string };
 type Person = {
   user_id: number; name: string; role: string; unit: string; filled: boolean; skills: string; can_lead: boolean; can_qa: boolean;
   max_projects: number; availability: string; active: number; spare: number;
@@ -12,13 +12,21 @@ type Data = { columns: string[]; codes: string[]; raci: RaciRow[]; directory: Pe
 
 const CODE_STYLE: Record<string, string> = { A: "bg-plum text-white", R: "bg-magenta text-white", "A/R": "bg-magenta-dark text-white", C: "bg-blue-100 text-blue-800", I: "bg-gray-200 text-gray-700" };
 const AVAIL: Record<string, [string, string]> = { available: ["Available", "bg-lime text-plum"], limited: ["Limited", "bg-amber-100 text-amber-800"], unavailable: ["Not available", "bg-gray-200 text-gray-600"] };
-const ROLES_TEXT: [string, string][] = [
-  ["Client (lead researcher)", "Leads the research, decides the science, submits to the journal."],
-  ["Genomac lead researcher", "Day-to-day contact; coordinates the work and is accountable for it."],
-  ["Quality reviewer", "Independent check of data, numbers, references and text. Never the analyst."],
-  ["Project coordinator", "Timeline, meetings, tracker, releasing files after payment is confirmed."],
-  ["Finance", "Budgets, payments, clearance, refunds."],
+// The roles behind the matrix columns (from the Responsibilities workbook): name, what they do, who holds it
+const ROLES_TEXT: [string, string, string][] = [
+  ["Client (lead researcher)", "Leads the research, decides the science, submits to the journal.", "The client on each project"],
+  ["Genomac lead researcher", "Day-to-day contact; coordinates the work and is accountable for it.", "Named on each project"],
+  ["Supporting researcher", "Specialist analysis and writing in their area of expertise.", "Named on each project"],
+  ["Quality reviewer", "Independent check of data, numbers, references and text. Never the analyst.", "Named on each project"],
+  ["Project coordinator", "Timeline, meetings, tracker, releasing files after payment is confirmed.", "Appointed by management"],
+  ["Finance", "Budgets, payments, clearance, refunds.", "Finance team"],
+  ["Subsidiary director", "Identifies projects, allocates people, monitors progress, escalates issues.", "One per subsidiary"],
+  ["Management / CEO", "Oversight, pricing, appointments, approval of the SOP.", "Office of the CEO"],
+  ["Victor (acquisition)", "Research clinics, Competition Lab, converting prospects.", "Victor"],
+  ["Farouk (training)", "Platform demos, training, standard workflow and prompts.", "Farouk"],
+  ["Procurement / IT", "Plagiarism and AI-use tools, staff access.", "To be named"],
 ];
+const COLUMN_TITLES = ROLES_TEXT.map((r) => r[0]);
 const tags = (s: string) => s.split(/[,;]/).map((x) => x.trim().toLowerCase()).filter(Boolean);
 
 const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
@@ -60,12 +68,15 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
               <thead>
                 <tr className="text-muted">
                   <th className="py-2 pr-2 text-left font-bold uppercase tracking-widest">Activity ({d.raci.length})</th>
-                  {d.columns.map((c) => <th key={c} className="py-2 px-1 font-bold text-center whitespace-nowrap">{c}</th>)}
+                  {d.columns.map((c, i) => <th key={c} title={COLUMN_TITLES[i]} className="py-2 px-1 font-bold text-center whitespace-nowrap">{c}</th>)}
                   <th className="py-2 pl-2 font-bold text-left">Check</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {d.raci.map((r) => (
+                {d.raci.map((r, idx) => [
+                  r.section && r.section !== d.raci[idx - 1]?.section ? (
+                    <tr key={`s-${r.id}`}><td colSpan={d.columns.length + 2} className="pt-4 pb-1 text-[11px] font-bold uppercase tracking-widest text-magenta-dark">{r.section}</td></tr>
+                  ) : null,
                   <tr key={r.id}>
                     <td className="py-1.5 pr-2 text-sm min-w-48">{r.name}{d.canEdit && <button className="ml-2 text-[11px] text-muted hover:text-red-600" onClick={() => remove(r)}>Remove</button>}</td>
                     {r.cells.map((c, i) => (
@@ -79,8 +90,8 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
                       </td>
                     ))}
                     <td className="py-1.5 pl-2 whitespace-nowrap">{r.check === "OK" ? <Pill cls="bg-lime text-plum">OK</Pill> : <Pill cls="bg-red-100 text-red-700">{r.check}</Pill>}</td>
-                  </tr>
-                ))}
+                  </tr>,
+                ])}
               </tbody>
             </table>
           </div>
@@ -95,7 +106,7 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
         </Card>
       </div>
       <Card title="Roles">
-        <ul className="space-y-3 text-sm">{ROLES_TEXT.map(([n, w]) => <li key={n}><b className="text-plum font-medium">{n}</b><div className="text-muted">{w}</div></li>)}</ul>
+        <ul className="space-y-3 text-sm">{ROLES_TEXT.map(([n, w, who]) => <li key={n}><b className="text-plum font-medium">{n}</b><div className="text-muted">{w}</div><div className="text-xs text-magenta-dark mt-0.5">{who}</div></li>)}</ul>
       </Card>
     </div>
   );
