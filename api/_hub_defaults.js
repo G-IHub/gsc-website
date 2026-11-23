@@ -26,6 +26,10 @@ export const CLEARANCE_ITEMS = [
   { key: "funds", label: "Source of funds for research costs identified" },
   { key: "feasibility", label: "Feasibility review done" },
 ];
+// payment schedule rows (money: Finance and management only)
+export const PAYMENT_ROW_STATUSES = ["planned", "due", "received", "not_used"];
+// the commitment fee agreed in discussion (refundable, credited to the total); editable per project
+export const COMMITMENT_FEE = 20000;
 export const MILESTONE_STATUSES = ["not_started", "in_progress", "done"];
 
 // audience: all = every signed-in staff member; money = management and finance; management = management only

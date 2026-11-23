@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+
+type MyTask = { id: number; project_id: number; ref: string; text: string; due: string | null; milestone: number | null };
 import { Card } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
 import { HEALTH_LABEL, HEALTH_STYLE, Pill, StatTile, ViewingAs, attentionFor, daysLeft, daysText } from "./bits";
@@ -14,6 +16,10 @@ const NOT_SHOWN = [
 ];
 
 const MemberHome = ({ me, projects, onOpen }: { me: Me; projects: Project[]; onOpen: (id: number) => void }) => {
+  const [tasks, setTasks] = useState<MyTask[] | null>(null);
+  useEffect(() => {
+    hub<{ tasks: MyTask[] }>("my-tasks").then((r) => setTasks(r.ok && r.data ? r.data.tasks : []));
+  }, []);
   const soon = projects.filter((p) => {
     const d = daysLeft(p.target_date);
     return d !== null && d <= 14;
@@ -30,7 +36,7 @@ const MemberHome = ({ me, projects, onOpen }: { me: Me; projects: Project[]; onO
       <div className="grid gap-4 sm:grid-cols-3">
         <StatTile label="My projects" value={projects.length} note={`${projects.filter((p) => p.health === "green").length} on track`} />
         <StatTile label="Due within 14 days" value={soon} />
-        <StatTile label="Marked late" value={projects.filter((p) => p.health === "red").length} />
+        <StatTile label="My open tasks" value={tasks ? tasks.length : "…"} note={tasks ? `${tasks.filter((t) => { const d = daysLeft(t.due); return d !== null && d <= 7; }).length} due within 7 days` : undefined} />
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -50,10 +56,23 @@ const MemberHome = ({ me, projects, onOpen }: { me: Me; projects: Project[]; onO
             </ul>
           </Card>
         </div>
-        <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-5 text-sm text-muted self-start">
+        <div className="space-y-5 self-start">
+        <Card title="My tasks">
+          {tasks && tasks.length === 0 && <p className="text-sm text-muted">No open tasks.</p>}
+          <ul className="divide-y divide-gray-100">
+            {tasks?.map((t) => (
+              <li key={t.id} className="py-2.5 text-sm">
+                <button className="text-left hover:underline" onClick={() => onOpen(t.project_id)}>{t.text}</button>
+                <div className="text-xs text-muted">{t.ref}{t.due ? ` · due ${t.due}` : ""}{t.milestone ? ` · Milestone ${t.milestone}` : ""}</div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-5 text-sm text-muted">
           <p className="text-plum font-medium">Not shown for your role</p>
           <ul className="mt-2 list-disc pl-5 space-y-1.5">{NOT_SHOWN.map((t) => <li key={t}>{t}</li>)}</ul>
           <p className="mt-3">If you need something on this list for your work, ask your lead.</p>
+        </div>
         </div>
       </div>
     </div>

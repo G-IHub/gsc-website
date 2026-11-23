@@ -57,7 +57,7 @@ export const MoneyCard = ({ id, canEdit }: { id: number; canEdit: boolean }) => 
     } else setMsg(errorText(r));
   };
   const save = async () => {
-    const r = await hub("money-set", { method: "POST", body: { project_id: id, fee: Number(fee), paid: Number(paid) } });
+    const r = await hub("money-set", { method: "POST", body: { project_id: id, fee: Number(fee) } });
     setMsg(r.ok ? "Saved." : errorText(r));
     if (r.ok) show();
   };
@@ -75,13 +75,12 @@ export const MoneyCard = ({ id, canEdit }: { id: number; canEdit: boolean }) => 
         <div className="space-y-4">
           <dl className="grid grid-cols-3 gap-4 text-sm">
             <div><dt className="text-xs uppercase tracking-widest text-muted font-bold">Fee</dt><dd className="text-lg text-plum">{fmt(money.fee)}</dd></div>
-            <div><dt className="text-xs uppercase tracking-widest text-muted font-bold">Paid</dt><dd className="text-lg text-plum">{fmt(money.paid)}</dd></div>
+            <div><dt className="text-xs uppercase tracking-widest text-muted font-bold">Received</dt><dd className="text-lg text-plum">{fmt(money.paid)}</dd></div>
             <div><dt className="text-xs uppercase tracking-widest text-muted font-bold">Balance</dt><dd className="text-lg text-plum">{fmt(Math.max(money.fee - money.paid, 0))}</dd></div>
           </dl>
           {canEdit && (
             <div className="flex flex-wrap items-end gap-3">
               <Field label="Fee (₦)"><input className={smallInput} inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} /></Field>
-              <Field label="Paid so far (₦)"><input className={smallInput} inputMode="decimal" value={paid} onChange={(e) => setPaid(e.target.value)} /></Field>
               <Btn variant="primary" onClick={save}>Save</Btn>
             </div>
           )}

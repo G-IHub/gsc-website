@@ -82,6 +82,65 @@ export const HUB_SCHEMA = [
      at TIMESTAMPTZ,
      PRIMARY KEY (project_id, key)
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_payments (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     name TEXT NOT NULL,
+     amount NUMERIC(16,2) NOT NULL DEFAULT 0,
+     due_date DATE,
+     received_date DATE,
+     status TEXT NOT NULL DEFAULT 'planned',
+     sort INT NOT NULL DEFAULT 0
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_changes (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     author_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     on_date DATE NOT NULL DEFAULT CURRENT_DATE,
+     text TEXT NOT NULL,
+     dates_effect TEXT NOT NULL DEFAULT '',
+     fee_effect TEXT NOT NULL DEFAULT '',
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_files (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     name TEXT NOT NULL,
+     folder TEXT NOT NULL DEFAULT 'Other',
+     kind TEXT NOT NULL DEFAULT 'Other',
+     status TEXT NOT NULL DEFAULT 'in_progress',
+     editing_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     editing_since TIMESTAMPTZ,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_file_versions (
+     id BIGSERIAL PRIMARY KEY,
+     file_id BIGINT NOT NULL REFERENCES hub_files(id) ON DELETE CASCADE,
+     version INT NOT NULL,
+     link TEXT NOT NULL,
+     note TEXT NOT NULL DEFAULT '',
+     by_user BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     UNIQUE (file_id, version)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_comments (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     author_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     text TEXT NOT NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_tasks (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     text TEXT NOT NULL,
+     assignee_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     due DATE,
+     milestone INT,
+     done BOOLEAN NOT NULL DEFAULT false,
+     created_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -282,6 +341,136 @@ export const makeStore = (sql) => ({
        ON CONFLICT (project_id, key) DO UPDATE SET done = EXCLUDED.done, by_user = EXCLUDED.by_user, at = now()`,
       [pid, key, done, uid],
     );
+  },
+
+  // payment schedule (money: only reached through Finance and management actions)
+  listPayments: async (pid) =>
+    sql.query(
+      `SELECT id::int AS id, name, amount::float8 AS amount, to_char(due_date, 'YYYY-MM-DD') AS due_date,
+              to_char(received_date, 'YYYY-MM-DD') AS received_date, status
+       FROM hub_payments WHERE project_id = $1 ORDER BY sort, id`,
+      [pid],
+    ),
+  getPayment: async (id) => (await sql.query(`SELECT id::int AS id, project_id::int AS project_id FROM hub_payments WHERE id = $1`, [id]))[0] ?? null,
+  savePayment: async (pid, r) => {
+    if (r.id) {
+      await sql.query(
+        `UPDATE hub_payments SET name=$1, amount=$2, due_date=$3, received_date=$4, status=$5 WHERE id=$6 AND project_id=$7`,
+        [r.name, r.amount, r.due_date, r.received_date, r.status, r.id, pid],
+      );
+      return r.id;
+    }
+    const [x] = await sql.query(
+      `INSERT INTO hub_payments (project_id, name, amount, due_date, received_date, status, sort)
+       VALUES ($1,$2,$3,$4,$5,$6, (SELECT COALESCE(max(sort),0)+1 FROM hub_payments WHERE project_id = $1)) RETURNING id::int AS id`,
+      [pid, r.name, r.amount, r.due_date, r.received_date, r.status],
+    );
+    return x.id;
+  },
+  deletePayment: async (id) => {
+    await sql.query(`DELETE FROM hub_payments WHERE id = $1`, [id]);
+  },
+
+  // change log
+  listChanges: async (pid) =>
+    sql.query(
+      `SELECT c.id::int AS id, to_char(c.on_date, 'YYYY-MM-DD') AS on_date, c.text, c.dates_effect, c.fee_effect, u.name AS author
+       FROM hub_changes c LEFT JOIN hub_users u ON u.id = c.author_id WHERE c.project_id = $1 ORDER BY c.on_date DESC, c.id DESC`,
+      [pid],
+    ),
+  addChange: async (pid, uid, c) =>
+    (await sql.query(
+      `INSERT INTO hub_changes (project_id, author_id, on_date, text, dates_effect, fee_effect) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::int AS id`,
+      [pid, uid, c.on_date, c.text, c.dates_effect, c.fee_effect],
+    ))[0].id,
+  getChange: async (id) => (await sql.query(`SELECT id::int AS id, project_id::int AS project_id FROM hub_changes WHERE id = $1`, [id]))[0] ?? null,
+  deleteChange: async (id) => {
+    await sql.query(`DELETE FROM hub_changes WHERE id = $1`, [id]);
+  },
+
+  // workspace: files (links) with versions
+  listFiles: async (pid) =>
+    sql.query(
+      `SELECT f.id::int AS id, f.name, f.folder, f.kind, f.status, f.editing_by::int AS editing_id, e.name AS editing_name,
+              v.version, v.link, v.note, b.name AS by_name, to_char(v.at, 'YYYY-MM-DD') AS at
+       FROM hub_files f
+       LEFT JOIN hub_users e ON e.id = f.editing_by
+       LEFT JOIN LATERAL (SELECT * FROM hub_file_versions x WHERE x.file_id = f.id ORDER BY x.version DESC LIMIT 1) v ON true
+       LEFT JOIN hub_users b ON b.id = v.by_user
+       WHERE f.project_id = $1 ORDER BY f.folder, f.name`,
+      [pid],
+    ),
+  getFile: async (id) =>
+    (await sql.query(
+      `SELECT f.id::int AS id, f.project_id::int AS project_id, f.name, f.editing_by::int AS editing_id, e.name AS editing_name
+       FROM hub_files f LEFT JOIN hub_users e ON e.id = f.editing_by WHERE f.id = $1`,
+      [id],
+    ))[0] ?? null,
+  addFile: async (pid, uid, f) => {
+    const [r] = await sql.query(
+      `INSERT INTO hub_files (project_id, name, folder, kind) VALUES ($1,$2,$3,$4) RETURNING id::int AS id`,
+      [pid, f.name, f.folder, f.kind],
+    );
+    await sql.query(`INSERT INTO hub_file_versions (file_id, version, link, note, by_user) VALUES ($1, 1, $2, $3, $4)`, [r.id, f.link, f.note, uid]);
+    return r.id;
+  },
+  addFileVersion: async (fid, uid, link, note) => {
+    const [r] = await sql.query(
+      `INSERT INTO hub_file_versions (file_id, version, link, note, by_user)
+       VALUES ($1, (SELECT COALESCE(max(version),0)+1 FROM hub_file_versions WHERE file_id = $1), $2, $3, $4) RETURNING version`,
+      [fid, link, note, uid],
+    );
+    return r.version;
+  },
+  setFileEditing: async (fid, uid) => {
+    await sql.query(`UPDATE hub_files SET editing_by = $1, editing_since = CASE WHEN $1::bigint IS NULL THEN NULL ELSE now() END WHERE id = $2`, [uid, fid]);
+  },
+  setFileStatus: async (fid, status) => {
+    await sql.query(`UPDATE hub_files SET status = $1 WHERE id = $2`, [status, fid]);
+  },
+
+  // workspace: discussion
+  listComments: async (pid) =>
+    sql.query(
+      `SELECT c.id::int AS id, c.author_id::int AS author_id, u.name AS author, c.text, c.created_at AS at
+       FROM hub_comments c LEFT JOIN hub_users u ON u.id = c.author_id WHERE c.project_id = $1 ORDER BY c.created_at, c.id LIMIT 200`,
+      [pid],
+    ),
+  addComment: async (pid, uid, text) =>
+    (await sql.query(`INSERT INTO hub_comments (project_id, author_id, text) VALUES ($1,$2,$3) RETURNING id::int AS id`, [pid, uid, text]))[0].id,
+  getComment: async (id) =>
+    (await sql.query(`SELECT id::int AS id, project_id::int AS project_id, author_id::int AS author_id FROM hub_comments WHERE id = $1`, [id]))[0] ?? null,
+  deleteComment: async (id) => {
+    await sql.query(`DELETE FROM hub_comments WHERE id = $1`, [id]);
+  },
+
+  // workspace: tasks
+  listTasks: async (pid) =>
+    sql.query(
+      `SELECT t.id::int AS id, t.text, t.assignee_id::int AS assignee_id, a.name AS assignee, to_char(t.due, 'YYYY-MM-DD') AS due,
+              t.milestone, t.done, t.created_by::int AS created_by
+       FROM hub_tasks t LEFT JOIN hub_users a ON a.id = t.assignee_id WHERE t.project_id = $1 ORDER BY t.done, t.due NULLS LAST, t.id`,
+      [pid],
+    ),
+  listMyTasks: async (uid) =>
+    sql.query(
+      `SELECT t.id::int AS id, t.project_id::int AS project_id, p.ref, t.text, to_char(t.due, 'YYYY-MM-DD') AS due, t.milestone
+       FROM hub_tasks t JOIN hub_projects p ON p.id = t.project_id
+       WHERE t.assignee_id = $1 AND NOT t.done ORDER BY t.due NULLS LAST, t.id LIMIT 50`,
+      [uid],
+    ),
+  getTask: async (id) =>
+    (await sql.query(`SELECT id::int AS id, project_id::int AS project_id, text, created_by::int AS created_by FROM hub_tasks WHERE id = $1`, [id]))[0] ?? null,
+  addTask: async (pid, uid, t) =>
+    (await sql.query(
+      `INSERT INTO hub_tasks (project_id, text, assignee_id, due, milestone, created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::int AS id`,
+      [pid, t.text, t.assignee_id, t.due, t.milestone, uid],
+    ))[0].id,
+  setTaskDone: async (id, done) => {
+    await sql.query(`UPDATE hub_tasks SET done = $1 WHERE id = $2`, [done, id]);
+  },
+  deleteTask: async (id) => {
+    await sql.query(`DELETE FROM hub_tasks WHERE id = $1`, [id]);
   },
 
   // log

@@ -7,11 +7,14 @@ import { MoneyCard } from "./Projects";
 import Milestones, { progressOf, type Milestone } from "./Milestones";
 import Updates from "./Updates";
 import Clearance from "./Clearance";
+import Payments from "./Payments";
+import ChangeLog from "./ChangeLog";
+import Workspace from "./Workspace";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
 type Detail = { project: Project; members: Member[]; canSeeMoney: boolean; canManageMembers: boolean };
-type Tab = "overview" | "access";
+type Tab = "overview" | "workspace" | "access";
 
 const Label = ({ children }: { children: string }) => <p className="text-xs uppercase tracking-widest text-muted font-bold">{children}</p>;
 
@@ -56,7 +59,8 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
     if (r.ok) load();
   };
 
-  const tabs: [Tab | "workspace", string][] = [["overview", "Overview"], ["workspace", "Workspace"], ["access", "People and access"]];
+  const inWorkspace = role === "management" || d.members.some((m) => m.user_id === me.user.id);
+  const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"]] as [Tab, string][]) : []), ["access", "People and access"]];
 
   return (
     <div className="space-y-6">
@@ -77,16 +81,16 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
 
       <div className="flex flex-wrap gap-2" role="tablist">
         {tabs.map(([key, label]) =>
-          key === "workspace" ? (
-            <span key={key} className="rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-400 cursor-not-allowed" title="Coming later">{label} <span className="text-[10px] uppercase tracking-widest ml-1">Soon</span></span>
-          ) : (
+          (
             <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
               className={`rounded-full border px-4 py-2 text-sm transition-colors ${tab === key ? "bg-magenta border-magenta text-white" : "border-gray-200 bg-white text-plum hover:border-gray-300"}`}>{label}</button>
           ),
         )}
       </div>
 
-      {tab === "access" ? (
+      {tab === "workspace" && inWorkspace ? (
+        <Workspace projectId={p.id} meId={me.user.id} members={d.members} />
+      ) : tab === "access" ? (
         <ProjectAccess projectId={p.id} members={d.members} people={people} canManage={d.canManageMembers} isManagement={role === "management"} onChanged={load} />
       ) : (
         <>
@@ -152,7 +156,9 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
                 </Card>
               )}
               {d.canSeeMoney && <MoneyCard id={p.id} canEdit={moneyRole} />}
+              {moneyRole && <Payments projectId={p.id} />}
               <Updates projectId={p.id} onChanged={load} />
+              <ChangeLog projectId={p.id} />
               {!d.canSeeMoney && <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-4 text-xs text-muted">Fees, payments, budget and margin are visible to Finance and management only.</div>}
             </div>
           </div>
