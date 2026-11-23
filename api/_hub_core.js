@@ -23,6 +23,8 @@ export const MONEY_ROLES = ["management", "finance"];
 export const SEE_ALL_ROLES = ["management", "finance"];
 export const CLIENT_ROLES = ["management", "finance", "director", "lead", "coordinator"]; // team members see the project code only
 export const PAY_FLAG_ROLES = ["management", "finance", "director", "lead", "coordinator"]; // team members do not see the payment flag
+// roles whose access to a project ends when the project is closed (its close-out milestone is done)
+export const CLOSES_ACCESS = ["member", "coordinator"];
 export const PAYMENT_STATUSES = ["not_cleared", "cleared", "balance_due", "paid"];
 export const HEALTH = ["green", "amber", "red"];
 
@@ -197,7 +199,11 @@ export async function handleHub(req, store, env = {}) {
     return out(403, { error: "You do not have access to this" });
   };
   const needMgmt = async (what) => (user.role === "management" ? null : deny(what));
-  const memberIds = new Set(await store.projectIdsForUser(user.id));
+  let memberIds = new Set(await store.projectIdsForUser(user.id));
+  if (CLOSES_ACCESS.includes(user.role) && memberIds.size > 0) {
+    const closed = new Set(await store.closedProjectIds());
+    memberIds = new Set([...memberIds].filter((id) => !closed.has(id)));
+  }
   const clearanceOf = async (pid) => {
     const rows = await store.listClearance(pid);
     const items = CLEARANCE_ITEMS.map((c) => {
@@ -269,7 +275,15 @@ export async function handleHub(req, store, env = {}) {
   if (action === "people" && method === "GET") {
     if (user.role !== "management" && user.role !== "lead") return deny("list people");
     const all = await store.listUsers();
-    return out(200, { people: all.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name, role: u.role })) });
+    const profiles = await store.listDirectory();
+    const counts = await store.countActiveMemberships();
+    return out(200, {
+      people: all.filter((u) => u.active).map((u) => {
+        const max = profiles.find((p) => p.user_id === u.id)?.max_projects ?? 2;
+        const active = counts.find((c) => c.user_id === u.id)?.n ?? 0;
+        return { id: u.id, name: u.name, role: u.role, spare: max - active };
+      }),
+    });
   }
 
   // ---- projects ----
@@ -613,7 +627,8 @@ export async function handleHub(req, store, env = {}) {
 
   // ---- the log ----
   if (action === "access-log" && method === "GET") {
-    const denied = await needMgmt("read access log");
+    const leadOwn = user.role === "lead" && req.query?.project && memberIds.has(Number(req.query.project));
+    const denied = leadOwn ? null : await needMgmt("read access log");
     if (denied) return denied;
     const rows = await store.listLog(req.query?.project ? 500 : 200);
     const pid = Number(req.query?.project);

@@ -6,7 +6,7 @@ import { Avatar, Pill } from "./bits";
 // "People and access" tab: who is on the project, what each role can see, and (for management) the project's access log
 
 export type Member = { user_id: number; name: string; role: string; project_role: string; added: string | null };
-export type Person = { id: number; name: string; role: string };
+export type Person = { id: number; name: string; role: string; spare?: number };
 
 const CAN: Record<string, string> = {
   management: "Everything",
@@ -30,7 +30,7 @@ const MATRIX: [string, Cell[]][] = [
   ["Edit stage, health and dates", [N, ["This project", "part"], N, N, N, Y]],
   ["Add or remove people", [N, ["This project", "part"], N, N, N, Y]],
   ["Other projects", [N, N, N, ["Own unit", "part"], ["All", "yes"], ["All", "yes"]]],
-  ["Access log", [N, N, N, N, N, ["All", "yes"]]],
+  ["Access log", [N, ["This project", "part"], N, N, N, ["All", "yes"]]],
 ];
 const CELL_STYLE = { yes: "bg-lime text-plum", no: "bg-gray-200 text-gray-600", part: "bg-blue-100 text-blue-800" };
 const PROJECT_ROLES = ["Supporting researcher", "Quality reviewer", "Project coordinator"];
@@ -94,19 +94,25 @@ const ProjectAccess = ({
       <div className="lg:col-span-2 space-y-5">
         <Card title="People on this project">
           {members.length === 0 && <p className="text-sm text-muted">Nobody is on this project yet.</p>}
-          <ul className="divide-y divide-gray-100">
-            {members.map((m) => (
-              <li key={m.user_id} className="py-3 flex items-center gap-3 text-sm">
-                <Avatar name={m.name} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-plum font-medium">{m.name}</div>
-                  <div className="text-xs text-muted">{m.project_role || ROLE_LABEL[m.role]} · {CAN[m.role] ?? "View"}{m.added ? ` · added ${m.added}` : ""}</div>
-                </div>
-                {canManage && <Btn variant="ghost" onClick={() => change("member-remove", m.user_id)}>Remove</Btn>}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 rounded-2xl bg-blue-50 text-blue-800 text-xs p-3">Only the project lead and management can add or remove people. Anyone added sees what this project shows to their role.</p>
+          {members.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Person</th><th className="py-2 pr-3 font-bold">Role here</th><th className="py-2 pr-3 font-bold">Can</th><th className="py-2 pr-3 font-bold">Added</th><th className="py-2"></th></tr></thead>
+                <tbody className="divide-y divide-gray-100">
+                  {members.map((m) => (
+                    <tr key={m.user_id}>
+                      <td className="py-2.5 pr-3"><span className="inline-flex items-center gap-2"><Avatar name={m.name} /><b className="text-plum font-medium">{m.name}</b></span></td>
+                      <td className="py-2.5 pr-3 first-letter:uppercase">{m.project_role || ROLE_LABEL[m.role]}</td>
+                      <td className="py-2.5 pr-3 text-muted">{CAN[m.role] ?? "View"}</td>
+                      <td className="py-2.5 pr-3 text-muted whitespace-nowrap">{m.added ? new Date(`${m.added}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—"}</td>
+                      <td className="py-2.5 text-right">{canManage && <Btn variant="ghost" onClick={() => change("member-remove", m.user_id)}>Remove</Btn>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="mt-3 rounded-2xl bg-blue-50 text-blue-800 text-xs p-3">Only the project lead and management can add or remove people. Access ends automatically for team members and coordinators when the project is closed (its close-out milestone is done). Anyone added sees what this project shows to their role.</p>
         </Card>
 
         {canManage && (
@@ -115,7 +121,7 @@ const ProjectAccess = ({
               <Field label="Person">
                 <select className={smallInput} value={pick} onChange={(e) => setPick(e.target.value)}>
                   <option value="">Choose…</option>
-                  {people.filter((p) => !onProject.has(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name} ({ROLE_LABEL[p.role]})</option>)}
+                  {people.filter((p) => !onProject.has(p.id)).map((p) => <option key={p.id} value={p.id}>{p.name} ({ROLE_LABEL[p.role]}{p.spare === undefined ? "" : p.spare > 0 ? `, ${p.spare} ${p.spare === 1 ? "slot" : "slots"} free` : ", full"})</option>)}
                 </select>
               </Field>
               <Field label="Role on this project">
@@ -128,7 +134,7 @@ const ProjectAccess = ({
             </div>
           </Card>
         )}
-        {isManagement && <ProjectLog id={projectId} />}
+        {(isManagement || canManage) && <ProjectLog id={projectId} />}
       </div>
 
       <div className="lg:col-span-3 space-y-5">
