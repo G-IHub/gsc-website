@@ -23,6 +23,7 @@ const N: Cell = ["No", "no"];
 // Columns: Team member, Lead, Coordinator, Director, Finance, Management. These mirror the rules in api/_hub_core.js.
 const MATRIX: [string, Cell[]][] = [
   ["Stage, health and dates", [Y, Y, Y, Y, Y, Y]],
+  ["Files, discussion and tasks", [Y, Y, Y, N, N, Y]],
   ["Client name and contact", [["Code only", "part"], Y, Y, Y, Y, Y]],
   ["Payment status flag", [N, ["Flag only", "part"], ["Flag only", "part"], ["Flag only", "part"], ["Yes, sets it", "yes"], ["Yes, sets it", "yes"]]],
   ["Fee, payments, budget and margin", [N, N, N, N, Y, Y]],

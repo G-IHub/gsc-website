@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { handleWorkspace } from "./_hub_workspace.js";
 import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
@@ -578,7 +579,7 @@ export async function handleHub(req, store, env = {}) {
     } else {
       await store.removeMember(p.id, target.id);
     }
-    await store.log({ user_id: user.id, event: action === "member-add" ? "member_added" : "member_removed", detail: { project: p.id, target: target.id } });
+    await store.log({ user_id: user.id, event: action === "member-add" ? "member_added" : "member_removed", detail: { project: p.id, target: target.id, name: target.name } });
     return out(200, { ok: true });
   }
 
@@ -615,6 +616,9 @@ export async function handleHub(req, store, env = {}) {
     const pid = Number(req.query?.project);
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
+
+  const w = await handleWorkspace({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str, isoDate });
+  if (w) return w;
 
   return out(404, { error: "Unknown action" });
 }
