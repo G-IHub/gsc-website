@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /hub
 Disallow: /api/
 
 Sitemap: https://www.genomacsc.com/sitemap.xml

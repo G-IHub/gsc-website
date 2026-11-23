@@ -221,6 +221,13 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { ok: true });
   }
 
+  // Names only (no emails), so a lead can pick someone to add to their project
+  if (action === "people" && method === "GET") {
+    if (user.role !== "management" && user.role !== "lead") return deny("list people");
+    const all = await store.listUsers();
+    return out(200, { people: all.filter((u) => u.active).map((u) => ({ id: u.id, name: u.name, role: u.role })) });
+  }
+
   // ---- projects ----
   if (action === "projects" && method === "GET") {
     const canClient = CLIENT_ROLES.includes(user.role);
@@ -260,7 +267,10 @@ export async function handleHub(req, store, env = {}) {
     const p = await projectOr404(body.id);
     if (!p) return out(404, { error: "Not found" });
     const mayEdit = user.role === "management" || (user.role === "lead" && memberIds.has(p.id));
-    if (!mayEdit) return deny("update project", { project: p.id });
+    const mayPay = MONEY_ROLES.includes(user.role); // finance may set the payment flag only
+    const editsDetails = ["stage", "health", "target_date"].some((k) => body[k] !== undefined);
+    if (editsDetails && !mayEdit) return deny("update project", { project: p.id });
+    if (!editsDetails && !mayPay && !mayEdit) return deny("update project", { project: p.id });
     const patch = {};
     if (body.stage !== undefined) patch.stage = str(body.stage, 120);
     if (body.health !== undefined) {
@@ -270,7 +280,7 @@ export async function handleHub(req, store, env = {}) {
     if (body.target_date !== undefined) patch.target_date = isoDate(body.target_date);
     if (body.payment_status !== undefined) {
       // Only money roles set the payment flag
-      if (!MONEY_ROLES.includes(user.role)) return deny("set payment status", { project: p.id });
+      if (!mayPay) return deny("set payment status", { project: p.id });
       if (!PAYMENT_STATUSES.includes(body.payment_status)) return out(400, { error: "Bad payment status" });
       patch.payment_status = body.payment_status;
     }

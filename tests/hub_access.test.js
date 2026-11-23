@@ -177,6 +177,17 @@ test("LEAD: sees client on their project, manages its people, never money", asyn
   assert.equal((await post("lead", "user-create", { email: "a@b.co", name: "A", role: "member" })).status, 403);
 });
 
+test("people picker: management and leads get names only; others are refused", async () => {
+  for (const who of ["mgmt", "lead"]) {
+    const r = await get(who, "people");
+    assert.equal(r.status, 200, who);
+    assert.ok(r.body.people.length >= 5);
+    assert.ok(!/example\.org|scrypt|password/.test(JSON.stringify(r.body)), "email or hash leaked");
+    assert.ok(!r.body.people.some((p) => p.name === "gone")); // inactive people are not offered
+  }
+  for (const who of ["memE", "fin", "dir", "coord"]) assert.equal((await get(who, "people")).status, 403, who);
+});
+
 test("COORDINATOR: sees only their project; cannot manage people or money", async () => {
   assert.deepEqual((await get("coord", "projects")).body.projects.map((p) => p.ref), ["GH-P1"]);
   assert.equal((await get("coord", "money", { id: proj.P1 })).status, 403);
@@ -189,7 +200,10 @@ test("FINANCE: all projects and all money, sets the payment flag, cannot manage 
   assert.equal(m.body.money.fee, FEE.P1);
   assert.equal((await post("fin", "money-set", { project_id: proj.P1, fee: 1000000, paid: 500000 })).status, 200);
   assert.equal((await get("fin", "money", { id: proj.P1 })).body.money.paid, 500000);
-  assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "balance_due" })).status, 403); // finance is not a project editor
+  assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "balance_due" })).status, 200); // the flag only
+  assert.equal((await post("fin", "project-update", { id: proj.P1, health: "red" })).status, 403); // not a project editor
+  assert.equal((await post("fin", "project-update", { id: proj.P1, payment_status: "cleared", stage: "x" })).status, 403);
+  assert.equal((await post("memE", "project-update", { id: proj.P1, payment_status: "paid" })).status, 403);
   assert.equal((await post("fin", "user-create", { email: "a@b.co", name: "A", role: "member" })).status, 403);
   assert.equal((await get("fin", "users")).status, 403);
   assert.equal((await post("fin", "money-set", { project_id: proj.P1, fee: -5, paid: 0 })).status, 400);
