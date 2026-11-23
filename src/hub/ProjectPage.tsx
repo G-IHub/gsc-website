@@ -5,6 +5,7 @@ import { HEALTH_LABEL, HEALTH_STYLE, PAY_LABEL, PAY_STYLE, Pill, ViewingAs, days
 import ProjectAccess, { type Member, type Person } from "./ProjectAccess";
 import { MoneyCard } from "./Projects";
 import Milestones, { progressOf, type Milestone } from "./Milestones";
+import Updates from "./Updates";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
@@ -149,6 +150,7 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
                 </Card>
               )}
               {d.canSeeMoney && <MoneyCard id={p.id} canEdit={moneyRole} />}
+              <Updates projectId={p.id} onChanged={load} />
               {!d.canSeeMoney && <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-4 text-xs text-muted">Fees, payments, budget and margin are visible to Finance and management only.</div>}
             </div>
           </div>
