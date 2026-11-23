@@ -265,6 +265,8 @@ export const makeStore = (sql) => ({
   // a project is closed when its close-out milestone (14) is done
   closedProjectIds: async () =>
     (await sql.query(`SELECT project_id::int AS id FROM hub_milestones WHERE n = 14 AND status = 'done'`)).map((r) => r.id),
+  projectRolesForUser: async (uid) =>
+    sql.query(`SELECT project_id::int AS id, project_role FROM hub_members WHERE user_id = $1`, [uid]),
   projectIdsForUser: async (uid) => (await sql.query(`SELECT project_id::int AS id FROM hub_members WHERE user_id = $1`, [uid])).map((r) => r.id),
   listMembers: async (pid) =>
     sql.query(
@@ -607,7 +609,7 @@ export const makeStore = (sql) => ({
   },
   listLog: async (limit) =>
     sql.query(
-      `SELECT l.id::int AS id, l.at, l.event, l.detail, u.name AS who
+      `SELECT l.id::int AS id, l.at, l.event, l.detail, u.name AS who, l.user_id::int AS user_id
        FROM hub_access_log l LEFT JOIN hub_users u ON u.id = l.user_id ORDER BY l.id DESC LIMIT ${Math.min(Number(limit) || 100, 500)}`,
     ),
 });

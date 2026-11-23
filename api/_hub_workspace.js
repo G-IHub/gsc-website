@@ -8,10 +8,11 @@ export const FOLDERS = ["Protocol", "Data lists", "Analysis", "Figures", "Drafts
 export const FILE_KINDS = ["Word", "Excel", "PDF", "Notebook", "Zip", "Link", "Other"];
 export const FILE_STATUSES = ["in_progress", "final"];
 const HTTPS = /^https:\/\/\S+$/i;
+const NEWS_EVENTS = ["file_added", "file_version", "comment_added", "update_added", "task_added"];
 const WORKSPACE_EVENTS = ["file_added", "file_version", "file_opened", "comment_added", "task_added", "task_done", "member_added", "member_removed"];
 
 export async function handleWorkspace({ action, method, body, query, user, store, memberIds, projectOr404, deny, out, str, isoDate }) {
-  const ws = ["files", "file-add", "file-version", "file-editing", "file-status", "file-open", "comments", "comment-add", "comment-delete",
+  const ws = ["my-news", "files", "file-add", "file-version", "file-editing", "file-status", "file-open", "comments", "comment-add", "comment-delete",
     "tasks", "task-add", "task-done", "task-delete", "activity", "my-tasks"];
   if (!ws.includes(action)) return null;
 
@@ -19,6 +20,14 @@ export async function handleWorkspace({ action, method, body, query, user, store
   if (action === "my-tasks" && method === "GET") {
     const rows = await store.listMyTasks(user.id);
     return out(200, { tasks: rows.filter((t) => user.role === "management" || memberIds.has(t.project_id)) });
+  }
+
+  if (action === "my-news" && method === "GET") {
+    const since = Date.now() - 14 * 86400000;
+    const refs = new Map((await store.listProjects()).map((p) => [p.id, p.ref]));
+    const rows = (await store.listLog(500)).filter((l) =>
+      NEWS_EVENTS.includes(l.event) && memberIds.has(Number(l.detail?.project)) && l.user_id !== user.id && new Date(l.at).getTime() >= since);
+    return out(200, { news: rows.slice(0, 10).map((l) => ({ id: l.id, at: l.at, who: l.who || "", event: l.event, name: l.detail?.name || "", version: l.detail?.version || null, project_id: Number(l.detail.project), ref: refs.get(Number(l.detail.project)) || "" })) });
   }
 
   const pid = method === "GET" ? query?.id : body.project_id;

@@ -14,6 +14,7 @@ export type Project = {
   target_date: string | null;
   last_update: string | null;
   lead: string | null;
+  my_role?: string | null;
   client?: { name: string; contact: string };
 };
 export type Me = { user: HubUser; canSeeMoney: boolean };

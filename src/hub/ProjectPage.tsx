@@ -14,14 +14,14 @@ import Workspace from "./Workspace";
 // One project: header, tabs (Overview, Workspace, People and access)
 
 type Detail = { project: Project; members: Member[]; canSeeMoney: boolean; canManageMembers: boolean };
-type Tab = "overview" | "workspace" | "access";
+export type Tab = "overview" | "workspace" | "access";
 
 const Label = ({ children }: { children: string }) => <p className="text-xs uppercase tracking-widest text-muted font-bold">{children}</p>;
 
-const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHome: () => void; onProjects: () => void }) => {
+const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { id: number; me: Me; onHome: () => void; onProjects: () => void; initialTab?: Tab }) => {
   const [d, setD] = useState<Detail | null>(null);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [people, setPeople] = useState<Person[]>([]);
   const [miles, setMiles] = useState<Milestone[]>([]);
   const [edit, setEdit] = useState({ stage: "", health: "green", target_date: "" });
