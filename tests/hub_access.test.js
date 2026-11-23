@@ -124,6 +124,7 @@ test("TEAM MEMBER: sees only their own projects, no client, no money, no admin a
   const list = await get("memE", "projects");
   assert.deepEqual(list.body.projects.map((p) => p.ref).sort(), ["GH-P1", "GH-P2"]);
   assert.ok(list.body.projects.every((p) => !("client" in p)));
+  assert.ok(list.body.projects.every((p) => !("payment_status" in p)), "a team member saw the payment flag");
   noAmounts(list);
   assert.ok(!JSON.stringify(list.body).includes("Client of"));
   assert.ok(!JSON.stringify(list.body).includes("client.example"));
@@ -133,6 +134,8 @@ test("TEAM MEMBER: sees only their own projects, no client, no money, no admin a
   noAmounts(one);
   assert.equal(one.body.canManageMembers, false);
   assert.equal(one.body.canSeeMoney, false);
+  assert.ok(!("payment_status" in one.body.project));
+  assert.match(one.body.members[0].added, /^\d{4}-\d{2}-\d{2}$/);
 
   assert.equal((await get("memE", "project", { id: proj.P3 })).status, 404); // not theirs
   assert.equal((await get("memE", "money", { id: proj.P1 })).status, 403);
@@ -160,6 +163,7 @@ test("LEAD: sees client on their project, manages its people, never money", asyn
   assert.deepEqual(list.body.projects.map((p) => p.ref), ["GH-P1"]);
   assert.equal(list.body.projects[0].client.name, "Client of P1");
   noAmounts(list);
+  assert.ok(["not_cleared", "cleared", "balance_due", "paid"].includes(list.body.projects[0].payment_status)); // leads see the flag
   const one = await get("lead", "project", { id: proj.P1 });
   assert.equal(one.body.canManageMembers, true);
   noAmounts(one);
@@ -267,4 +271,14 @@ test("the access log records refusals, money reads and people changes, and only 
   assert.ok(money.who && money.detail.project);
   assert.ok(!JSON.stringify(log).includes("scrypt"));
   assert.equal((await get("fin", "access-log")).status, 403);
+});
+
+test("access log can be filtered to one project (management only)", async () => {
+  await get("mgmt", "money", { id: proj.P1 });
+  await get("mgmt", "money", { id: proj.P2 });
+  const r = await call("mgmt", "GET", "access-log", { query: { project: String(proj.P1) } });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.log.length > 0);
+  assert.ok(r.body.log.every((l) => Number(l.detail.project) === proj.P1), "an entry from another project came back");
+  assert.equal((await call("lead", "GET", "access-log", { query: { project: String(proj.P1) } })).status, 403);
 });

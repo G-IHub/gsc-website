@@ -41,6 +41,7 @@ export const HUB_SCHEMA = [
      project_role TEXT NOT NULL DEFAULT '',
      PRIMARY KEY (project_id, user_id)
    )`,
+  `ALTER TABLE hub_members ADD COLUMN IF NOT EXISTS added_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -124,7 +125,7 @@ export const makeStore = (sql) => ({
   projectIdsForUser: async (uid) => (await sql.query(`SELECT project_id::int AS id FROM hub_members WHERE user_id = $1`, [uid])).map((r) => r.id),
   listMembers: async (pid) =>
     sql.query(
-      `SELECT m.user_id::int AS user_id, u.name, u.role, m.project_role
+      `SELECT m.user_id::int AS user_id, u.name, u.role, m.project_role, to_char(m.added_at, 'YYYY-MM-DD') AS added
        FROM hub_members m JOIN hub_users u ON u.id = m.user_id WHERE m.project_id = $1 ORDER BY u.name`,
       [pid],
     ),

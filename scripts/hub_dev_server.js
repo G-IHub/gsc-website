@@ -40,6 +40,10 @@ for (const [ref, title, unit, stage, fee] of projects) {
   await store.setClient(p.id, { name: `Sample client for ${ref}`, contact: "client@example.com" });
   await store.setMoney(p.id, { fee, paid: fee / 2, currency: "NGN" });
 }
+// a few states so Home has something to show
+await store.updateProject(pid["GH-001"], { health: "red", target_date: "2026-11-20", payment_status: "cleared" });
+await store.updateProject(pid["GH-002"], { health: "amber", target_date: "2026-11-28", payment_status: "balance_due" });
+await store.updateProject(pid["GH-003"], { payment_status: "cleared" });
 await store.addMember(pid["GH-002"], id["leadb@example.org"], "lead");
 await store.addMember(pid["GH-002"], id["researchere@example.org"], "supporting");
 await store.addMember(pid["GH-003"], id["researchere@example.org"], "supporting");
