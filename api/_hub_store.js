@@ -74,6 +74,14 @@ export const HUB_SCHEMA = [
      blockers TEXT NOT NULL DEFAULT '',
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_clearance (
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     key TEXT NOT NULL,
+     done BOOLEAN NOT NULL DEFAULT false,
+     by_user BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     at TIMESTAMPTZ,
+     PRIMARY KEY (project_id, key)
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -259,6 +267,21 @@ export const makeStore = (sql) => ({
     (await sql.query(`SELECT id::int AS id, project_id::int AS project_id, author_id::int AS author_id FROM hub_updates WHERE id = $1`, [id]))[0] ?? null,
   deleteUpdate: async (id) => {
     await sql.query(`DELETE FROM hub_updates WHERE id = $1`, [id]);
+  },
+
+  // financial clearance checklist (only ticked items are stored)
+  listClearance: async (pid) =>
+    sql.query(
+      `SELECT c.key, c.done, u.name AS by_name, to_char(c.at, 'YYYY-MM-DD') AS at
+       FROM hub_clearance c LEFT JOIN hub_users u ON u.id = c.by_user WHERE c.project_id = $1`,
+      [pid],
+    ),
+  setClearance: async (pid, key, done, uid) => {
+    await sql.query(
+      `INSERT INTO hub_clearance (project_id, key, done, by_user, at) VALUES ($1,$2,$3,$4, now())
+       ON CONFLICT (project_id, key) DO UPDATE SET done = EXCLUDED.done, by_user = EXCLUDED.by_user, at = now()`,
+      [pid, key, done, uid],
+    );
   },
 
   // log

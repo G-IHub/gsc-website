@@ -20,6 +20,8 @@ const LABEL: Record<string, string> = {
   milestone_updated: "Updated a milestone",
   update_added: "Added a weekly update",
   update_deleted: "Removed a weekly update",
+  clearance_set: "Changed a clearance check",
+  clearance_reverted: "Project put back to not cleared",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };

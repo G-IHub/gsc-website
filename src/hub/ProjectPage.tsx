@@ -6,6 +6,7 @@ import ProjectAccess, { type Member, type Person } from "./ProjectAccess";
 import { MoneyCard } from "./Projects";
 import Milestones, { progressOf, type Milestone } from "./Milestones";
 import Updates from "./Updates";
+import Clearance from "./Clearance";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
@@ -141,9 +142,10 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
               {!p.client && <p className="text-xs text-muted">Client details are hidden for your role. Use the project code.</p>}
             </div>
             <div className="space-y-5">
+              {moneyRole && <Clearance projectId={p.id} onChanged={load} />}
               {moneyRole && (
                 <Card title="Payment status flag">
-                  <p className="text-sm text-muted mb-3">This is the flag the project team sees. Amounts stay in the card below.</p>
+                  <p className="text-sm text-muted mb-3">This is the flag the project team sees. It can move past "Not cleared" only when every clearance check is ticked.</p>
                   <select className={`${smallInput} max-w-xs`} value={p.payment_status} onChange={(e) => update({ payment_status: e.target.value }, "Payment status updated.")}>
                     {Object.entries(PAY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>

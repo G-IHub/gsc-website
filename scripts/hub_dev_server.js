@@ -44,6 +44,10 @@ for (const [ref, title, unit, stage, fee] of projects) {
 await store.updateProject(pid["GH-001"], { health: "red", target_date: "2026-11-20", payment_status: "cleared" });
 await store.updateProject(pid["GH-002"], { health: "amber", target_date: "2026-11-28", payment_status: "balance_due" });
 await store.updateProject(pid["GH-003"], { payment_status: "cleared" });
+// those three are past clearance, so their checklists are complete too
+for (const ref of ["GH-001", "GH-002", "GH-003"]) {
+  for (const key of ["budget", "min_fee", "sheet_fee", "funds", "feasibility"]) await store.setClearance(pid[ref], key, true, id["finance@example.org"]);
+}
 await store.addMember(pid["GH-002"], id["leadb@example.org"], "lead");
 await store.addMember(pid["GH-002"], id["researchere@example.org"], "supporting");
 await store.addMember(pid["GH-003"], id["researchere@example.org"], "supporting");
