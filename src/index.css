@@ -250,5 +250,5 @@ h2 {
 .hub-root section.rounded-3xl { padding: 16px 18px; }
 .hub-root .p-5 { padding: 14px 16px; }
 .hub-root aside { font-size: 13px; }
-.hub-root aside nav button, .hub-root aside nav > span { padding: 8px 10px; font-size: 13px; }
+.hub-root aside nav button, .hub-root aside nav > span[title] { padding: 8px 10px; font-size: 13px; }
 .hub-root h1 { letter-spacing: -0.01em; }

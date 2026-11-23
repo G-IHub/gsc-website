@@ -119,6 +119,7 @@ const shapeProject = (p, user, canClient, client) => ({
   ...(PAY_FLAG_ROLES.includes(user.role) ? { payment_status: p.payment_status } : {}),
   target_date: p.target_date || null,
   last_update: p.last_update || null,
+  lead: p.lead_name || null,
   ...(canClient ? { client: client || { name: "", contact: "" } } : {}),
 });
 

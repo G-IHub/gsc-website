@@ -13,6 +13,7 @@ export type Project = {
   payment_status: "not_cleared" | "cleared" | "balance_due" | "paid";
   target_date: string | null;
   last_update: string | null;
+  lead: string | null;
   client?: { name: string; contact: string };
 };
 export type Me = { user: HubUser; canSeeMoney: boolean };

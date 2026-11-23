@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 
+type KpiLite = { key: string; name: string; value: string; progress: number; status: string };
+type Lite = { kpis: KpiLite[]; met: number; monthReceived?: number };
+const REPORT_ROLES = ["management", "finance", "director", "lead"];
+
 type MyTask = { id: number; project_id: number; ref: string; text: string; due: string | null; milestone: number | null };
 import { Card } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
@@ -79,7 +83,13 @@ const MemberHome = ({ me, projects, onOpen }: { me: Me; projects: Project[]; onO
   );
 };
 
-const Portfolio = ({ me, projects, onOpen, onAll }: { me: Me; projects: Project[]; onOpen: (id: number) => void; onAll: () => void }) => {
+const Portfolio = ({ me, projects, onOpen, onAll, onReports }: { me: Me; projects: Project[]; onOpen: (id: number) => void; onAll: () => void; onReports: () => void }) => {
+  const [lite, setLite] = useState<Lite | null>(null);
+  useEffect(() => {
+    if (!REPORT_ROLES.includes(me.user.role)) return;
+    hub<Lite>("reports-summary", { query: { light: "1" } }).then((r) => r.ok && r.data && setLite(r.data));
+  }, [me.user.role]);
+  const money = me.user.role === "management" || me.user.role === "finance";
   const attention = attentionFor(projects);
   const soon = projects.filter((p) => {
     const d = daysLeft(p.target_date);
@@ -98,7 +108,11 @@ const Portfolio = ({ me, projects, onOpen, onAll }: { me: Me; projects: Project[
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Active projects" value={projects.length} note={counts} />
         <StatTile label="Needs attention" value={attention.length} note="Late, due soon, payment, clearance" />
-        <StatTile label="Due within 14 days" value={soon} />
+        {money ? (
+          <StatTile label="Revenue received this month" value={lite?.monthReceived !== undefined ? `₦${lite.monthReceived.toLocaleString()}` : "…"} note="From the payment schedules" />
+        ) : (
+          <StatTile label="Due within 14 days" value={soon} />
+        )}
         <StatTile label="Balance due" value={projects.filter((p) => p.payment_status === "balance_due").length} note="Projects waiting for the final payment" />
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
@@ -109,12 +123,13 @@ const Portfolio = ({ me, projects, onOpen, onAll }: { me: Me; projects: Project[
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Code</th><th className="py-2 pr-3 font-bold">Project</th><th className="py-2 pr-3 font-bold">Stage</th><th className="py-2 pr-3 font-bold">Target</th><th className="py-2 font-bold">Health</th></tr></thead>
+                  <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Code</th><th className="py-2 pr-3 font-bold">Project</th><th className="py-2 pr-3 font-bold">Lead</th><th className="py-2 pr-3 font-bold">Stage</th><th className="py-2 pr-3 font-bold">Target</th><th className="py-2 font-bold">Health</th></tr></thead>
                   <tbody className="divide-y divide-gray-100">
                     {projects.map((p) => (
                       <tr key={p.id} className="hover:bg-mist cursor-pointer" onClick={() => onOpen(p.id)}>
-                        <td className="py-3 pr-3"><button className="text-magenta-dark font-medium hover:underline" onClick={() => onOpen(p.id)}>{p.ref}</button></td>
+                        <td className="py-3 pr-3 whitespace-nowrap"><button className="text-magenta-dark font-medium hover:underline" onClick={() => onOpen(p.id)}>{p.ref}</button></td>
                         <td className="py-3 pr-3 text-plum">{p.title}</td>
+                        <td className="py-3 pr-3 whitespace-nowrap">{p.lead ?? <span className="text-muted">—</span>}</td>
                         <td className="py-3 pr-3 text-muted">{p.stage || "—"}</td>
                         <td className="py-3 pr-3 whitespace-nowrap">{p.target_date ?? "—"}<span className="block text-xs text-muted">{daysText(daysLeft(p.target_date))}</span></td>
                         <td className="py-3"><Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill></td>
@@ -126,6 +141,7 @@ const Portfolio = ({ me, projects, onOpen, onAll }: { me: Me; projects: Project[
             )}
           </Card>
         </div>
+        <div className="space-y-5">
         <Card title="Needs attention this week">
           {attention.length === 0 && <p className="text-sm text-muted">Nothing needs attention right now.</p>}
           <ul className="divide-y divide-gray-100">
@@ -137,12 +153,26 @@ const Portfolio = ({ me, projects, onOpen, onAll }: { me: Me; projects: Project[
             ))}
           </ul>
         </Card>
+        {lite && (
+          <Card title={`30-day KPIs: ${lite.met} of ${lite.kpis.length} met`}>
+            <ul className="space-y-3">
+              {[...lite.kpis].sort((a, b) => Number(a.value === "Not entered") - Number(b.value === "Not entered")).slice(0, 5).map((k) => (
+                <li key={k.key} className="text-sm">
+                  <div className="flex justify-between gap-2"><span>{k.name}</span><span className="text-muted whitespace-nowrap">{k.value}</span></div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
+                </li>
+              ))}
+            </ul>
+            <button className="mt-4 inline-flex rounded-full bg-magenta hover:bg-magenta-dark text-white px-4 py-2 text-sm font-medium" onClick={onReports}>Open reports and KPIs</button>
+          </Card>
+        )}
+        </div>
       </div>
     </div>
   );
 };
 
-const Home = ({ me, onOpen, onAll }: { me: Me; onOpen: (id: number) => void; onAll: () => void }) => {
+const Home = ({ me, onOpen, onAll, onReports }: { me: Me; onOpen: (id: number) => void; onAll: () => void; onReports: () => void }) => {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -153,7 +183,7 @@ const Home = ({ me, onOpen, onAll }: { me: Me; onOpen: (id: number) => void; onA
   }, []);
   if (error) return <p className="text-red-600">{error}</p>;
   if (!projects) return <p className="text-muted">Loading…</p>;
-  return me.user.role === "member" ? <MemberHome me={me} projects={projects} onOpen={onOpen} /> : <Portfolio me={me} projects={projects} onOpen={onOpen} onAll={onAll} />;
+  return me.user.role === "member" ? <MemberHome me={me} projects={projects} onOpen={onOpen} /> : <Portfolio me={me} projects={projects} onOpen={onOpen} onAll={onAll} onReports={onReports} />;
 };
 
 export default Home;

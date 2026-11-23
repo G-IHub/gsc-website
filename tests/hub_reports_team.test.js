@@ -89,6 +89,21 @@ test("revenue only for Finance and management, from received payments", async ()
   }
 });
 
+test("light summary for Home: KPIs only; money roles get this month's total; nothing logged", async () => {
+  const before = (await get("mgmt", "access-log")).body.log.filter((l) => l.event === "money_read").length;
+  const f = (await get("fin", "reports-summary", { light: "1" })).body;
+  assert.equal(f.kpis.length, 11);
+  assert.ok(!("revenue" in f));
+  assert.equal(f.monthReceived, 20000);
+  const l = (await get("lead", "reports-summary", { light: "1" })).body;
+  assert.ok(!("revenue" in l) && !("monthReceived" in l));
+  assert.ok(!/20000/.test(JSON.stringify(l)));
+  const after = (await get("mgmt", "access-log")).body.log.filter((x) => x.event === "money_read").length;
+  assert.equal(after, before);
+  // projects now carry the lead's name
+  assert.equal((await get("mgmt", "projects")).body.projects.find((p) => p.ref === "GH-1").lead, "lead");
+});
+
 test("manual KPIs: management only, and auto KPIs cannot be overwritten", async () => {
   assert.equal((await post("fin", "kpi-set", { key: "templates", value: "100%", progress: 100, status: "met" })).status, 403);
   assert.equal((await post("lead", "kpi-set", { key: "templates", value: "100%", progress: 100, status: "met" })).status, 403);
