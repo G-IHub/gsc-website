@@ -150,6 +150,34 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { ok: true, user: publicUser(user) }, makeCookie(user.id, secret));
   }
 
+  // ---- one-time first-account setup ----
+  // Works only while the hub has NO accounts at all, and only when HUB_SETUP_KEY (24+ characters) is set on the server.
+  // Remove the key after use. With no key set this answers exactly like an unknown action.
+  if (action === "setup" && method === "POST") {
+    const setupKey = String(env.HUB_SETUP_KEY ?? "");
+    if (setupKey.length < 24) return out(404, { error: "Unknown action" });
+    const f = await store.countFailures(ip, "setup");
+    if (f.ip >= MAX_FAILURES_IP || f.email >= MAX_FAILURES_EMAIL) return out(429, { error: "Too many attempts. Try again in 15 minutes." });
+    const given = crypto.createHash("sha256").update(String(body.key ?? "")).digest();
+    const want = crypto.createHash("sha256").update(setupKey).digest();
+    if (!crypto.timingSafeEqual(given, want)) {
+      await store.addFailure(ip, "setup");
+      await store.log({ user_id: null, event: "setup_refused", detail: { ip } });
+      return out(403, { error: "Not allowed" });
+    }
+    const email = str(body.email, 200).toLowerCase();
+    const name = str(body.name, 120);
+    if (!isEmail(email) || !name) return out(400, { error: "A name and a valid email are needed" });
+    if ((await store.listUsers()).length > 0) {
+      await store.log({ user_id: null, event: "setup_refused", detail: { ip, why: "accounts exist" } });
+      return out(403, { error: "Not allowed" });
+    }
+    const temp = newTempPassword();
+    const created = await store.createUser({ email, name, role: "management", unit: "", password_hash: hashPassword(temp) });
+    await store.log({ user_id: created.id, event: "setup_done", detail: { ip } });
+    return out(200, { user: publicUser(created), tempPassword: temp }); // shown once
+  }
+
   if (action === "logout" && method === "POST") return out(200, { ok: true }, clearCookie());
 
   // ---- everything below needs a valid session and a still-active account ----
