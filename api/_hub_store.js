@@ -141,6 +141,41 @@ export const HUB_SCHEMA = [
      created_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_reports (
+     id BIGSERIAL PRIMARY KEY,
+     week_ending DATE NOT NULL,
+     workstream TEXT NOT NULL,
+     status TEXT NOT NULL,
+     done TEXT NOT NULL DEFAULT '',
+     deliverables TEXT NOT NULL DEFAULT '',
+     challenges TEXT NOT NULL DEFAULT '',
+     next TEXT NOT NULL DEFAULT '',
+     author_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_kpis (
+     key TEXT PRIMARY KEY,
+     value TEXT NOT NULL DEFAULT '',
+     progress INT NOT NULL DEFAULT 0,
+     status TEXT NOT NULL DEFAULT 'progress',
+     by_user BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_raci (
+     id BIGSERIAL PRIMARY KEY,
+     name TEXT NOT NULL,
+     cells JSONB NOT NULL DEFAULT '[]',
+     sort INT NOT NULL DEFAULT 0
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_directory (
+     user_id BIGINT PRIMARY KEY REFERENCES hub_users(id) ON DELETE CASCADE,
+     skills TEXT NOT NULL DEFAULT '',
+     can_lead BOOLEAN NOT NULL DEFAULT false,
+     can_qa BOOLEAN NOT NULL DEFAULT false,
+     max_projects INT NOT NULL DEFAULT 2,
+     availability TEXT NOT NULL DEFAULT 'available',
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -472,6 +507,79 @@ export const makeStore = (sql) => ({
   deleteTask: async (id) => {
     await sql.query(`DELETE FROM hub_tasks WHERE id = $1`, [id]);
   },
+
+  // weekly workstream reports and manually entered KPIs
+  addReport: async (r) =>
+    (await sql.query(
+      `INSERT INTO hub_reports (week_ending, workstream, status, done, deliverables, challenges, next, author_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id::int AS id`,
+      [r.week_ending, r.workstream, r.status, r.done, r.deliverables, r.challenges, r.next, r.author_id],
+    ))[0].id,
+  listReports: async (week) =>
+    sql.query(
+      `SELECT r.id::int AS id, r.workstream, r.status, r.done, r.deliverables, r.challenges, r.next, u.name AS author,
+              to_char(r.created_at, 'YYYY-MM-DD') AS submitted
+       FROM hub_reports r LEFT JOIN hub_users u ON u.id = r.author_id
+       WHERE r.week_ending = $1 ORDER BY r.created_at DESC, r.id DESC`,
+      [week],
+    ),
+  listReportWeeks: async () =>
+    (await sql.query(`SELECT DISTINCT to_char(week_ending, 'YYYY-MM-DD') AS w FROM hub_reports ORDER BY w DESC LIMIT 12`)).map((r) => r.w),
+  listKpis: async () => sql.query(`SELECT key, value, progress, status, to_char(at, 'YYYY-MM-DD') AS at FROM hub_kpis`),
+  setKpi: async (key, k) => {
+    await sql.query(
+      `INSERT INTO hub_kpis (key, value, progress, status, by_user, at) VALUES ($1,$2,$3,$4,$5, now())
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, progress = EXCLUDED.progress, status = EXCLUDED.status, by_user = EXCLUDED.by_user, at = now()`,
+      [key, k.value, k.progress, k.status, k.by],
+    );
+  },
+
+  // team: responsibilities matrix and the expertise directory
+  listRaci: async () => sql.query(`SELECT id::int AS id, name, cells FROM hub_raci ORDER BY sort, id`),
+  seedRaci: async (rows) => {
+    const [{ n }] = await sql.query(`SELECT count(*)::int AS n FROM hub_raci`);
+    if (n > 0) return;
+    let i = 0;
+    for (const r of rows) await sql.query(`INSERT INTO hub_raci (name, cells, sort) VALUES ($1, $2::jsonb, $3)`, [r.name, JSON.stringify(r.cells), ++i]);
+  },
+  setRaci: async (id, cells, name) => {
+    const rows = await sql.query(
+      `UPDATE hub_raci SET cells = $1::jsonb, name = COALESCE($2, name) WHERE id = $3 RETURNING id`,
+      [JSON.stringify(cells), name ?? null, id],
+    );
+    return rows.length > 0;
+  },
+  addRaci: async (name, cells) =>
+    (await sql.query(
+      `INSERT INTO hub_raci (name, cells, sort) VALUES ($1, $2::jsonb, (SELECT COALESCE(max(sort),0)+1 FROM hub_raci)) RETURNING id::int AS id`,
+      [name, JSON.stringify(cells)],
+    ))[0].id,
+  deleteRaci: async (id) => {
+    await sql.query(`DELETE FROM hub_raci WHERE id = $1`, [id]);
+  },
+  getProfile: async (uid) =>
+    (await sql.query(`SELECT skills, can_lead, can_qa, max_projects, availability FROM hub_directory WHERE user_id = $1`, [uid]))[0] ?? null,
+  setProfile: async (uid, p) => {
+    await sql.query(
+      `INSERT INTO hub_directory (user_id, skills, can_lead, can_qa, max_projects, availability, updated_at) VALUES ($1,$2,$3,$4,$5,$6, now())
+       ON CONFLICT (user_id) DO UPDATE SET skills = EXCLUDED.skills, can_lead = EXCLUDED.can_lead, can_qa = EXCLUDED.can_qa,
+         max_projects = EXCLUDED.max_projects, availability = EXCLUDED.availability, updated_at = now()`,
+      [uid, p.skills, p.can_lead, p.can_qa, p.max_projects, p.availability],
+    );
+  },
+  listDirectory: async () =>
+    sql.query(`SELECT user_id::int AS user_id, skills, can_lead, can_qa, max_projects, availability FROM hub_directory`),
+  countDirectoryProfiles: async () =>
+    (await sql.query(
+      `SELECT count(*)::int AS n FROM hub_directory d JOIN hub_users u ON u.id = d.user_id WHERE u.active AND d.skills <> ''`,
+    ))[0].n,
+  // "active" = on a project whose close-out (milestone 14) is not done
+  countActiveMemberships: async () =>
+    sql.query(
+      `SELECT m.user_id::int AS user_id, count(*)::int AS n FROM hub_members m
+       WHERE NOT EXISTS (SELECT 1 FROM hub_milestones x WHERE x.project_id = m.project_id AND x.n = 14 AND x.status = 'done')
+       GROUP BY m.user_id`,
+    ),
 
   // log
   log: async (e) => {

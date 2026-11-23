@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import { handleWorkspace } from "./_hub_workspace.js";
+import { handleReports } from "./_hub_reports.js";
+import { handleTeam } from "./_hub_team.js";
 import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
@@ -616,6 +618,11 @@ export async function handleHub(req, store, env = {}) {
     const pid = Number(req.query?.project);
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
+
+  const rp = await handleReports({ action, method, body, query: req.query, user, store, out, deny, str, isoDate, canSeeProject, memberIds, env });
+  if (rp) return rp;
+  const tm = await handleTeam({ action, method, body, user, store, out, deny, str });
+  if (tm) return tm;
 
   const w = await handleWorkspace({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str, isoDate });
   if (w) return w;

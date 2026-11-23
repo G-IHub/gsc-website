@@ -24,6 +24,10 @@ const LABEL: Record<string, string> = {
   clearance_reverted: "Project put back to not cleared",
   change_added: "Added a change to the change log",
   change_deleted: "Removed a change-log entry",
+  report_submitted: "Submitted a weekly report",
+  kpi_set: "Entered a KPI",
+  raci_set: "Changed the responsibilities matrix",
+  profile_set: "Updated their expertise profile",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };
