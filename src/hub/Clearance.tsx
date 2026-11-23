@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Card } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
@@ -8,7 +8,7 @@ type State = { items: Item[]; done: number; total: number; allDone: boolean };
 
 // Financial clearance: Finance and management tick the five checks. Until all five are ticked,
 // the project's payment flag stays "Not cleared" (enforced on the server) and no work should start.
-const Clearance = ({ projectId, onChanged }: { projectId: number; onChanged: () => void }) => {
+const Clearance = ({ projectId, onChanged, children }: { projectId: number; onChanged: () => void; children?: ReactNode }) => {
   const [s, setS] = useState<State | null>(null);
   const [msg, setMsg] = useState("");
 
@@ -52,6 +52,7 @@ const Clearance = ({ projectId, onChanged }: { projectId: number; onChanged: () 
         </ul>
       )}
       {s && !s.allDone && <p className="mt-3 rounded-2xl bg-amber-50 text-amber-800 text-xs p-3">No work starts until all {s.total} checks are ticked.</p>}
+      {children}
       {msg && <p className="text-sm text-red-600 mt-2" role="alert">{msg}</p>}
     </Card>
   );

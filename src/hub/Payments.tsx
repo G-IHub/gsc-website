@@ -13,12 +13,24 @@ const field = "bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs focu
 // Marking a row Received updates "Received" in the fees card automatically.
 const Payments = ({ projectId }: { projectId: number }) => {
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [fee, setFee] = useState<number | null>(null);
+  const [feeEdit, setFeeEdit] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
   const show = async () => {
     const r = await hub<{ payments: Row[] }>("payments", { query: { id: String(projectId) } });
     if (r.ok && r.data) setRows(r.data.payments);
-    else setMsg(errorText(r));
+    else return setMsg(errorText(r));
+    const m = await hub<{ money: { fee: number } }>("money", { query: { id: String(projectId) } });
+    if (m.ok && m.data) setFee(m.data.money.fee);
+  };
+  const saveFee = async () => {
+    const r = await hub("money-set", { method: "POST", body: { project_id: projectId, fee: Number(feeEdit) } });
+    if (r.ok) {
+      setFee(Number(feeEdit));
+      setFeeEdit(null);
+      setMsg("");
+    } else setMsg(errorText(r));
   };
   const send = async (action: string, body: Record<string, unknown>) => {
     const r = await hub<{ payments: Row[] }>(action, { method: "POST", body: { project_id: projectId, ...body } });
@@ -31,9 +43,9 @@ const Payments = ({ projectId }: { projectId: number }) => {
 
   if (!rows) {
     return (
-      <Card title="Payment schedule">
-        <p className="text-sm text-muted mb-3">Opening this is recorded in the access log.</p>
-        <Btn onClick={show}>Show payment schedule</Btn>
+      <Card title="Payments">
+        <p className="text-sm text-muted mb-3">Fee and payment schedule. Opening this is recorded in the access log.</p>
+        <Btn onClick={show}>Show payments</Btn>
         {msg && <p className="text-sm text-red-600 mt-3">{msg}</p>}
       </Card>
     );
@@ -42,7 +54,7 @@ const Payments = ({ projectId }: { projectId: number }) => {
   const expected = rows.filter((r) => r.status !== "not_used").reduce((s, r) => s + r.amount, 0);
 
   return (
-    <Card title="Payment schedule">
+    <Card title="Payments">
       {rows.length === 0 ? (
         <div className="space-y-3">
           <p className="text-sm text-muted">No schedule yet. The standard one is a refundable commitment fee of ₦20,000, an optional middle payment, and the balance when the work is ready.</p>
@@ -73,9 +85,20 @@ const Payments = ({ projectId }: { projectId: number }) => {
             ))}
           </ul>
           <Btn className="mt-2" onClick={() => send("payment-save", { name: "Payment", amount: 0, status: "planned" })}>Add a payment</Btn>
-          <p className="mt-3 rounded-2xl bg-mist text-xs text-muted p-3">Expected {fmt(expected)} · received {fmt(received)} · still to receive {fmt(Math.max(expected - received, 0))}. Budget, cost and margin are visible to Finance and management only.</p>
         </>
       )}
+      <div className="mt-3 rounded-2xl bg-mist text-xs text-muted p-3 space-y-2">
+        <p>
+          Total fee {fee !== null ? fmt(fee) : "…"} · received {fmt(received)} · still to receive {fee !== null ? fmt(Math.max(fee - received, 0)) : "…"}.
+          {fee !== null && rows.length > 0 && Math.abs(expected - fee) > 0.5 && <span className="block text-amber-800 mt-1">The schedule adds up to {fmt(expected)}, not the fee.</span>}
+        </p>
+        {feeEdit === null ? (
+          <button className="text-magenta-dark hover:underline" onClick={() => setFeeEdit(String(fee ?? 0))}>Change the total fee</button>
+        ) : (
+          <div className="flex items-center gap-2">₦<input className={`${field} w-32`} inputMode="decimal" value={feeEdit} onChange={(e) => setFeeEdit(e.target.value)} aria-label="Total fee" /><Btn variant="primary" onClick={saveFee}>Save</Btn><Btn variant="ghost" onClick={() => setFeeEdit(null)}>Cancel</Btn></div>
+        )}
+        <p>Budget, cost and margin for this project are visible to Finance and management only.</p>
+      </div>
       {msg && <p className="text-sm text-red-600 mt-2" role="alert">{msg}</p>}
     </Card>
   );

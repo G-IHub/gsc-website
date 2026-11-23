@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card } from "../admin/ui";
+import { Btn, Card } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
 
@@ -28,6 +28,9 @@ export const progressOf = (rows: Milestone[]) => {
 // and Finance changes the steps it owns (fee received, balance received).
 const Milestones = ({ projectId, rows, onChanged }: { projectId: number; rows: Milestone[]; onChanged: () => void }) => {
   const [msg, setMsg] = useState("");
+  const [editing, setEditing] = useState(false); // plain table like the mockup; controls only while editing
+  const anyEditable = rows.some((m) => m.canEdit);
+  const short = (iso: string | null) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—");
   const save = async (n: number, patch: Record<string, unknown>) => {
     const r = await hub("milestone-update", { method: "POST", body: { project_id: projectId, n, ...patch } });
     if (r.ok) {
@@ -37,7 +40,7 @@ const Milestones = ({ projectId, rows, onChanged }: { projectId: number; rows: M
   };
 
   return (
-    <Card title="Milestones and deliverables">
+    <Card title="Milestones and deliverables" action={anyEditable ? <Btn onClick={() => setEditing(!editing)}>{editing ? "Done" : "Edit milestones"}</Btn> : undefined}>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -53,11 +56,11 @@ const Milestones = ({ projectId, rows, onChanged }: { projectId: number; rows: M
                 <td className="py-2.5 pr-3 text-plum">{m.name}</td>
                 <td className="py-2.5 pr-3 text-muted">{m.owner}</td>
                 <td className="py-2.5 pr-3 whitespace-nowrap">
-                  {m.canEdit ? <input type="date" className={field} value={m.planned ?? ""} onChange={(e) => save(m.n, { planned: e.target.value || null })} aria-label={`Planned date for step ${m.n}`} /> : m.planned ?? "—"}
+                  {editing && m.canEdit ? <input type="date" className={field} value={m.planned ?? ""} onChange={(e) => save(m.n, { planned: e.target.value || null })} aria-label={`Planned date for step ${m.n}`} /> : short(m.planned)}
                 </td>
-                <td className="py-2.5 pr-3 whitespace-nowrap text-muted">{m.done ?? "—"}</td>
+                <td className="py-2.5 pr-3 whitespace-nowrap text-muted">{short(m.done)}</td>
                 <td className="py-2.5 pr-3">
-                  {m.canEdit ? (
+                  {editing && m.canEdit ? (
                     <select className={field} value={m.status} onChange={(e) => save(m.n, { status: e.target.value })} aria-label={`Status of step ${m.n}`}>
                       {Object.entries(STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
@@ -66,7 +69,7 @@ const Milestones = ({ projectId, rows, onChanged }: { projectId: number; rows: M
                   )}
                 </td>
                 <td className="py-2.5 text-muted">
-                  {!m.signoff ? "—" : m.canEdit ? (
+                  {!m.signoff ? "—" : editing && m.canEdit ? (
                     <label className="inline-flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={m.signed} onChange={(e) => save(m.n, { signed: e.target.checked })} /> {m.signed ? "Signed" : "Needed"}</label>
                   ) : m.signed ? "Signed" : "Needed"}
                 </td>

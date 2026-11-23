@@ -26,6 +26,7 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
   const [miles, setMiles] = useState<Milestone[]>([]);
   const [edit, setEdit] = useState({ stage: "", health: "green", target_date: "" });
   const [msg, setMsg] = useState("");
+  const [openUpdate, setOpenUpdate] = useState(0);
   const role = me.user.role;
   const moneyRole = role === "management" || role === "finance";
 
@@ -71,11 +72,19 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
             <button className="hover:text-plum hover:underline" onClick={onProjects}>Projects</button> / {p.ref}
           </p>
           <h1 className="text-2xl text-plum mt-2">{p.title}</h1>
-          {p.client && <p className="text-sm text-muted mt-1">Client: {p.client.name || "not set"}{p.client.contact ? ` · ${p.client.contact}` : ""}</p>}
+          {p.client && <p className="text-sm text-muted mt-1">Client (lead researcher): {p.client.name || "not set"}{p.client.contact ? `, ${p.client.contact}` : ""}</p>}
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill>
+            {p.payment_status && <Pill cls={PAY_STYLE[p.payment_status]}>{`Payment: ${PAY_LABEL[p.payment_status]}`}</Pill>}
+            {p.unit && <Pill cls="bg-magenta-tint text-magenta-dark">{p.unit}</Pill>}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ViewingAs label={ROLE_LABEL[role]?.toLowerCase() ?? role} />
-          {days !== null && <Pill cls={days < 0 ? "bg-red-100 text-red-700" : days <= 7 ? "bg-amber-100 text-amber-800" : "bg-lime text-plum"}>{daysText(days)}</Pill>}
+          {days !== null && <Pill cls={days < 0 ? "bg-red-100 text-red-700" : days <= 7 ? "bg-amber-100 text-amber-800" : "bg-lime text-plum"}>{days < 0 ? daysText(days) : days === 0 ? "Due today" : `Due in ${days} ${days === 1 ? "day" : "days"}`}</Pill>}
+          {inWorkspace && (
+            <Btn onClick={() => { setTab("overview"); setOpenUpdate((n) => n + 1); setTimeout(() => document.getElementById("weekly-updates")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>Add weekly update</Btn>
+          )}
         </div>
       </div>
 
@@ -103,24 +112,19 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
             </Card>
             <Card title="Dates">
               <dl className="space-y-2 text-sm">
+                <div><Label>Started</Label><dd className="mt-0.5">{miles.find((m) => m.n === 2)?.done ?? "Not started yet"}</dd></div>
                 <div><Label>Target delivery</Label><dd className="mt-0.5">{p.target_date ?? "Not set"}</dd></div>
                 {p.payment_status && <div><Label>Cleared to start</Label><dd className="mt-0.5">{p.payment_status === "not_cleared" ? "No" : "Yes"}</dd></div>}
               </dl>
             </Card>
-            <Card title="Status">
-              <div className="flex flex-wrap gap-2">
-                <Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill>
-                {p.payment_status && <Pill cls={PAY_STYLE[p.payment_status]}>{`Payment: ${PAY_LABEL[p.payment_status]}`}</Pill>}
-                {p.unit && <Pill cls="bg-magenta-tint text-magenta-dark">{p.unit}</Pill>}
-              </div>
-              <p className="text-sm text-muted mt-3">Stage: {p.stage || "not set"}</p>
-              {miles.length > 0 && (
-                <div className="mt-3">
+            <Card title="Progress">
+              {miles.length > 0 ? (
+                <>
                   <p className="text-sm text-plum font-medium">{progress.done} of {progress.total} milestones done</p>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${(progress.done / progress.total) * 100}%` }} /></div>
-                  {progress.next && <p className="text-xs text-muted mt-1.5">Next: {progress.next.name}</p>}
-                </div>
-              )}
+                </>
+              ) : <p className="text-sm text-muted">No milestones yet.</p>}
+              <p className="text-xs text-muted mt-2">Stage: {p.stage || "not set"}.{progress.next ? ` Next: ${progress.next.name}.` : ""}</p>
             </Card>
           </div>
 
@@ -146,18 +150,20 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
               {!p.client && <p className="text-xs text-muted">Client details are hidden for your role. Use the project code.</p>}
             </div>
             <div className="space-y-5">
-              {moneyRole && <Clearance projectId={p.id} onChanged={load} />}
               {moneyRole && (
-                <Card title="Payment status flag">
-                  <p className="text-sm text-muted mb-3">This is the flag the project team sees. It can move past "Not cleared" only when every clearance check is ticked.</p>
-                  <select className={`${smallInput} max-w-xs`} value={p.payment_status} onChange={(e) => update({ payment_status: e.target.value }, "Payment status updated.")}>
-                    {Object.entries(PAY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </Card>
+                <Clearance projectId={p.id} onChanged={load}>
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <Field label="Payment status the project team sees" hint={'It can move past "Not cleared" only when all five checks are ticked.'}>
+                      <select className={`${smallInput} max-w-xs`} value={p.payment_status} onChange={(e) => update({ payment_status: e.target.value }, "Payment status updated.")}>
+                        {Object.entries(PAY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                    </Field>
+                  </div>
+                </Clearance>
               )}
-              {d.canSeeMoney && <MoneyCard id={p.id} canEdit={moneyRole} />}
               {moneyRole && <Payments projectId={p.id} />}
-              <Updates projectId={p.id} onChanged={load} />
+              {d.canSeeMoney && !moneyRole && <MoneyCard id={p.id} canEdit={false} />}
+              <div id="weekly-updates" className="scroll-mt-4"><Updates projectId={p.id} onChanged={load} openSignal={openUpdate} /></div>
               <ChangeLog projectId={p.id} />
               {!d.canSeeMoney && <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-4 text-xs text-muted">Fees, payments, budget and margin are visible to Finance and management only.</div>}
             </div>
