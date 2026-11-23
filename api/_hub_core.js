@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { CLEARANCE_ITEMS, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
+import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
 // This file holds ALL the access decisions. It never talks to a database directly: it is given a `store`
@@ -470,6 +470,101 @@ export async function handleHub(req, store, env = {}) {
     return out(200, await clearanceOf(p.id));
   }
 
+  // ---- payment schedule: Finance and management only; "paid" is worked out from the received rows ----
+  const syncPaid = async (pid) => {
+    const rows = await store.listPayments(pid);
+    const m = (await store.getMoney(pid)) || { fee: 0, paid: 0, currency: "NGN" };
+    const paid = rows.filter((r) => r.status === "received").reduce((s, r) => s + r.amount, 0);
+    await store.setMoney(pid, { fee: m.fee, paid, currency: m.currency || "NGN" });
+  };
+
+  if (action === "payments" && method === "GET") {
+    const p = await projectOr404(req.query?.id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!MONEY_ROLES.includes(user.role)) return deny("read payments", { project: p.id });
+    await store.log({ user_id: user.id, event: "money_read", detail: { project: p.id, what: "payments" } });
+    return out(200, { payments: await store.listPayments(p.id) });
+  }
+
+  if ((action === "payment-save" || action === "payment-delete" || action === "payment-standard") && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!MONEY_ROLES.includes(user.role)) return deny(action, { project: p.id });
+    if (action === "payment-standard") {
+      if ((await store.listPayments(p.id)).length > 0) return out(409, { error: "This project already has a payment schedule" });
+      const fee = (await store.getMoney(p.id))?.fee ?? 0;
+      await store.savePayment(p.id, { name: "Commitment fee (refundable)", amount: COMMITMENT_FEE, due_date: null, received_date: null, status: "planned" });
+      await store.savePayment(p.id, { name: "Middle payment", amount: 0, due_date: null, received_date: null, status: "not_used" });
+      await store.savePayment(p.id, { name: "Balance", amount: Math.max(fee - COMMITMENT_FEE, 0), due_date: null, received_date: null, status: "planned" });
+    } else {
+      const id = body.id === undefined || body.id === null ? undefined : Number(body.id);
+      if (id !== undefined) {
+        const row = Number.isInteger(id) ? await store.getPayment(id) : null;
+        if (!row || row.project_id !== p.id) return out(404, { error: "Not found" });
+      }
+      if (action === "payment-delete") {
+        if (id === undefined) return out(400, { error: "Bad request" });
+        await store.deletePayment(id);
+      } else {
+        const name = str(body.name, 120);
+        const amount = Number(body.amount);
+        if (!name) return out(400, { error: "Name the payment" });
+        if (!Number.isFinite(amount) || amount < 0) return out(400, { error: "The amount must be zero or more" });
+        if (!PAYMENT_ROW_STATUSES.includes(body.status)) return out(400, { error: "Bad status" });
+        let received = isoDate(body.received_date);
+        if (body.status === "received" && !received) received = new Date().toISOString().slice(0, 10);
+        if (body.status !== "received") received = null;
+        await store.savePayment(p.id, { id, name, amount: Math.round(amount * 100) / 100, due_date: isoDate(body.due_date), received_date: received, status: body.status });
+      }
+    }
+    await syncPaid(p.id);
+    await store.log({ user_id: user.id, event: "money_set", detail: { project: p.id, what: action } });
+    return out(200, { payments: await store.listPayments(p.id) });
+  }
+
+  // ---- change log: everyone on the project reads; the fee effect is shown to Finance and management only ----
+  const mayLogChange = (p) => user.role === "management" || user.role === "finance" || (user.role === "lead" && memberIds.has(p.id));
+
+  if (action === "changes" && method === "GET") {
+    const p = await projectOr404(req.query?.id);
+    if (!p) return out(404, { error: "Not found" });
+    const money = MONEY_ROLES.includes(user.role);
+    const rows = await store.listChanges(p.id);
+    return out(200, {
+      changes: rows.map((c) => ({ id: c.id, on_date: c.on_date, text: c.text, dates_effect: c.dates_effect, author: c.author || "", ...(money ? { fee_effect: c.fee_effect } : {}) })),
+      canAdd: mayLogChange(p),
+      canDelete: user.role === "management",
+      canFee: money,
+    });
+  }
+
+  if (action === "change-add" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!mayLogChange(p)) return deny("add change", { project: p.id });
+    const text = str(body.text, 1000);
+    if (!text) return out(400, { error: "Describe the change" });
+    const id = await store.addChange(p.id, user.id, {
+      on_date: isoDate(body.on_date) || new Date().toISOString().slice(0, 10),
+      text,
+      dates_effect: str(body.dates_effect, 300),
+      fee_effect: MONEY_ROLES.includes(user.role) ? str(body.fee_effect, 300) : "", // only Finance and management record money here
+    });
+    await store.log({ user_id: user.id, event: "change_added", detail: { project: p.id } });
+    return out(200, { ok: true, id });
+  }
+
+  if (action === "change-delete" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    if (user.role !== "management") return deny("delete change", { project: p.id });
+    const c = Number.isInteger(Number(body.id)) ? await store.getChange(Number(body.id)) : null;
+    if (!c || c.project_id !== p.id) return out(404, { error: "Not found" });
+    await store.deleteChange(c.id);
+    await store.log({ user_id: user.id, event: "change_deleted", detail: { project: p.id } });
+    return out(200, { ok: true });
+  }
+
   // ---- who is on a project ----
   if ((action === "member-add" || action === "member-remove") && method === "POST") {
     const p = await projectOr404(body.project_id);
@@ -504,7 +599,8 @@ export async function handleHub(req, store, env = {}) {
     const p = Number.isInteger(id) ? await store.getProject(id) : null;
     if (!p) return out(404, { error: "Not found" });
     const fee = Number(body.fee);
-    const paid = Number(body.paid);
+    const old = await store.getMoney(p.id);
+    const paid = body.paid === undefined ? (old?.paid ?? 0) : Number(body.paid); // left out = keep (the payment schedule keeps it up to date)
     if (!Number.isFinite(fee) || !Number.isFinite(paid) || fee < 0 || paid < 0) return out(400, { error: "Amounts must be zero or more" });
     await store.setMoney(p.id, { fee, paid, currency: str(body.currency, 6) || "NGN" });
     await store.log({ user_id: user.id, event: "money_set", detail: { project: p.id } });

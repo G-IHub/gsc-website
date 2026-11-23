@@ -22,6 +22,8 @@ const LABEL: Record<string, string> = {
   update_deleted: "Removed a weekly update",
   clearance_set: "Changed a clearance check",
   clearance_reverted: "Project put back to not cleared",
+  change_added: "Added a change to the change log",
+  change_deleted: "Removed a change-log entry",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };

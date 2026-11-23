@@ -82,6 +82,26 @@ export const HUB_SCHEMA = [
      at TIMESTAMPTZ,
      PRIMARY KEY (project_id, key)
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_payments (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     name TEXT NOT NULL,
+     amount NUMERIC(16,2) NOT NULL DEFAULT 0,
+     due_date DATE,
+     received_date DATE,
+     status TEXT NOT NULL DEFAULT 'planned',
+     sort INT NOT NULL DEFAULT 0
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_changes (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     author_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     on_date DATE NOT NULL DEFAULT CURRENT_DATE,
+     text TEXT NOT NULL,
+     dates_effect TEXT NOT NULL DEFAULT '',
+     fee_effect TEXT NOT NULL DEFAULT '',
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -282,6 +302,51 @@ export const makeStore = (sql) => ({
        ON CONFLICT (project_id, key) DO UPDATE SET done = EXCLUDED.done, by_user = EXCLUDED.by_user, at = now()`,
       [pid, key, done, uid],
     );
+  },
+
+  // payment schedule (money: only reached through Finance and management actions)
+  listPayments: async (pid) =>
+    sql.query(
+      `SELECT id::int AS id, name, amount::float8 AS amount, to_char(due_date, 'YYYY-MM-DD') AS due_date,
+              to_char(received_date, 'YYYY-MM-DD') AS received_date, status
+       FROM hub_payments WHERE project_id = $1 ORDER BY sort, id`,
+      [pid],
+    ),
+  getPayment: async (id) => (await sql.query(`SELECT id::int AS id, project_id::int AS project_id FROM hub_payments WHERE id = $1`, [id]))[0] ?? null,
+  savePayment: async (pid, r) => {
+    if (r.id) {
+      await sql.query(
+        `UPDATE hub_payments SET name=$1, amount=$2, due_date=$3, received_date=$4, status=$5 WHERE id=$6 AND project_id=$7`,
+        [r.name, r.amount, r.due_date, r.received_date, r.status, r.id, pid],
+      );
+      return r.id;
+    }
+    const [x] = await sql.query(
+      `INSERT INTO hub_payments (project_id, name, amount, due_date, received_date, status, sort)
+       VALUES ($1,$2,$3,$4,$5,$6, (SELECT COALESCE(max(sort),0)+1 FROM hub_payments WHERE project_id = $1)) RETURNING id::int AS id`,
+      [pid, r.name, r.amount, r.due_date, r.received_date, r.status],
+    );
+    return x.id;
+  },
+  deletePayment: async (id) => {
+    await sql.query(`DELETE FROM hub_payments WHERE id = $1`, [id]);
+  },
+
+  // change log
+  listChanges: async (pid) =>
+    sql.query(
+      `SELECT c.id::int AS id, to_char(c.on_date, 'YYYY-MM-DD') AS on_date, c.text, c.dates_effect, c.fee_effect, u.name AS author
+       FROM hub_changes c LEFT JOIN hub_users u ON u.id = c.author_id WHERE c.project_id = $1 ORDER BY c.on_date DESC, c.id DESC`,
+      [pid],
+    ),
+  addChange: async (pid, uid, c) =>
+    (await sql.query(
+      `INSERT INTO hub_changes (project_id, author_id, on_date, text, dates_effect, fee_effect) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id::int AS id`,
+      [pid, uid, c.on_date, c.text, c.dates_effect, c.fee_effect],
+    ))[0].id,
+  getChange: async (id) => (await sql.query(`SELECT id::int AS id, project_id::int AS project_id FROM hub_changes WHERE id = $1`, [id]))[0] ?? null,
+  deleteChange: async (id) => {
+    await sql.query(`DELETE FROM hub_changes WHERE id = $1`, [id]);
   },
 
   // log

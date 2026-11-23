@@ -7,6 +7,8 @@ import { MoneyCard } from "./Projects";
 import Milestones, { progressOf, type Milestone } from "./Milestones";
 import Updates from "./Updates";
 import Clearance from "./Clearance";
+import Payments from "./Payments";
+import ChangeLog from "./ChangeLog";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
@@ -152,7 +154,9 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
                 </Card>
               )}
               {d.canSeeMoney && <MoneyCard id={p.id} canEdit={moneyRole} />}
+              {moneyRole && <Payments projectId={p.id} />}
               <Updates projectId={p.id} onChanged={load} />
+              <ChangeLog projectId={p.id} />
               {!d.canSeeMoney && <div className="rounded-3xl border border-dashed border-gray-300 bg-white/60 p-4 text-xs text-muted">Fees, payments, budget and margin are visible to Finance and management only.</div>}
             </div>
           </div>
