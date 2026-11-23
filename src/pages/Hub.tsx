@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { LogOut } from "lucide-react";
+import { BookOpen, ChartColumn, FolderOpen, House, KeyRound, LogOut, ShieldCheck, UserCog, Users, type LucideIcon } from "lucide-react";
 import { Btn, Field, inputClass } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me } from "../hub/hubApi";
 import Projects from "../hub/Projects";
+import Home from "../hub/Home";
+import ProjectPage from "../hub/ProjectPage";
 import People from "../hub/People";
 import AccessLog from "../hub/AccessLog";
 import Account from "../hub/Account";
@@ -10,7 +12,7 @@ import Account from "../hub/Account";
 // Genomac Research Hub: private, staff only. Not linked anywhere on the site and kept out of search results.
 // Every call goes to /api/hub, which decides what each person may see; this page only shows what comes back.
 
-type Tab = "projects" | "people" | "log" | "account";
+type View = { name: "home" | "projects" | "people" | "log" | "account" } | { name: "project"; id: number };
 
 const SignIn = ({ onDone }: { onDone: () => void }) => {
   const [email, setEmail] = useState("");
@@ -55,7 +57,7 @@ const SignIn = ({ onDone }: { onDone: () => void }) => {
 
 const Hub = () => {
   const [me, setMe] = useState<Me | null | "loading" | "off">("loading");
-  const [tab, setTab] = useState<Tab>("projects");
+  const [view, setView] = useState<View>({ name: "home" });
 
   useEffect(() => {
     document.title = "Research Hub — GSC";
@@ -79,7 +81,7 @@ const Hub = () => {
   const signOut = async () => {
     await hub("logout", { method: "POST" });
     setMe(null);
-    setTab("projects");
+    setView({ name: "home" });
   };
 
   if (me === "loading") return <div className="min-h-screen bg-mist" />;
@@ -95,49 +97,73 @@ const Hub = () => {
     );
   }
 
-  const isMgmt = me.user.role === "management";
-  const tabs: [Tab, string][] = [
-    ["projects", "Projects"],
-    ...(isMgmt ? ([["people", "People"], ["log", "Access log"]] as [Tab, string][]) : []),
-    ["account", "My account"],
+  const role = me.user.role;
+  const isMgmt = role === "management";
+  const limited = role === "member" || role === "coordinator"; // team members and coordinators get the shorter menu
+  const section = view.name === "project" ? "projects" : view.name;
+
+  type Item = { key: string; label: string; icon: LucideIcon; go?: View; soon?: boolean };
+  const main: Item[] = [
+    { key: "home", label: "Home", icon: House, go: { name: "home" } },
+    { key: "projects", label: limited ? "My projects" : "Projects", icon: FolderOpen, go: { name: "projects" } },
+    { key: "library", label: "Resource library", icon: BookOpen, soon: true },
+    ...(limited ? [] : ([
+      { key: "reports", label: "Reports and KPIs", icon: ChartColumn, soon: true },
+      { key: "team", label: "Team", icon: Users, soon: true },
+    ] as Item[])),
   ];
+  const admin: Item[] = [
+    ...(isMgmt ? ([
+      { key: "people", label: "People", icon: UserCog, go: { name: "people" } },
+      { key: "log", label: "Access log", icon: ShieldCheck, go: { name: "log" } },
+    ] as Item[]) : []),
+    { key: "account", label: "My account", icon: KeyRound, go: { name: "account" } },
+  ];
+  const NavItem = ({ it }: { it: Item }) =>
+    it.soon ? (
+      <span className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/40 cursor-not-allowed whitespace-nowrap" title="Coming later">
+        <it.icon size={18} aria-hidden="true" /> {it.label} <span className="ml-auto text-[10px] uppercase tracking-widest">Soon</span>
+      </span>
+    ) : (
+      <button
+        onClick={() => setView(it.go!)}
+        aria-current={section === it.key ? "page" : undefined}
+        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-left whitespace-nowrap transition-colors ${section === it.key ? "bg-mist text-plum font-medium" : "text-white/80 hover:bg-white/10 hover:text-white"}`}
+      >
+        <it.icon size={18} aria-hidden="true" /> {it.label}
+      </button>
+    );
 
   return (
-    <div className="min-h-screen bg-mist">
-      <header className="bg-plum text-white">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-bold tracking-widest uppercase text-lime">Staff only</p>
-            <p className="text-lg font-journal">Genomac Research Hub</p>
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-white/80">
-              {me.user.name} · {ROLE_LABEL[me.user.role] ?? me.user.role}
-            </span>
-            <button onClick={signOut} className="inline-flex items-center gap-1.5 text-white/80 hover:text-white">
-              <LogOut size={16} /> Sign out
-            </button>
-          </div>
+    <div className="min-h-screen bg-mist md:flex">
+      <aside className="bg-plum text-white md:w-60 md:shrink-0 md:min-h-screen md:sticky md:top-0 md:h-screen flex flex-col">
+        <div className="px-5 pt-5 pb-3">
+          <p className="text-[11px] font-bold tracking-widest uppercase text-lime">Staff only</p>
+          <p className="text-lg font-journal leading-tight">Genomac Research Hub</p>
         </div>
-        <nav className="max-w-6xl mx-auto px-4 md:px-6 flex gap-1" aria-label="Hub">
-          {tabs.map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              aria-current={tab === key ? "page" : undefined}
-              className={`px-4 py-2.5 text-sm rounded-t-xl transition-colors ${tab === key ? "bg-mist text-plum font-medium" : "text-white/75 hover:text-white"}`}
-            >
-              {label}
-            </button>
-          ))}
+        <nav className="px-3 flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-3" aria-label="Hub">
+          {main.map((it) => <NavItem key={it.key} it={it} />)}
+          <span className="hidden md:block h-px bg-white/10 my-2" />
+          {admin.map((it) => <NavItem key={it.key} it={it} />)}
         </nav>
-      </header>
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
-        {tab === "projects" && <Projects me={me} />}
-        {tab === "people" && isMgmt && <People me={me} />}
-        {tab === "log" && isMgmt && <AccessLog />}
-        {tab === "account" && <Account />}
-      </div>
+        <div className="md:mt-auto border-t border-white/10 px-5 py-4 text-sm flex md:block items-center justify-between gap-3">
+          <div>
+            <p className="font-medium">{me.user.name}</p>
+            <p className="text-xs text-white/60">{ROLE_LABEL[role] ?? role}</p>
+          </div>
+          <button onClick={signOut} className="md:mt-3 inline-flex items-center gap-1.5 text-white/70 hover:text-white">
+            <LogOut size={16} /> Sign out
+          </button>
+        </div>
+      </aside>
+      <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8 max-w-6xl">
+        {view.name === "home" && <Home me={me} onOpen={(id) => setView({ name: "project", id })} onAll={() => setView({ name: "projects" })} />}
+        {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
+        {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
+        {view.name === "people" && isMgmt && <People me={me} />}
+        {view.name === "log" && isMgmt && <AccessLog />}
+        {view.name === "account" && <Account />}
+      </main>
     </div>
   );
 };

@@ -18,6 +18,7 @@ export const ROLES = ["management", "finance", "director", "lead", "member", "co
 export const MONEY_ROLES = ["management", "finance"];
 export const SEE_ALL_ROLES = ["management", "finance"];
 export const CLIENT_ROLES = ["management", "finance", "director", "lead", "coordinator"]; // team members see the project code only
+export const PAY_FLAG_ROLES = ["management", "finance", "director", "lead", "coordinator"]; // team members do not see the payment flag
 export const PAYMENT_STATUSES = ["not_cleared", "cleared", "balance_due", "paid"];
 export const HEALTH = ["green", "amber", "red"];
 
@@ -111,7 +112,7 @@ const shapeProject = (p, user, canClient, client) => ({
   stage: p.stage,
   unit: p.unit || "",
   health: p.health,
-  payment_status: p.payment_status,
+  ...(PAY_FLAG_ROLES.includes(user.role) ? { payment_status: p.payment_status } : {}),
   target_date: p.target_date || null,
   ...(canClient ? { client: client || { name: "", contact: "" } } : {}),
 });
@@ -272,7 +273,7 @@ export async function handleHub(req, store, env = {}) {
     const members = await store.listMembers(p.id);
     return out(200, {
       project: shapeProject(p, user, canClient, canClient ? await store.getClient(p.id) : null),
-      members: members.map((m) => ({ user_id: m.user_id, name: m.name, role: m.role, project_role: m.project_role })),
+      members: members.map((m) => ({ user_id: m.user_id, name: m.name, role: m.role, project_role: m.project_role, added: m.added || null })),
       canSeeMoney: canSeeMoney(user, env),
       canManageMembers: user.role === "management" || (user.role === "lead" && memberIds.has(p.id)),
     });
@@ -362,7 +363,9 @@ export async function handleHub(req, store, env = {}) {
   if (action === "access-log" && method === "GET") {
     const denied = await needMgmt("read access log");
     if (denied) return denied;
-    return out(200, { log: await store.listLog(200) });
+    const rows = await store.listLog(req.query?.project ? 500 : 200);
+    const pid = Number(req.query?.project);
+    return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
   return out(404, { error: "Unknown action" });
