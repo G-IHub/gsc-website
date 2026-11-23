@@ -193,7 +193,8 @@ export const HUB_SCHEMA = [
 
 const U = "id::int AS id, email, name, role, unit, password_hash, active";
 // the date of the newest weekly update, so Home can say which projects have gone quiet
-const LAST_UPDATE = "(SELECT to_char(max(u.created_at), 'YYYY-MM-DD') FROM hub_updates u WHERE u.project_id = hub_projects.id) AS last_update";
+const LAST_UPDATE = "(SELECT to_char(max(u.created_at), 'YYYY-MM-DD') FROM hub_updates u WHERE u.project_id = hub_projects.id) AS last_update, " +
+  "(SELECT l.name FROM hub_members m JOIN hub_users l ON l.id = m.user_id WHERE m.project_id = hub_projects.id AND (l.role = 'lead' OR m.project_role ILIKE '%lead%') ORDER BY l.name LIMIT 1) AS lead_name";
 const P = "id::int AS id, ref, title, stage, unit, health, payment_status, to_char(target_date, 'YYYY-MM-DD') AS target_date";
 
 export async function ensureSchema(sql) {

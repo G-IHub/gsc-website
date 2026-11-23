@@ -160,7 +160,7 @@ const Hub = () => {
         </div>
       </aside>
       <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8 max-w-6xl">
-        {view.name === "home" && <Home me={me} onOpen={(id) => setView({ name: "project", id })} onAll={() => setView({ name: "projects" })} />}
+        {view.name === "home" && <Home me={me} onOpen={(id) => setView({ name: "project", id })} onAll={() => setView({ name: "projects" })} onReports={() => setView({ name: "reports" })} />}
         {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
         {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
         {view.name === "library" && <Library />}

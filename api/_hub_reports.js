@@ -83,6 +83,9 @@ export async function handleReports({ action, method, body, query, user, store, 
   }
 
   if (action === "reports-summary" && method === "GET") {
+    const light = query?.light === "1"; // Home: the KPI card and this month's total, not logged as opening the money
+    const month = today().slice(0, 7);
+    let monthReceived = 0;
     const projects = (await store.listProjects()).filter((p) => canSeeProject(user, p, memberIds));
     let delivered = 0, deliveredOnTime = 0, feas = 0, budgets = 0, leads = 0, cleared = 0, activated = 0, startedUncleared = 0;
     const weekly = new Map();
@@ -113,6 +116,7 @@ export async function handleReports({ action, method, body, query, user, store, 
           const w = weekEnding(r.received_date);
           weekly.set(w, (weekly.get(w) || 0) + r.amount);
           if (r.received_date >= since30) received30 += r.amount;
+          if (r.received_date.startsWith(month)) monthReceived += r.amount;
         }
       }
     }
@@ -137,11 +141,11 @@ export async function handleReports({ action, method, body, query, user, store, 
       return { key: k.key, name: k.name, kind: k.kind, value: m?.value || "Not entered", progress: m?.progress ?? 0, status: m?.status || "progress", updated: m?.at || null };
     });
     let revenue;
-    if (money) {
+    if (money && !light) {
       // the last 6 weeks, oldest first
       const weeks = [];
       for (let i = 5; i >= 0; i--) weeks.push(weekEnding(new Date(Date.now() - i * 7 * 86400000).toISOString().slice(0, 10)));
-      revenue = { received30, weeks: weeks.map((w) => ({ week_ending: w, amount: weekly.get(w) || 0 })) };
+      revenue = { received30, monthReceived, weeks: weeks.map((w) => ({ week_ending: w, amount: weekly.get(w) || 0 })) };
       await store.log({ user_id: user.id, event: "money_read", detail: { what: "reports" } });
     }
     return out(200, {
@@ -149,7 +153,8 @@ export async function handleReports({ action, method, body, query, user, store, 
       tiles: { projects: n, delivered, deliveredOnTime, startedUncleared, cleared },
       kpis,
       met: kpis.filter((k) => k.status === "met").length,
-      ...(money ? { revenue } : {}),
+      ...(money && !light ? { revenue } : {}),
+      ...(money && light ? { monthReceived } : {}),
     });
   }
 
