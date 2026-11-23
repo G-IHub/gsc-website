@@ -15,7 +15,7 @@ import Account from "../hub/Account";
 // Genomac Research Hub: private, staff only. Not linked anywhere on the site and kept out of search results.
 // Every call goes to /api/hub, which decides what each person may see; this page only shows what comes back.
 
-type View = { name: "home" | "projects" | "library" | "reports" | "team" | "people" | "log" | "account" } | { name: "project"; id: number };
+type View = { name: "home" | "projects" | "library" | "reports" | "team" | "people" | "log" | "account" } | { name: "project"; id: number; tab?: "overview" | "workspace" | "access" };
 
 const SignIn = ({ onDone }: { onDone: () => void }) => {
   const [email, setEmail] = useState("");
@@ -160,9 +160,9 @@ const Hub = () => {
         </div>
       </aside>
       <main className="flex-1 min-w-0 px-4 md:px-8 py-6 md:py-8 max-w-6xl">
-        {view.name === "home" && <Home me={me} onOpen={(id) => setView({ name: "project", id })} onAll={() => setView({ name: "projects" })} onReports={() => setView({ name: "reports" })} />}
+        {view.name === "home" && <Home me={me} onOpen={(id, tab) => setView({ name: "project", id, tab })} onAll={() => setView({ name: "projects" })} onReports={() => setView({ name: "reports" })} />}
         {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
-        {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
+        {view.name === "project" && <ProjectPage key={`${view.id}-${view.tab ?? ""}`} id={view.id} initialTab={view.tab} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
         {view.name === "library" && <Library />}
         {view.name === "reports" && !limited && <Reports me={me} />}
         {view.name === "team" && !limited && <Team me={me} />}

@@ -122,6 +122,20 @@ test("opening a file is recorded in the workspace activity (people in the worksp
   assert.equal(opened.version, 2);
 });
 
+test("New in my projects: colleagues' files, comments and tasks in my open projects only, never my own or money", async () => {
+  await post("lead", "comment-add", { project_id: P1, text: "Please review the draft." });
+  await post("memX", "comment-add", { project_id: P2, text: "Not for E: P2 is not E's project." });
+  const news = (await get("memE", "my-news")).body.news;
+  assert.ok(news.length > 0);
+  assert.ok(news.every((n) => n.project_id === P1), "news from a project E is not on");
+  assert.ok(news.every((n) => n.who !== "memE"), "E's own actions shown as news");
+  assert.ok(news.some((n) => n.event === "comment_added" && n.who === "lead" && n.ref === "GH-1"));
+  assert.ok(!/987654|"fee"|"paid"/.test(JSON.stringify(news)));
+  // my own role on each project comes with the projects list
+  const mine = (await get("memE", "projects")).body.projects.find((p) => p.ref === "GH-1");
+  assert.equal(mine.my_role, "supporting");
+});
+
 test("activity: workspace events only, never money or refusals", async () => {
   await get("mgmt", "money", { id: P1 }); // a money read, which must not appear
   await get("fin", "files", { id: P1 }); // a refusal, which must not appear

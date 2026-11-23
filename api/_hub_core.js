@@ -290,8 +290,9 @@ export async function handleHub(req, store, env = {}) {
   if (action === "projects" && method === "GET") {
     const canClient = CLIENT_ROLES.includes(user.role);
     const rows = (await store.listProjects()).filter((p) => canSeeProject(user, p, memberIds));
+    const myRoles = new Map((await store.projectRolesForUser(user.id)).map((r) => [r.id, r.project_role]));
     const list = [];
-    for (const p of rows) list.push(shapeProject(p, user, canClient, canClient ? await store.getClient(p.id) : null));
+    for (const p of rows) list.push({ ...shapeProject(p, user, canClient, canClient ? await store.getClient(p.id) : null), my_role: myRoles.get(p.id) ?? null });
     return out(200, { projects: list });
   }
 
