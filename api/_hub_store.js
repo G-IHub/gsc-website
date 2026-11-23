@@ -262,6 +262,9 @@ export const makeStore = (sql) => ({
   },
 
   // who is on which project
+  // a project is closed when its close-out milestone (14) is done
+  closedProjectIds: async () =>
+    (await sql.query(`SELECT project_id::int AS id FROM hub_milestones WHERE n = 14 AND status = 'done'`)).map((r) => r.id),
   projectIdsForUser: async (uid) => (await sql.query(`SELECT project_id::int AS id FROM hub_members WHERE user_id = $1`, [uid])).map((r) => r.id),
   listMembers: async (pid) =>
     sql.query(

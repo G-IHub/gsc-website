@@ -277,12 +277,13 @@ test("the access log records refusals, money reads and people changes, and only 
   assert.equal((await get("fin", "access-log")).status, 403);
 });
 
-test("access log can be filtered to one project (management only)", async () => {
+test("access log can be filtered to one project (management, or that project's lead)", async () => {
   await get("mgmt", "money", { id: proj.P1 });
   await get("mgmt", "money", { id: proj.P2 });
   const r = await call("mgmt", "GET", "access-log", { query: { project: String(proj.P1) } });
   assert.equal(r.status, 200);
   assert.ok(r.body.log.length > 0);
   assert.ok(r.body.log.every((l) => Number(l.detail.project) === proj.P1), "an entry from another project came back");
-  assert.equal((await call("lead", "GET", "access-log", { query: { project: String(proj.P1) } })).status, 403);
+  assert.equal((await call("lead", "GET", "access-log", { query: { project: String(proj.P1) } })).status, 200); // their own project
+  assert.equal((await call("lead", "GET", "access-log", { query: { project: String(proj.P2) } })).status, 403);
 });
