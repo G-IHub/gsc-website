@@ -178,6 +178,7 @@ export const HUB_SCHEMA = [
    )`,
   `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS version TEXT NOT NULL DEFAULT '0.1'`,
   `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS owner TEXT NOT NULL DEFAULT ''`,
+  `ALTER TABLE hub_raci ADD COLUMN IF NOT EXISTS section TEXT NOT NULL DEFAULT ''`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -546,12 +547,17 @@ export const makeStore = (sql) => ({
   },
 
   // team: responsibilities matrix and the expertise directory
-  listRaci: async () => sql.query(`SELECT id::int AS id, name, cells FROM hub_raci ORDER BY sort, id`),
-  seedRaci: async (rows) => {
-    const [{ n }] = await sql.query(`SELECT count(*)::int AS n FROM hub_raci`);
-    if (n > 0) return;
+  listRaci: async () => sql.query(`SELECT id::int AS id, section, name, cells FROM hub_raci ORDER BY sort, id`),
+  seedRaci: async (rows, firstSeed = []) => {
+    const have = await sql.query(`SELECT name, cells FROM hub_raci ORDER BY sort, id`);
+    if (have.length > 0) {
+      // upgrade only a copy nobody has touched: exactly the old 17 rows, names and cells unchanged
+      const same = have.length === firstSeed.length && have.every((h, i) => h.name === firstSeed[i].name && JSON.stringify(h.cells) === JSON.stringify(firstSeed[i].cells));
+      if (!same) return;
+      await sql.query(`DELETE FROM hub_raci`);
+    }
     let i = 0;
-    for (const r of rows) await sql.query(`INSERT INTO hub_raci (name, cells, sort) VALUES ($1, $2::jsonb, $3)`, [r.name, JSON.stringify(r.cells), ++i]);
+    for (const r of rows) await sql.query(`INSERT INTO hub_raci (section, name, cells, sort) VALUES ($1, $2, $3::jsonb, $4)`, [r.section || "", r.name, JSON.stringify(r.cells), ++i]);
   },
   setRaci: async (id, cells, name) => {
     const rows = await sql.query(
