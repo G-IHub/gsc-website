@@ -110,6 +110,18 @@ test("tasks: assign only to people on the project; my tasks; who removes", async
   assert.equal((await post("memX", "task-done", { project_id: P2, id: t1, done: false })).status, 404);
 });
 
+test("opening a file is recorded in the workspace activity (people in the workspace only)", async () => {
+  const fid = (await get("memE", "files", { id: P1 })).body.files[0].id;
+  assert.equal((await post("fin", "file-open", { project_id: P1, file_id: fid })).status, 403);
+  assert.equal((await post("memX", "file-open", { project_id: P1, file_id: fid })).status, 404);
+  assert.equal((await post("memF", "file-open", { project_id: P1, file_id: fid })).status, 200);
+  const a = (await get("lead", "activity", { id: P1 })).body.activity;
+  const opened = a.find((x) => x.event === "file_opened");
+  assert.equal(opened.who, "memF");
+  assert.equal(opened.name, "Manuscript draft");
+  assert.equal(opened.version, 2);
+});
+
 test("activity: workspace events only, never money or refusals", async () => {
   await get("mgmt", "money", { id: P1 }); // a money read, which must not appear
   await get("fin", "files", { id: P1 }); // a refusal, which must not appear
