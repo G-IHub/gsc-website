@@ -5,7 +5,7 @@ import { errorText, hub } from "./hubApi";
 type Update = { id: number; date: string; author: string; done: string; next: string; blockers: string; canDelete: boolean };
 
 // Weekly updates for one project. Add and read only: an update can be removed, never rewritten.
-const Updates = ({ projectId, onChanged }: { projectId: number; onChanged: () => void }) => {
+const Updates = ({ projectId, onChanged, openSignal = 0 }: { projectId: number; onChanged: () => void; openSignal?: number }) => {
   const [list, setList] = useState<Update[] | null>(null);
   const [canAdd, setCanAdd] = useState(false);
   const [open, setOpen] = useState(false);
@@ -23,6 +23,11 @@ const Updates = ({ projectId, onChanged }: { projectId: number; onChanged: () =>
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (openSignal > 0) setOpen(true);
+  }, [openSignal]);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,7 +50,7 @@ const Updates = ({ projectId, onChanged }: { projectId: number; onChanged: () =>
   };
 
   return (
-    <Card title="Weekly updates" action={canAdd && !open ? <Btn onClick={() => setOpen(true)}>Add weekly update</Btn> : undefined}>
+    <Card title="Latest updates" action={canAdd && !open ? <Btn onClick={() => setOpen(true)}>Add weekly update</Btn> : undefined}>
       {open && (
         <form onSubmit={submit} className="space-y-3 mb-4 rounded-2xl bg-mist p-4">
           <Field label="Done this week"><textarea className={smallInput} rows={3} value={f.done} onChange={(e) => setF({ ...f, done: e.target.value })} /></Field>
