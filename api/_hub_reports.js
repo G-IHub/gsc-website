@@ -12,6 +12,8 @@ export const WORKSTREAMS = [
   "Technology and capacity (training and QA)",
   "Client acquisition and project activation",
 ];
+// who leads each workstream (from the meeting report)
+export const WORKSTREAM_LEADS = ["Admin / Legal", "Finance", "Subsidiary directors", "Farouk", "Victor"];
 export const RAG = ["green", "amber", "red"];
 export const REPORT_ROLES = ["management", "finance", "director", "lead"];
 const MONEY = ["management", "finance"];
@@ -79,7 +81,7 @@ export async function handleReports({ action, method, body, query, user, store, 
     const week = weekEnding(isoDate(query?.week) || today());
     const rows = await store.listReports(week);
     const latest = WORKSTREAMS.map((ws) => rows.find((r) => r.workstream === ws) || null);
-    return out(200, { week_ending: week, workstreams: WORKSTREAMS, reports: latest, weeks: await store.listReportWeeks() });
+    return out(200, { week_ending: week, workstreams: WORKSTREAMS, leads: WORKSTREAM_LEADS, reports: latest, weeks: await store.listReportWeeks() });
   }
 
   if (action === "reports-summary" && method === "GET") {

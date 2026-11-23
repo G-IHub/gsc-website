@@ -11,7 +11,7 @@ type Summary = {
   revenue?: { received30: number; weeks: { week_ending: string; amount: number }[] };
 };
 type Report = { id: number; workstream: string; status: string; done: string; deliverables: string; challenges: string; next: string; author: string | null; submitted: string } | null;
-type Week = { week_ending: string; workstreams: string[]; reports: Report[]; weeks: string[] };
+type Week = { week_ending: string; workstreams: string[]; leads: string[]; reports: Report[]; weeks: string[] };
 
 const KPI_STATUS: Record<string, [string, string]> = { met: ["Met", "bg-lime text-plum"], progress: ["In progress", "bg-blue-100 text-blue-800"], behind: ["Behind", "bg-red-100 text-red-700"] };
 const RAG: Record<string, [string, string]> = { green: ["Green", "bg-lime text-plum"], amber: ["Amber", "bg-amber-100 text-amber-800"], red: ["Red", "bg-red-100 text-red-700"] };
@@ -149,16 +149,19 @@ const Reports = ({ me }: { me: Me }) => {
           }>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Workstream</th><th className="py-2 pr-3 font-bold">Status</th><th className="py-2 font-bold">Report</th></tr></thead>
+                <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Workstream</th><th className="py-2 pr-3 font-bold">Lead</th><th className="py-2 pr-3 font-bold">Status</th><th className="py-2 font-bold">Report</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {w.workstreams.map((ws, i) => {
                     const r = w.reports[i];
                     return (
                       <tr key={ws} className="align-top">
                         <td className="py-2.5 pr-3">{ws}{r?.author && <div className="text-xs text-muted">{r.author}, {r.submitted}</div>}</td>
+                        <td className="py-2.5 pr-3 text-muted whitespace-nowrap">{w.leads[i]}</td>
                         <td className="py-2.5 pr-3">{r ? <Pill cls={RAG[r.status]?.[1] ?? ""}>{RAG[r.status]?.[0] ?? r.status}</Pill> : "—"}</td>
                         <td className="py-2.5">
-                          {r ? <button className="text-magenta-dark hover:underline text-sm" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Hide" : "Read"}</button> : <Pill cls="bg-amber-100 text-amber-800">Not in yet</Pill>}
+                          {r ? (
+                            <span className="inline-flex items-center gap-2 whitespace-nowrap"><Pill cls="bg-lime text-plum">Submitted</Pill><button className="text-magenta-dark hover:underline text-xs" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Hide" : "Read"}</button></span>
+                          ) : <Pill cls="bg-amber-100 text-amber-800">Not in yet</Pill>}
                           {r && open === r.id && (
                             <div className="mt-2 space-y-1.5 text-sm">
                               <p><b className="text-plum font-medium">Completed:</b> {r.done}</p>
@@ -188,7 +191,7 @@ const Reports = ({ me }: { me: Me }) => {
             </table>
           </Card>
           {s.revenue && (
-            <Card title="Fees received per week">
+            <Card title="Revenue received per week (₦ thousands)">
               <div className="flex items-end gap-3 h-40 pt-4">
                 {s.revenue.weeks.map((x) => (
                   <div key={x.week_ending} className="flex-1 flex flex-col items-center justify-end h-full">
