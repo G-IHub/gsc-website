@@ -5,6 +5,8 @@ import { ROLE_LABEL, errorText, hub, type Me } from "../hub/hubApi";
 import Projects from "../hub/Projects";
 import Home from "../hub/Home";
 import Library from "../hub/Library";
+import Reports from "../hub/Reports";
+import Team from "../hub/Team";
 import ProjectPage from "../hub/ProjectPage";
 import People from "../hub/People";
 import AccessLog from "../hub/AccessLog";
@@ -13,7 +15,7 @@ import Account from "../hub/Account";
 // Genomac Research Hub: private, staff only. Not linked anywhere on the site and kept out of search results.
 // Every call goes to /api/hub, which decides what each person may see; this page only shows what comes back.
 
-type View = { name: "home" | "projects" | "library" | "people" | "log" | "account" } | { name: "project"; id: number };
+type View = { name: "home" | "projects" | "library" | "reports" | "team" | "people" | "log" | "account" } | { name: "project"; id: number };
 
 const SignIn = ({ onDone }: { onDone: () => void }) => {
   const [email, setEmail] = useState("");
@@ -109,8 +111,8 @@ const Hub = () => {
     { key: "projects", label: limited ? "My projects" : "Projects", icon: FolderOpen, go: { name: "projects" } },
     { key: "library", label: "Resource library", icon: BookOpen, go: { name: "library" } },
     ...(limited ? [] : ([
-      { key: "reports", label: "Reports and KPIs", icon: ChartColumn, soon: true },
-      { key: "team", label: "Team", icon: Users, soon: true },
+      { key: "reports", label: "Reports and KPIs", icon: ChartColumn, go: { name: "reports" } },
+      { key: "team", label: "Team", icon: Users, go: { name: "team" } },
     ] as Item[])),
   ];
   const admin: Item[] = [
@@ -162,6 +164,8 @@ const Hub = () => {
         {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
         {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
         {view.name === "library" && <Library />}
+        {view.name === "reports" && !limited && <Reports me={me} />}
+        {view.name === "team" && !limited && <Team />}
         {view.name === "people" && isMgmt && <People me={me} />}
         {view.name === "log" && isMgmt && <AccessLog />}
         {view.name === "account" && <Account />}

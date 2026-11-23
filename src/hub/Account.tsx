@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Btn, Card, Field, inputClass } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
+import MyProfile from "./MyProfile";
 
 const Account = () => {
   const [oldPassword, setOld] = useState("");
@@ -18,6 +19,7 @@ const Account = () => {
   return (
     <div className="space-y-5 max-w-lg">
       <h1 className="text-2xl text-plum">My account</h1>
+      <MyProfile />
       <Card title="Change password">
         <form onSubmit={submit} className="space-y-4">
           <Field label="Current password"><input type="password" autoComplete="current-password" className={inputClass} value={oldPassword} onChange={(e) => setOld(e.target.value)} /></Field>
