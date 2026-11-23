@@ -115,6 +115,7 @@ const shapeProject = (p, user, canClient, client) => ({
   health: p.health,
   ...(PAY_FLAG_ROLES.includes(user.role) ? { payment_status: p.payment_status } : {}),
   target_date: p.target_date || null,
+  last_update: p.last_update || null,
   ...(canClient ? { client: client || { name: "", contact: "" } } : {}),
 });
 
@@ -391,6 +392,42 @@ export async function handleHub(req, store, env = {}) {
     if (!Number.isInteger(id)) return out(400, { error: "Bad request" });
     await store.deleteLibrary(id);
     await store.log({ user_id: user.id, event: "library_deleted", detail: { id } });
+    return out(200, { ok: true });
+  }
+
+  // ---- weekly updates: members of the project write them, everyone who can see the project reads them ----
+  if (action === "updates" && method === "GET") {
+    const p = await projectOr404(req.query?.id);
+    if (!p) return out(404, { error: "Not found" });
+    const rows = await store.listUpdates(p.id);
+    const mayAdd = user.role === "management" || memberIds.has(p.id);
+    return out(200, {
+      updates: rows.map((u) => ({ id: u.id, date: u.date, author: u.author || "Former team member", done: u.done, next: u.next, blockers: u.blockers, canDelete: user.role === "management" || u.author_id === user.id })),
+      canAdd: mayAdd,
+    });
+  }
+
+  if (action === "update-add" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    if (!(user.role === "management" || memberIds.has(p.id))) return deny("add weekly update", { project: p.id });
+    const done = str(body.done, 2000);
+    const next = str(body.next, 2000);
+    const blockers = str(body.blockers, 1000);
+    if (!done) return out(400, { error: "Say what was done this week" });
+    const id = await store.addUpdate(p.id, user.id, { done, next, blockers });
+    await store.log({ user_id: user.id, event: "update_added", detail: { project: p.id } });
+    return out(200, { ok: true, id });
+  }
+
+  if (action === "update-delete" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    const u = Number.isInteger(Number(body.id)) ? await store.getUpdate(Number(body.id)) : null;
+    if (!u || u.project_id !== p.id) return out(404, { error: "Not found" });
+    if (!(user.role === "management" || u.author_id === user.id)) return deny("delete weekly update", { project: p.id });
+    await store.deleteUpdate(u.id);
+    await store.log({ user_id: user.id, event: "update_deleted", detail: { project: p.id } });
     return out(200, { ok: true });
   }
 

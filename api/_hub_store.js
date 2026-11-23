@@ -65,6 +65,15 @@ export const HUB_SCHEMA = [
      sort INT NOT NULL DEFAULT 0,
      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_updates (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     author_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     done TEXT NOT NULL DEFAULT '',
+     next TEXT NOT NULL DEFAULT '',
+     blockers TEXT NOT NULL DEFAULT '',
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -81,6 +90,8 @@ export const HUB_SCHEMA = [
 ];
 
 const U = "id::int AS id, email, name, role, unit, password_hash, active";
+// the date of the newest weekly update, so Home can say which projects have gone quiet
+const LAST_UPDATE = "(SELECT to_char(max(u.created_at), 'YYYY-MM-DD') FROM hub_updates u WHERE u.project_id = hub_projects.id) AS last_update";
 const P = "id::int AS id, ref, title, stage, unit, health, payment_status, to_char(target_date, 'YYYY-MM-DD') AS target_date";
 
 export async function ensureSchema(sql) {
@@ -122,8 +133,8 @@ export const makeStore = (sql) => ({
   },
 
   // projects
-  listProjects: async () => sql.query(`SELECT ${P} FROM hub_projects ORDER BY ref`),
-  getProject: async (id) => (await sql.query(`SELECT ${P} FROM hub_projects WHERE id = $1`, [id]))[0] ?? null,
+  listProjects: async () => sql.query(`SELECT ${P}, ${LAST_UPDATE} FROM hub_projects ORDER BY ref`),
+  getProject: async (id) => (await sql.query(`SELECT ${P}, ${LAST_UPDATE} FROM hub_projects WHERE id = $1`, [id]))[0] ?? null,
   createProject: async (p) =>
     (await sql.query(
       `INSERT INTO hub_projects (ref, title, stage, unit, target_date) VALUES ($1,$2,$3,$4,$5) RETURNING ${P}`,
@@ -227,6 +238,27 @@ export const makeStore = (sql) => ({
   },
   deleteLibrary: async (id) => {
     await sql.query(`DELETE FROM hub_library WHERE id = $1`, [id]);
+  },
+
+  // weekly updates: add and read only (no edits), so the record stays honest
+  listUpdates: async (pid) =>
+    sql.query(
+      `SELECT u.id::int AS id, u.author_id::int AS author_id, a.name AS author, u.done, u.next, u.blockers,
+              to_char(u.created_at, 'YYYY-MM-DD') AS date, u.created_at
+       FROM hub_updates u LEFT JOIN hub_users a ON a.id = u.author_id WHERE u.project_id = $1 ORDER BY u.created_at DESC, u.id DESC LIMIT 30`,
+      [pid],
+    ),
+  addUpdate: async (pid, authorId, u) => {
+    const [r] = await sql.query(
+      `INSERT INTO hub_updates (project_id, author_id, done, next, blockers) VALUES ($1,$2,$3,$4,$5) RETURNING id::int AS id`,
+      [pid, authorId, u.done, u.next, u.blockers],
+    );
+    return r.id;
+  },
+  getUpdate: async (id) =>
+    (await sql.query(`SELECT id::int AS id, project_id::int AS project_id, author_id::int AS author_id FROM hub_updates WHERE id = $1`, [id]))[0] ?? null,
+  deleteUpdate: async (id) => {
+    await sql.query(`DELETE FROM hub_updates WHERE id = $1`, [id]);
   },
 
   // log

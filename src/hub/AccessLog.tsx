@@ -18,6 +18,8 @@ const LABEL: Record<string, string> = {
   project_updated: "Updated a project",
   password_changed: "Changed a password",
   milestone_updated: "Updated a milestone",
+  update_added: "Added a weekly update",
+  update_deleted: "Removed a weekly update",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };

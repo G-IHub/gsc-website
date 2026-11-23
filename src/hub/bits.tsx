@@ -68,6 +68,9 @@ export const attentionFor = (projects: Project[]): Attention[] => {
     if (d !== null && d < 0) items.push({ tag: "Late", cls: "bg-red-100 text-red-700", text: `${p.ref} is ${-d} ${-d === 1 ? "day" : "days"} past its target date.`, project: p.id });
     else if (p.health === "red") items.push({ tag: "Late", cls: "bg-red-100 text-red-700", text: `${p.ref} is marked late.`, project: p.id });
     else if (d !== null && d <= 7) items.push({ tag: "Due soon", cls: "bg-amber-100 text-amber-800", text: `${p.ref} is due ${d === 0 ? "today" : `in ${d} ${d === 1 ? "day" : "days"}`}.`, project: p.id });
+    const sinceUpdate = p.last_update ? -(daysLeft(p.last_update) ?? 0) : null;
+    if (sinceUpdate === null) items.push({ tag: "Report", cls: "bg-blue-100 text-blue-800", text: `${p.ref} has no weekly update yet.`, project: p.id });
+    else if (sinceUpdate > 7) items.push({ tag: "Report", cls: "bg-blue-100 text-blue-800", text: `${p.ref} has had no weekly update for ${sinceUpdate} days.`, project: p.id });
     if (p.payment_status === "balance_due") items.push({ tag: "Payment", cls: "bg-amber-100 text-amber-800", text: `${p.ref} has a balance due.`, project: p.id });
     if (p.payment_status === "not_cleared") items.push({ tag: "Clearance", cls: "bg-blue-100 text-blue-800", text: `${p.ref} is not cleared to start yet.`, project: p.id });
   }
