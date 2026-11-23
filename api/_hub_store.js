@@ -176,6 +176,8 @@ export const HUB_SCHEMA = [
      availability TEXT NOT NULL DEFAULT 'available',
      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS version TEXT NOT NULL DEFAULT '0.1'`,
+  `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS owner TEXT NOT NULL DEFAULT ''`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -312,30 +314,38 @@ export const makeStore = (sql) => ({
 
   // document library (links to the files; the files themselves stay in the team's own drive)
   listLibrary: async () =>
-    sql.query(`SELECT id::int AS id, title, category, kind, audience, description, link, sort FROM hub_library ORDER BY sort, id`),
+    sql.query(
+      `SELECT id::int AS id, title, category, kind, audience, description, link, sort, version, owner, to_char(updated_at, 'YYYY-MM-DD') AS updated
+       FROM hub_library ORDER BY sort, id`,
+    ),
   seedLibrary: async (list) => {
     const [{ n }] = await sql.query(`SELECT count(*)::int AS n FROM hub_library`);
-    if (n > 0) return;
+    if (n > 0) {
+      // documents added before owners existed: fill in the starter owner once, never overwrite one that was set
+      const [{ blank }] = await sql.query(`SELECT count(*)::int AS blank FROM hub_library WHERE owner = ''`);
+      if (blank > 0) for (const d of list) await sql.query(`UPDATE hub_library SET owner = $1, version = $2 WHERE title = $3 AND owner = ''`, [d.owner, d.version, d.title]);
+      return;
+    }
     let i = 0;
     for (const d of list) {
       await sql.query(
-        `INSERT INTO hub_library (title, category, kind, audience, description, sort) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [d.title, d.category, d.kind, d.audience, d.description, ++i],
+        `INSERT INTO hub_library (title, category, kind, audience, description, sort, owner, version) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [d.title, d.category, d.kind, d.audience, d.description, ++i, d.owner, d.version],
       );
     }
   },
   saveLibrary: async (d) => {
     if (d.id) {
       await sql.query(
-        `UPDATE hub_library SET title=$1, category=$2, kind=$3, audience=$4, description=$5, link=$6, updated_at=now() WHERE id=$7`,
-        [d.title, d.category, d.kind, d.audience, d.description, d.link, d.id],
+        `UPDATE hub_library SET title=$1, category=$2, kind=$3, audience=$4, description=$5, link=$6, version=$8, owner=$9, updated_at=now() WHERE id=$7`,
+        [d.title, d.category, d.kind, d.audience, d.description, d.link, d.id, d.version, d.owner],
       );
       return d.id;
     }
     const [r] = await sql.query(
-      `INSERT INTO hub_library (title, category, kind, audience, description, link, sort)
-       VALUES ($1,$2,$3,$4,$5,$6, (SELECT COALESCE(max(sort),0)+1 FROM hub_library)) RETURNING id::int AS id`,
-      [d.title, d.category, d.kind, d.audience, d.description, d.link],
+      `INSERT INTO hub_library (title, category, kind, audience, description, link, version, owner, sort)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8, (SELECT COALESCE(max(sort),0)+1 FROM hub_library)) RETURNING id::int AS id`,
+      [d.title, d.category, d.kind, d.audience, d.description, d.link, d.version, d.owner],
     );
     return r.id;
   },

@@ -108,6 +108,20 @@ test("library: everyone reads by audience; only management changes; links must b
   assert.equal(added.status, 200);
   assert.equal((await post("mgmt", "library-delete", { id: added.body.id })).status, 200);
   assert.ok(!(await get("mgmt", "library")).body.documents.some((d) => d.id === added.body.id));
+  // version, owner and the updated date come back; the starter owners are filled in
+  const short = (await get("memE", "library")).body.documents.find((d) => d.title === "Client Agreement: Short Form");
+  assert.equal(short.owner, "Management");
+  assert.equal(short.version, "0.2");
+  assert.match(short.updated, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal((await post("mgmt", "library-save", { id: short.id, title: short.title, kind: "Word", audience: "all", version: "0.3", owner: "Legal" })).status, 200);
+  const after = (await get("memE", "library")).body.documents.find((d) => d.id === short.id);
+  assert.equal(after.version, "0.3");
+  assert.equal(after.owner, "Legal");
+  // documents saved before owners existed (as on the live site) get the starter owner once, without touching set ones
+  await sql.query(`UPDATE hub_library SET owner = '' WHERE title = 'QA Checklist'`);
+  const qa = (await get("memE", "library")).body.documents.find((d) => d.title === "QA Checklist");
+  assert.equal(qa.owner, "Quality reviewers");
+  assert.equal((await get("memE", "library")).body.documents.find((d) => d.id === short.id).owner, "Legal");
   // the starter list is not re-added once it exists
   assert.equal((await get("mgmt", "library")).body.documents.length, mg.body.documents.length);
 });

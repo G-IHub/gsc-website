@@ -399,7 +399,7 @@ export async function handleHub(req, store, env = {}) {
     const audience = LIBRARY_AUDIENCES.includes(body.audience) ? body.audience : "all";
     const id = body.id === undefined || body.id === null ? undefined : Number(body.id);
     if (id !== undefined && !Number.isInteger(id)) return out(400, { error: "Bad request" });
-    const saved = await store.saveLibrary({ id, title, category: str(body.category, 80), kind, audience, description: str(body.description, 500), link });
+    const saved = await store.saveLibrary({ id, title, category: str(body.category, 80), kind, audience, description: str(body.description, 500), link, version: str(body.version, 20) || "0.1", owner: str(body.owner, 80) });
     await store.log({ user_id: user.id, event: "library_saved", detail: { id: saved } });
     return out(200, { ok: true, id: saved });
   }
