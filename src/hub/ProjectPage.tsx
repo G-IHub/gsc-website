@@ -4,6 +4,7 @@ import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
 import { HEALTH_LABEL, HEALTH_STYLE, PAY_LABEL, PAY_STYLE, Pill, ViewingAs, daysLeft, daysText } from "./bits";
 import ProjectAccess, { type Member, type Person } from "./ProjectAccess";
 import { MoneyCard } from "./Projects";
+import Milestones, { progressOf, type Milestone } from "./Milestones";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
@@ -17,6 +18,7 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("overview");
   const [people, setPeople] = useState<Person[]>([]);
+  const [miles, setMiles] = useState<Milestone[]>([]);
   const [edit, setEdit] = useState({ stage: "", health: "green", target_date: "" });
   const [msg, setMsg] = useState("");
   const role = me.user.role;
@@ -28,6 +30,8 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
     setD(r.data);
     const p = r.data.project;
     setEdit({ stage: p.stage, health: p.health, target_date: p.target_date ?? "" });
+    const mr = await hub<{ milestones: Milestone[] }>("milestones", { query: { id: String(id) } });
+    if (mr.ok && mr.data) setMiles(mr.data.milestones);
     if (r.data.canManageMembers) {
       const pr = await hub<{ people: Person[] }>("people");
       if (pr.ok && pr.data) setPeople(pr.data.people);
@@ -42,6 +46,7 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
   if (!d) return <p className="text-muted">Loading…</p>;
   const p = d.project;
   const days = daysLeft(p.target_date);
+  const progress = progressOf(miles);
 
   const update = async (body: Record<string, unknown>, ok: string) => {
     const r = await hub("project-update", { method: "POST", body: { id: p.id, ...body } });
@@ -103,11 +108,19 @@ const ProjectPage = ({ id, me, onHome, onProjects }: { id: number; me: Me; onHom
                 {p.unit && <Pill cls="bg-magenta-tint text-magenta-dark">{p.unit}</Pill>}
               </div>
               <p className="text-sm text-muted mt-3">Stage: {p.stage || "not set"}</p>
+              {miles.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-sm text-plum font-medium">{progress.done} of {progress.total} milestones done</p>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${(progress.done / progress.total) * 100}%` }} /></div>
+                  {progress.next && <p className="text-xs text-muted mt-1.5">Next: {progress.next.name}</p>}
+                </div>
+              )}
             </Card>
           </div>
 
           <div className="grid gap-5 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-5">
+              {miles.length > 0 && <Milestones projectId={p.id} rows={miles} onChanged={load} />}
               {d.canManageMembers ? (
                 <Card title="Update this project">
                   <div className="grid sm:grid-cols-3 gap-4">

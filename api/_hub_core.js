@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
 // This file holds ALL the access decisions. It never talks to a database directly: it is given a `store`
@@ -315,6 +316,81 @@ export async function handleHub(req, store, env = {}) {
     }
     await store.updateProject(p.id, patch);
     await store.log({ user_id: user.id, event: "project_updated", detail: { project: p.id, patch } });
+    return out(200, { ok: true });
+  }
+
+  // ---- milestones: anyone who can see the project can read them ----
+  if (action === "milestones" && method === "GET") {
+    const p = await projectOr404(req.query?.id);
+    if (!p) return out(404, { error: "Not found" });
+    let rows = await store.listMilestones(p.id);
+    if (rows.length === 0) {
+      await store.seedMilestones(p.id, DEFAULT_MILESTONES);
+      rows = await store.listMilestones(p.id);
+    }
+    const mayEdit = user.role === "management" || (user.role === "lead" && memberIds.has(p.id));
+    return out(200, {
+      milestones: rows.map((m) => ({ ...m, canEdit: mayEdit || (user.role === "finance" && m.owner === "Finance") })),
+    });
+  }
+
+  if (action === "milestone-update" && method === "POST") {
+    const p = await projectOr404(body.project_id);
+    if (!p) return out(404, { error: "Not found" });
+    const n = Number(body.n);
+    const row = Number.isInteger(n) ? (await store.listMilestones(p.id)).find((m) => m.n === n) : null;
+    if (!row) return out(404, { error: "Not found" });
+    const mayEdit = user.role === "management" || (user.role === "lead" && memberIds.has(p.id));
+    if (!(mayEdit || (user.role === "finance" && row.owner === "Finance"))) return deny("update milestone", { project: p.id, n });
+    const patch = {};
+    if (body.status !== undefined) {
+      if (!MILESTONE_STATUSES.includes(body.status)) return out(400, { error: "Bad status" });
+      patch.status = body.status;
+      if (body.status === "done" && body.done === undefined && !row.done) patch.done = new Date().toISOString().slice(0, 10);
+      if (body.status !== "done" && body.done === undefined) patch.done = null;
+    }
+    if (body.planned !== undefined) patch.planned = isoDate(body.planned);
+    if (body.done !== undefined) patch.done = isoDate(body.done);
+    if (body.signed !== undefined) {
+      if (!row.signoff) return out(400, { error: "This step has no client sign-off" });
+      patch.signed = Boolean(body.signed);
+    }
+    await store.updateMilestone(p.id, n, patch);
+    await store.log({ user_id: user.id, event: "milestone_updated", detail: { project: p.id, n, patch } });
+    return out(200, { ok: true });
+  }
+
+  // ---- document library ----
+  if (action === "library" && method === "GET") {
+    await store.seedLibrary(DEFAULT_LIBRARY);
+    const mayMoney = MONEY_ROLES.includes(user.role);
+    const rows = (await store.listLibrary()).filter(
+      (d) => d.audience === "all" || (d.audience === "money" && mayMoney) || user.role === "management",
+    );
+    return out(200, { documents: rows, canEdit: user.role === "management" });
+  }
+
+  if (action === "library-save" && method === "POST") {
+    if (user.role !== "management") return deny("save library document");
+    const title = str(body.title, 200);
+    const link = str(body.link, 1000);
+    if (!title) return out(400, { error: "A title is needed" });
+    if (link && !/^https:\/\/\S+$/i.test(link)) return out(400, { error: "The link must start with https://" });
+    const kind = LIBRARY_KINDS.includes(body.kind) ? body.kind : "Other";
+    const audience = LIBRARY_AUDIENCES.includes(body.audience) ? body.audience : "all";
+    const id = body.id === undefined || body.id === null ? undefined : Number(body.id);
+    if (id !== undefined && !Number.isInteger(id)) return out(400, { error: "Bad request" });
+    const saved = await store.saveLibrary({ id, title, category: str(body.category, 80), kind, audience, description: str(body.description, 500), link });
+    await store.log({ user_id: user.id, event: "library_saved", detail: { id: saved } });
+    return out(200, { ok: true, id: saved });
+  }
+
+  if (action === "library-delete" && method === "POST") {
+    if (user.role !== "management") return deny("delete library document");
+    const id = Number(body.id);
+    if (!Number.isInteger(id)) return out(400, { error: "Bad request" });
+    await store.deleteLibrary(id);
+    await store.log({ user_id: user.id, event: "library_deleted", detail: { id } });
     return out(200, { ok: true });
   }
 

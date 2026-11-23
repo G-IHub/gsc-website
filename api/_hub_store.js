@@ -42,6 +42,29 @@ export const HUB_SCHEMA = [
      PRIMARY KEY (project_id, user_id)
    )`,
   `ALTER TABLE hub_members ADD COLUMN IF NOT EXISTS added_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
+  `CREATE TABLE IF NOT EXISTS hub_milestones (
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     n INT NOT NULL,
+     name TEXT NOT NULL,
+     owner TEXT NOT NULL DEFAULT '',
+     planned DATE,
+     done DATE,
+     status TEXT NOT NULL DEFAULT 'not_started',
+     signoff BOOLEAN NOT NULL DEFAULT false,
+     signed BOOLEAN NOT NULL DEFAULT false,
+     PRIMARY KEY (project_id, n)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_library (
+     id BIGSERIAL PRIMARY KEY,
+     title TEXT NOT NULL,
+     category TEXT NOT NULL DEFAULT '',
+     kind TEXT NOT NULL DEFAULT 'Word',
+     audience TEXT NOT NULL DEFAULT 'all',
+     description TEXT NOT NULL DEFAULT '',
+     link TEXT NOT NULL DEFAULT '',
+     sort INT NOT NULL DEFAULT 0,
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -149,6 +172,61 @@ export const makeStore = (sql) => ({
        ON CONFLICT (project_id) DO UPDATE SET fee = EXCLUDED.fee, paid = EXCLUDED.paid, currency = EXCLUDED.currency`,
       [pid, m.fee, m.paid, m.currency],
     );
+  },
+
+  // milestones: the 14 standard ones are created the first time a project's milestones are asked for
+  listMilestones: async (pid) =>
+    sql.query(
+      `SELECT n, name, owner, to_char(planned, 'YYYY-MM-DD') AS planned, to_char(done, 'YYYY-MM-DD') AS done, status, signoff, signed
+       FROM hub_milestones WHERE project_id = $1 ORDER BY n`,
+      [pid],
+    ),
+  seedMilestones: async (pid, list) => {
+    for (const m of list) {
+      await sql.query(
+        `INSERT INTO hub_milestones (project_id, n, name, owner, signoff) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+        [pid, m.n, m.name, m.owner, m.signoff],
+      );
+    }
+  },
+  updateMilestone: async (pid, n, patch) => {
+    for (const [k, v] of Object.entries(patch)) {
+      if (!["status", "planned", "done", "signed"].includes(k)) continue; // only these columns
+      await sql.query(`UPDATE hub_milestones SET ${k} = $1 WHERE project_id = $2 AND n = $3`, [v, pid, n]);
+    }
+  },
+
+  // document library (links to the files; the files themselves stay in the team's own drive)
+  listLibrary: async () =>
+    sql.query(`SELECT id::int AS id, title, category, kind, audience, description, link, sort FROM hub_library ORDER BY sort, id`),
+  seedLibrary: async (list) => {
+    const [{ n }] = await sql.query(`SELECT count(*)::int AS n FROM hub_library`);
+    if (n > 0) return;
+    let i = 0;
+    for (const d of list) {
+      await sql.query(
+        `INSERT INTO hub_library (title, category, kind, audience, description, sort) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [d.title, d.category, d.kind, d.audience, d.description, ++i],
+      );
+    }
+  },
+  saveLibrary: async (d) => {
+    if (d.id) {
+      await sql.query(
+        `UPDATE hub_library SET title=$1, category=$2, kind=$3, audience=$4, description=$5, link=$6, updated_at=now() WHERE id=$7`,
+        [d.title, d.category, d.kind, d.audience, d.description, d.link, d.id],
+      );
+      return d.id;
+    }
+    const [r] = await sql.query(
+      `INSERT INTO hub_library (title, category, kind, audience, description, link, sort)
+       VALUES ($1,$2,$3,$4,$5,$6, (SELECT COALESCE(max(sort),0)+1 FROM hub_library)) RETURNING id::int AS id`,
+      [d.title, d.category, d.kind, d.audience, d.description, d.link],
+    );
+    return r.id;
+  },
+  deleteLibrary: async (id) => {
+    await sql.query(`DELETE FROM hub_library WHERE id = $1`, [id]);
   },
 
   // log

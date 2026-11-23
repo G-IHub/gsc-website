@@ -235,3 +235,20 @@ h2 {
     transform: none;
   }
 }
+
+/* ---------- Research Hub (/hub): a compact, dashboard-sized type scale ----------
+   Scoped to .hub-root so the public website and the admin page keep their sizes. */
+.hub-root { font-size: 13px; }
+.hub-root .text-xs { font-size: 11px; }
+.hub-root .text-sm { font-size: 12.5px; }
+.hub-root .text-lg { font-size: 15px; }
+.hub-root .text-xl { font-size: 15px; }
+.hub-root .text-2xl { font-size: 22px; }
+.hub-root .text-3xl { font-size: 26px; }
+.hub-root .text-\[15px\] { font-size: 13px; }
+.hub-root .rounded-3xl { border-radius: 14px; }
+.hub-root section.rounded-3xl { padding: 16px 18px; }
+.hub-root .p-5 { padding: 14px 16px; }
+.hub-root aside { font-size: 13px; }
+.hub-root aside nav button, .hub-root aside nav > span { padding: 8px 10px; font-size: 13px; }
+.hub-root h1 { letter-spacing: -0.01em; }

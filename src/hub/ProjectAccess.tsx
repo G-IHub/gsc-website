@@ -42,6 +42,7 @@ const LOG_TEXT: Record<string, string> = {
   member_removed: "removed someone from this project",
   project_updated: "updated the project",
   denied: "was refused access",
+  milestone_updated: "updated a milestone",
 };
 
 const ProjectLog = ({ id }: { id: number }) => {
