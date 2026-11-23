@@ -128,7 +128,7 @@ const Hub = () => {
       <button
         onClick={() => setView(it.go!)}
         aria-current={section === it.key ? "page" : undefined}
-        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-left whitespace-nowrap transition-colors ${section === it.key ? "bg-white text-plum font-medium" : "text-white/80 hover:bg-white/10 hover:text-white"}`}
+        className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-left whitespace-nowrap transition-colors ${section === it.key ? "bg-mist text-plum font-medium" : "text-white/80 hover:bg-white/10 hover:text-white"}`}
       >
         <it.icon size={18} aria-hidden="true" /> {it.label}
       </button>
