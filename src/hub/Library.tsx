@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { ExternalLink, Plus, Search } from "lucide-react";
+import { Copy, ExternalLink, Plus, Search } from "lucide-react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
+import { RESEARCH_PROMPTS } from "./prompts";
 
-type Doc = { id: number; title: string; category: string; kind: string; audience: string; description: string; link: string };
+type Doc = { id: number; title: string; category: string; kind: string; audience: string; description: string; link: string; version: string; owner: string; updated: string };
 const KINDS = ["Word", "Excel", "PDF", "Link", "Other"];
 const AUDIENCE_LABEL: Record<string, string> = { all: "All staff", money: "Management and Finance", management: "Management only" };
 const KIND_STYLE: Record<string, string> = { Word: "bg-blue-100 text-blue-800", Excel: "bg-lime text-plum", PDF: "bg-red-100 text-red-700", Link: "bg-magenta-tint text-magenta-dark", Other: "bg-gray-200 text-gray-700" };
-const blank: Doc = { id: 0, title: "", category: "", kind: "Word", audience: "all", description: "", link: "" };
+const blank: Doc = { id: 0, title: "", category: "", kind: "Word", audience: "all", description: "", link: "", version: "0.1", owner: "", updated: "" };
+const short = (iso: string) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "");
 
 const Editor = ({ doc, onDone, onCancel }: { doc: Doc; onDone: () => void; onCancel: () => void }) => {
   const [f, setF] = useState(doc);
@@ -28,6 +30,8 @@ const Editor = ({ doc, onDone, onCancel }: { doc: Doc; onDone: () => void; onCan
         <Field label="Type">
           <select className={smallInput} value={f.kind} onChange={set("kind")}>{KINDS.map((k) => <option key={k}>{k}</option>)}</select>
         </Field>
+        <Field label="Version"><input className={smallInput} value={f.version} onChange={set("version")} placeholder="0.1" /></Field>
+        <Field label="Owner" hint="Who keeps it up to date"><input className={smallInput} value={f.owner} onChange={set("owner")} /></Field>
         <Field label="Who can see it">
           <select className={smallInput} value={f.audience} onChange={set("audience")}>{Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         </Field>
@@ -51,6 +55,9 @@ const Library = () => {
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Doc | null>(null);
+  const [cat, setCat] = useState("All");
+  const [prompt, setPrompt] = useState(5);
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     const r = await hub<{ documents: Doc[]; canEdit: boolean }>("library");
@@ -74,53 +81,84 @@ const Library = () => {
   if (error) return <p className="text-red-600">{error}</p>;
   if (!docs) return <p className="text-muted">Loading…</p>;
   const needle = q.trim().toLowerCase();
-  const shown = docs.filter((d) => !needle || `${d.title} ${d.description} ${d.category}`.toLowerCase().includes(needle));
-  const groups = [...new Set(shown.map((d) => d.category || "Other"))];
+  const cats = [...new Set(docs.map((d) => d.category || "Other"))];
+  const shown = docs.filter((d) => (cat === "All" || (d.category || "Other") === cat) && (!needle || `${d.title} ${d.description} ${d.category} ${d.owner}`.toLowerCase().includes(needle)));
+  const p = RESEARCH_PROMPTS.find((x) => x.n === prompt) ?? RESEARCH_PROMPTS[0]!;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(p.prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  };
+  const chip = (name: string) => (
+    <button key={name} onClick={() => setCat(name)} className={`rounded-full border px-3 py-1 text-xs ${cat === name ? "bg-plum border-plum text-white" : "bg-white border-gray-200 text-plum hover:border-gray-300"}`}>{name}</button>
+  );
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl text-plum">Resource library</h1>
-          <p className="text-sm text-muted mt-1">Templates and guides for the Research-to-Publication service. {docs.length} documents.</p>
+          <p className="text-sm text-muted mt-1">Every approved template, procedure and prompt in one place. Always the current version.</p>
         </div>
         {canEdit && !editing && <Btn variant="primary" onClick={() => setEditing(blank)}><Plus size={16} /> Add a document</Btn>}
       </div>
       {editing && <Editor doc={editing} onCancel={() => setEditing(null)} onDone={() => { setEditing(null); load(); }} />}
-      <div className="relative max-w-sm">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search the library" aria-label="Search the library" className={`${smallInput} pl-9`} />
-      </div>
-      {shown.length === 0 && <p className="text-sm text-muted">Nothing matches that search.</p>}
-      {groups.map((g) => (
-        <Card key={g} title={g}>
-          <ul className="divide-y divide-gray-100">
-            {shown.filter((d) => (d.category || "Other") === g).map((d) => (
-              <li key={d.id} className="py-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-plum font-medium">{d.title}</span>
-                    <Pill cls={KIND_STYLE[d.kind] ?? KIND_STYLE.Other!}>{d.kind}</Pill>
-                    {d.audience !== "all" && <Pill cls="bg-amber-100 text-amber-800">{AUDIENCE_LABEL[d.audience]}</Pill>}
-                  </div>
-                  <p className="text-sm text-muted mt-1">{d.description}</p>
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Categories">{chip("All")}{cats.map(chip)}</div>
+            <div className="relative ml-auto w-full sm:w-56">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" aria-label="Search the library" className={`${smallInput} pl-8`} />
+            </div>
+          </div>
+          {shown.length === 0 && <p className="text-sm text-muted">Nothing matches.</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {shown.map((d) => (
+              <div key={d.id} className="bg-white border border-gray-200/80 rounded-3xl p-5 flex flex-col">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <Pill cls={KIND_STYLE[d.kind] ?? KIND_STYLE.Other!}>{d.kind}</Pill>
+                  <span className="text-muted">{d.category}</span>
+                  {d.audience !== "all" && <Pill cls="bg-amber-100 text-amber-800">{AUDIENCE_LABEL[d.audience]}</Pill>}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <p className="text-plum font-medium mt-2">{d.title}</p>
+                <p className="text-xs text-muted mt-1">Version {d.version || "0.1"}{d.owner ? ` · ${d.owner}` : ""}{d.updated ? ` · updated ${short(d.updated)}` : ""}</p>
+                <p className="text-sm text-muted mt-2 flex-1">{d.description}</p>
+                <div className="flex flex-wrap items-center gap-2 mt-3">
                   {d.link ? (
-                    <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-magenta hover:bg-magenta-dark text-white px-3.5 py-1.5 text-sm font-medium">
-                      Open <ExternalLink size={14} aria-hidden="true" />
-                    </a>
+                    <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-magenta hover:bg-magenta-dark text-white px-3.5 py-1.5 text-sm font-medium">Open <ExternalLink size={14} aria-hidden="true" /></a>
                   ) : (
                     <span className="text-xs text-muted">{canEdit ? "No link yet" : "File not added yet"}</span>
                   )}
                   {canEdit && <Btn variant="ghost" onClick={() => setEditing(d)}>Edit</Btn>}
                   {canEdit && <Btn variant="ghost" onClick={() => remove(d)}>Remove</Btn>}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
+        </div>
+
+        <Card title="Research prompt library">
+          <p className="text-xs text-muted mb-3">Pick the stage, copy the prompt, replace the [brackets].</p>
+          <div className="flex flex-wrap gap-1.5">
+            {RESEARCH_PROMPTS.map((x) => (
+              <button key={x.n} onClick={() => setPrompt(x.n)} className={`rounded-full border px-2.5 py-1 text-xs ${x.n === prompt ? "bg-magenta border-magenta text-white" : "bg-white border-gray-200 text-plum hover:border-gray-300"}`}>{x.n}. {x.name}</button>
+            ))}
+          </div>
+          <div className="mt-4 rounded-2xl bg-mist p-4 text-sm">
+            <p className="text-plum font-medium">{p.n}. {p.name}</p>
+            <p className="mt-2 whitespace-pre-wrap">{p.prompt}</p>
+            {p.omi && <p className="mt-3 text-xs text-muted"><b className="text-plum">Omi does:</b> {p.omi}</p>}
+            {p.check && <p className="mt-2 text-xs text-muted"><b className="text-plum">Human check:</b> {p.check}</p>}
+          </div>
+          <Btn variant="primary" className="mt-3" onClick={copy}><Copy size={14} /> {copied ? "Copied" : "Copy prompt"}</Btn>
         </Card>
-      ))}
+      </div>
     </div>
   );
 };
