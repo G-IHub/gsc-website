@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
-import { ROLE_LABEL, errorText, hub } from "./hubApi";
+import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
+import { SKILL_AREAS, inArea } from "./skillAreas";
 import { Pill } from "./bits";
 
 type RaciRow = { id: number; section: string; name: string; cells: string[]; check: string };
@@ -112,19 +113,31 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
   );
 };
 
-const Directory = ({ d }: { d: Data }) => {
+const Directory = ({ d, me }: { d: Data; me: Me }) => {
   const [need, setNeed] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [target, setTarget] = useState("");
+  const [assignMsg, setAssignMsg] = useState("");
+  const mayAssign = me.user.role === "management" || me.user.role === "lead";
+  useEffect(() => {
+    if (!mayAssign) return;
+    hub<{ projects: Project[] }>("projects").then((r) => r.ok && r.data && setProjects(r.data.projects));
+  }, [mayAssign]);
   const people = d.directory;
-  const coverage = useMemo(() => {
-    const map = new Map<string, Person[]>();
-    for (const p of people) for (const t of tags(p.skills)) map.set(t, [...(map.get(t) ?? []), p]);
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([skill, ps]) => {
-      const leads = ps.filter((p) => p.can_lead);
-      const spareLead = leads.filter((p) => p.spare > 0 && p.availability !== "unavailable");
-      const [label, cls] = leads.length === 0 ? ["No lead", "bg-amber-100 text-amber-800"] : spareLead.length === 0 ? ["Gap", "bg-red-100 text-red-700"] : ["Covered", "bg-lime text-plum"];
-      return { skill, detail: `${ps.length} ${ps.length === 1 ? "person" : "people"} · ${leads.length} can lead · ${spareLead.length} with spare capacity`, label, cls };
-    });
-  }, [people]);
+  const coverage = useMemo(() => SKILL_AREAS.map((area) => {
+    const ps = people.filter((p) => p.filled && inArea(p.skills, area));
+    const leads = ps.filter((p) => p.can_lead);
+    const spareLead = leads.filter((p) => p.spare > 0 && p.availability !== "unavailable");
+    const reviewers = ps.filter((p) => p.can_qa);
+    let label: string, cls: string, detail: string;
+    if (ps.length === 0) [label, cls, detail] = ["Gap", "bg-red-100 text-red-700", "Nobody yet"];
+    else if (area.reviewOnly) [label, cls, detail] = ["Support", "bg-blue-100 text-blue-800", `${ps.length} ${ps.length === 1 ? "person" : "people"} · ${reviewers.length} can review`];
+    else if (leads.length === 0) [label, cls, detail] = ["No lead", "bg-amber-100 text-amber-800", `${ps.length} ${ps.length === 1 ? "person" : "people"} · nobody can lead`];
+    else [label, cls, detail] = spareLead.length === 0
+      ? ["Gap", "bg-red-100 text-red-700", `${ps.length} ${ps.length === 1 ? "person" : "people"} · ${leads.length} can lead · 0 with spare capacity`]
+      : ["Covered", "bg-lime text-plum", `${ps.length} ${ps.length === 1 ? "person" : "people"} · ${leads.length} can lead · ${spareLead.length} with spare capacity`];
+    return { skill: area.name, detail, label, cls };
+  }), [people]);
   const suggestion = useMemo(() => {
     const wanted = tags(need);
     if (wanted.length === 0) return null;
@@ -164,11 +177,10 @@ const Directory = ({ d }: { d: Data }) => {
       <div className="space-y-5">
         <Card title="Skill coverage">
           <p className="text-xs text-muted mb-2">Red means nobody with spare capacity can lead that kind of work.</p>
-          {coverage.length === 0 && <p className="text-sm text-muted">No skills entered yet.</p>}
           <ul className="divide-y divide-gray-100">
             {coverage.map((c) => (
               <li key={c.skill} className="py-2 flex items-start justify-between gap-2 text-sm">
-                <div><span className="text-plum capitalize">{c.skill}</span><div className="text-xs text-muted">{c.detail}</div></div>
+                <div><span className="text-plum">{c.skill}</span><div className="text-xs text-muted">{c.detail}</div></div>
                 <Pill cls={c.cls}>{c.label}</Pill>
               </li>
             ))}
@@ -183,14 +195,34 @@ const Directory = ({ d }: { d: Data }) => {
               <li>Quality reviewer: {suggestion.qa ? <b className="text-plum font-medium">{suggestion.qa.name} ({suggestion.qa.spare} free)</b> : <span className="text-muted">nobody free who can review</span>}</li>
             </ul>
           )}
-          <p className="text-xs text-muted mt-3">Add the people to the project from its People and access tab.</p>
+          {suggestion && mayAssign && (suggestion.lead || suggestion.second || suggestion.qa) && (
+            <div className="mt-4 space-y-2">
+              <select className={smallInput} value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Project">
+                <option value="">Choose a project…</option>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.ref} · {p.title}</option>)}
+              </select>
+              <Btn variant="primary" disabled={!target} onClick={async () => {
+                const picks: [Person | undefined, string][] = [[suggestion.lead, "lead"], [suggestion.second, "Supporting researcher"], [suggestion.qa, "Quality reviewer"]];
+                const done: string[] = [];
+                for (const [person, role] of picks) {
+                  if (!person) continue;
+                  const r = await hub("member-add", { method: "POST", body: { project_id: Number(target), user_id: person.user_id, project_role: role } });
+                  if (!r.ok) return setAssignMsg(errorText(r));
+                  done.push(person.name);
+                }
+                setAssignMsg(`Added ${done.join(", ")} to the project.`);
+              }}>Assign to project</Btn>
+              {assignMsg && <p className="text-xs text-muted" role="status">{assignMsg}</p>}
+            </div>
+          )}
+          {!mayAssign && <p className="text-xs text-muted mt-3">A lead or management adds people to a project.</p>}
         </Card>
       </div>
     </div>
   );
 };
 
-const Team = () => {
+const Team = ({ me }: { me: Me }) => {
   const [d, setD] = useState<Data | null>(null);
   const [tab, setTab] = useState<"matrix" | "directory">("matrix");
   const [error, setError] = useState("");
@@ -217,7 +249,7 @@ const Team = () => {
             className={`rounded-full border px-4 py-2 text-sm ${tab === k ? "bg-magenta border-magenta text-white" : "border-gray-200 bg-white text-plum hover:border-gray-300"}`}>{l}</button>
         ))}
       </div>
-      {tab === "matrix" ? <Matrix d={d} reload={load} /> : <Directory d={d} />}
+      {tab === "matrix" ? <Matrix d={d} reload={load} /> : <Directory d={d} me={me} />}
     </div>
   );
 };

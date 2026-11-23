@@ -165,7 +165,7 @@ const Hub = () => {
         {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
         {view.name === "library" && <Library />}
         {view.name === "reports" && !limited && <Reports me={me} />}
-        {view.name === "team" && !limited && <Team />}
+        {view.name === "team" && !limited && <Team me={me} />}
         {view.name === "people" && isMgmt && <People me={me} />}
         {view.name === "log" && isMgmt && <AccessLog />}
         {view.name === "account" && <Account />}

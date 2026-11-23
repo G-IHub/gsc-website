@@ -48,6 +48,10 @@ await store.updateProject(pid["GH-003"], { payment_status: "cleared" });
 for (const ref of ["GH-001", "GH-002", "GH-003"]) {
   for (const key of ["budget", "min_fee", "sheet_fee", "funds", "feasibility"]) await store.setClearance(pid[ref], key, true, id["finance@example.org"]);
 }
+// sample expertise profiles (Team page)
+await store.setProfile(id["leadb@example.org"], { skills: "AMR, whole-genome sequencing, phylogenetics, Python", can_lead: true, can_qa: false, max_projects: 2, availability: "available" });
+await store.setProfile(id["researchere@example.org"], { skills: "GWAS, population genetics, R", can_lead: true, can_qa: false, max_projects: 2, availability: "limited" });
+await store.setProfile(id["researcherx@example.org"], { skills: "Survival analysis, statistics, R, literature review", can_lead: false, can_qa: true, max_projects: 2, availability: "available" });
 await store.addMember(pid["GH-002"], id["leadb@example.org"], "lead");
 await store.addMember(pid["GH-002"], id["researchere@example.org"], "supporting");
 await store.addMember(pid["GH-003"], id["researchere@example.org"], "supporting");
