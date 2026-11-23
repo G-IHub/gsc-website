@@ -125,6 +125,7 @@ test("weekly workstream reports: submit and read by week", async () => {
   const w = (await get("dir", "reports", { week: "2026-11-25" })).body;
   assert.equal(w.week_ending, "2026-11-27");
   assert.equal(w.reports.length, 5);
+  assert.deepEqual(w.leads, ["Admin / Legal", "Finance", "Subsidiary directors", "Farouk", "Victor"]);
   assert.equal(w.reports[1].status, "amber");
   assert.equal(w.reports[1].author, "fin");
   assert.equal(w.reports[0], null); // not in yet
