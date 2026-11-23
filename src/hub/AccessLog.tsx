@@ -17,6 +17,9 @@ const LABEL: Record<string, string> = {
   project_created: "Created a project",
   project_updated: "Updated a project",
   password_changed: "Changed a password",
+  milestone_updated: "Updated a milestone",
+  library_saved: "Saved a library document",
+  library_deleted: "Removed a library document",
 };
 
 const AccessLog = () => {

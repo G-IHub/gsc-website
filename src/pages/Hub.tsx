@@ -4,6 +4,7 @@ import { Btn, Field, inputClass } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me } from "../hub/hubApi";
 import Projects from "../hub/Projects";
 import Home from "../hub/Home";
+import Library from "../hub/Library";
 import ProjectPage from "../hub/ProjectPage";
 import People from "../hub/People";
 import AccessLog from "../hub/AccessLog";
@@ -12,7 +13,7 @@ import Account from "../hub/Account";
 // Genomac Research Hub: private, staff only. Not linked anywhere on the site and kept out of search results.
 // Every call goes to /api/hub, which decides what each person may see; this page only shows what comes back.
 
-type View = { name: "home" | "projects" | "people" | "log" | "account" } | { name: "project"; id: number };
+type View = { name: "home" | "projects" | "library" | "people" | "log" | "account" } | { name: "project"; id: number };
 
 const SignIn = ({ onDone }: { onDone: () => void }) => {
   const [email, setEmail] = useState("");
@@ -84,10 +85,10 @@ const Hub = () => {
     setView({ name: "home" });
   };
 
-  if (me === "loading") return <div className="min-h-screen bg-mist" />;
+  if (me === "loading") return <div className="hub-root min-h-screen bg-mist" />;
   if (me === "off" || me === null) {
     return (
-      <div className="min-h-screen bg-mist flex items-center justify-center p-4">
+      <div className="hub-root min-h-screen bg-mist flex items-center justify-center p-4">
         {me === "off" ? (
           <p className="text-muted text-center">The Research Hub is not switched on yet.</p>
         ) : (
@@ -106,7 +107,7 @@ const Hub = () => {
   const main: Item[] = [
     { key: "home", label: "Home", icon: House, go: { name: "home" } },
     { key: "projects", label: limited ? "My projects" : "Projects", icon: FolderOpen, go: { name: "projects" } },
-    { key: "library", label: "Resource library", icon: BookOpen, soon: true },
+    { key: "library", label: "Resource library", icon: BookOpen, go: { name: "library" } },
     ...(limited ? [] : ([
       { key: "reports", label: "Reports and KPIs", icon: ChartColumn, soon: true },
       { key: "team", label: "Team", icon: Users, soon: true },
@@ -135,7 +136,7 @@ const Hub = () => {
     );
 
   return (
-    <div className="min-h-screen bg-mist md:flex">
+    <div className="hub-root min-h-screen bg-mist md:flex">
       <aside className="bg-plum text-white md:w-60 md:shrink-0 md:min-h-screen md:sticky md:top-0 md:h-screen flex flex-col">
         <div className="px-5 pt-5 pb-3">
           <p className="text-[11px] font-bold tracking-widest uppercase text-lime">Staff only</p>
@@ -160,6 +161,7 @@ const Hub = () => {
         {view.name === "home" && <Home me={me} onOpen={(id) => setView({ name: "project", id })} onAll={() => setView({ name: "projects" })} />}
         {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
         {view.name === "project" && <ProjectPage key={view.id} id={view.id} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
+        {view.name === "library" && <Library />}
         {view.name === "people" && isMgmt && <People me={me} />}
         {view.name === "log" && isMgmt && <AccessLog />}
         {view.name === "account" && <Account />}
