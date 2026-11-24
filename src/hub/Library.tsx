@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Copy, ExternalLink, Plus, Search } from "lucide-react";
+import { BookOpen, ExternalLink, FileText, Plus, Search } from "lucide-react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
-import { RESEARCH_PROMPTS } from "./prompts";
+import PromptReader from "./PromptReader";
+import DocReader from "./DocReader";
 
 type Doc = { id: number; title: string; category: string; kind: string; audience: string; description: string; link: string; version: string; owner: string; updated: string };
 const KINDS = ["Word", "Excel", "PDF", "Link", "Other"];
@@ -35,7 +36,7 @@ const Editor = ({ doc, onDone, onCancel }: { doc: Doc; onDone: () => void; onCan
         <Field label="Who can see it">
           <select className={smallInput} value={f.audience} onChange={set("audience")}>{Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         </Field>
-        <Field label="Link to the file" hint="Paste the share link from Google Drive or OneDrive. It must start with https://" className="sm:col-span-2">
+        <Field label="Link to the file" hint="Paste the Google Drive share link (it must start with https://). Files saved as Google Docs or Sheets can be read here and downloaded as PDF; a Word or Excel file uploaded as it is can be read and downloaded, but not as PDF." className="sm:col-span-2">
           <input className={smallInput} value={f.link} onChange={set("link")} placeholder="https://" />
         </Field>
         <Field label="What it is for" className="sm:col-span-2"><input className={smallInput} value={f.description} onChange={set("description")} /></Field>
@@ -56,8 +57,8 @@ const Library = () => {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Doc | null>(null);
   const [cat, setCat] = useState("All");
-  const [prompt, setPrompt] = useState(5);
-  const [copied, setCopied] = useState(false);
+  const [view, setView] = useState<"docs" | "prompts">("docs");
+  const [reading, setReading] = useState<Doc | null>(null);
 
   const load = useCallback(async () => {
     const r = await hub<{ documents: Doc[]; canEdit: boolean }>("library");
@@ -83,16 +84,6 @@ const Library = () => {
   const needle = q.trim().toLowerCase();
   const cats = [...new Set(docs.map((d) => d.category || "Other"))];
   const shown = docs.filter((d) => (cat === "All" || (d.category || "Other") === cat) && (!needle || `${d.title} ${d.description} ${d.category} ${d.owner}`.toLowerCase().includes(needle)));
-  const p = RESEARCH_PROMPTS.find((x) => x.n === prompt) ?? RESEARCH_PROMPTS[0]!;
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(p.prompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
-  };
   const chip = (name: string) => (
     <button key={name} onClick={() => setCat(name)} className={`rounded-full border px-3 py-1 text-xs ${cat === name ? "bg-plum border-plum text-white" : "bg-white border-gray-200 text-plum hover:border-gray-300"}`}>{name}</button>
   );
@@ -104,12 +95,24 @@ const Library = () => {
           <h1 className="text-2xl text-plum">Resource library</h1>
           <p className="text-sm text-muted mt-1">Every approved template, procedure and prompt in one place. Always the current version.</p>
         </div>
-        {canEdit && !editing && <Btn variant="primary" onClick={() => setEditing(blank)}><Plus size={16} /> Add a document</Btn>}
+        {canEdit && !editing && view === "docs" && <Btn variant="primary" onClick={() => setEditing(blank)}><Plus size={16} /> Add a document</Btn>}
       </div>
-      {editing && <Editor doc={editing} onCancel={() => setEditing(null)} onDone={() => { setEditing(null); load(); }} />}
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      {/* two sections, each with the whole page to itself */}
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Library sections">
+        {([["docs", "Documents", FileText, docs.length], ["prompts", "Research prompt library", BookOpen, 12]] as const).map(([k, label, Icon, n]) => (
+          <button key={k} role="tab" aria-selected={view === k} onClick={() => setView(k)}
+            className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] transition-colors ${view === k ? "bg-plum border-plum text-white" : "bg-white border-gray-200 text-plum hover:border-gray-300"}`}>
+            <Icon size={14} aria-hidden="true" /> {label} <span className={`rounded-full px-1.5 text-[10px] ${view === k ? "bg-white/20" : "bg-mist"}`}>{n}</span>
+          </button>
+        ))}
+      </div>
+
+      {view === "prompts" ? <PromptReader /> : reading ? <DocReader doc={reading} onBack={() => setReading(null)} /> : (
+      <>
+      {editing && <Editor doc={editing} onCancel={() => setEditing(null)} onDone={() => { setEditing(null); load(); }} />}
+      <div>
+        <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="Categories">{chip("All")}{cats.map(chip)}</div>
             <div className="relative ml-auto w-full sm:w-56">
@@ -118,7 +121,7 @@ const Library = () => {
             </div>
           </div>
           {shown.length === 0 && <p className="text-sm text-muted">Nothing matches.</p>}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {shown.map((d) => (
               <div key={d.id} className="bg-white border border-gray-200/80 rounded-3xl p-5 flex flex-col">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -126,12 +129,12 @@ const Library = () => {
                   <span className="text-muted">{d.category}</span>
                   {d.audience !== "all" && <Pill cls="bg-amber-100 text-amber-800">{AUDIENCE_LABEL[d.audience]}</Pill>}
                 </div>
-                <p className="text-plum font-medium mt-2">{d.title}</p>
+                <button className="text-left text-plum font-medium mt-2 hover:underline" onClick={() => setReading(d)}>{d.title}</button>
                 <p className="text-xs text-muted mt-1">Version {d.version || "0.1"}{d.owner ? ` · ${d.owner}` : ""}{d.updated ? ` · updated ${short(d.updated)}` : ""}</p>
                 <p className="text-sm text-muted mt-2 flex-1">{d.description}</p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {d.link ? (
-                    <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-magenta hover:bg-magenta-dark text-white px-3.5 py-1.5 text-sm font-medium">Open <ExternalLink size={14} aria-hidden="true" /></a>
+                    <button onClick={() => setReading(d)} className="inline-flex items-center gap-1.5 rounded-full bg-plum hover:bg-plum-soft text-white px-3 py-1 text-[11px] font-medium">Read <ExternalLink size={12} aria-hidden="true" /></button>
                   ) : (
                     <span className="text-xs text-muted">{canEdit ? "No link yet" : "File not added yet"}</span>
                   )}
@@ -143,22 +146,9 @@ const Library = () => {
           </div>
         </div>
 
-        <Card title="Research prompt library">
-          <p className="text-xs text-muted mb-3">Pick the stage, copy the prompt, replace the [brackets].</p>
-          <div className="flex flex-wrap gap-1.5">
-            {RESEARCH_PROMPTS.map((x) => (
-              <button key={x.n} onClick={() => setPrompt(x.n)} className={`rounded-full border px-2.5 py-1 text-xs ${x.n === prompt ? "bg-magenta border-magenta text-white" : "bg-white border-gray-200 text-plum hover:border-gray-300"}`}>{x.n}. {x.name}</button>
-            ))}
-          </div>
-          <div className="mt-4 rounded-2xl bg-mist p-4 text-sm">
-            <p className="text-plum font-medium">{p.n}. {p.name}</p>
-            <p className="mt-2 whitespace-pre-wrap">{p.prompt}</p>
-            {p.omi && <p className="mt-3 text-xs text-muted"><b className="text-plum">Omi does:</b> {p.omi}</p>}
-            {p.check && <p className="mt-2 text-xs text-muted"><b className="text-plum">Human check:</b> {p.check}</p>}
-          </div>
-          <Btn variant="primary" className="mt-3" onClick={copy}><Copy size={14} /> {copied ? "Copied" : "Copy prompt"}</Btn>
-        </Card>
       </div>
+      </>
+      )}
     </div>
   );
 };
