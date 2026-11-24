@@ -10,11 +10,12 @@ import Clearance from "./Clearance";
 import Payments from "./Payments";
 import ChangeLog from "./ChangeLog";
 import Workspace from "./Workspace";
+import QaChecklist from "./QaChecklist";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
 type Detail = { project: Project; members: Member[]; canSeeMoney: boolean; canManageMembers: boolean };
-export type Tab = "overview" | "workspace" | "access";
+export type Tab = "overview" | "workspace" | "qa" | "access";
 
 const Label = ({ children }: { children: string }) => <p className="text-xs uppercase tracking-widest text-muted font-bold">{children}</p>;
 
@@ -61,7 +62,7 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
   };
 
   const inWorkspace = role === "management" || d.members.some((m) => m.user_id === me.user.id);
-  const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"]] as [Tab, string][]) : []), ["access", "People and access"]];
+  const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"], ["qa", "QA checklist"]] as [Tab, string][]) : []), ["access", "People and access"]];
 
   return (
     <div className="space-y-6">
@@ -97,7 +98,9 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
         )}
       </div>
 
-      {tab === "workspace" && inWorkspace ? (
+      {tab === "qa" && inWorkspace ? (
+        <QaChecklist projectId={p.id} onChanged={load} />
+      ) : tab === "workspace" && inWorkspace ? (
         <Workspace projectId={p.id} meId={me.user.id} members={d.members} />
       ) : tab === "access" ? (
         <ProjectAccess projectId={p.id} members={d.members} people={people} canManage={d.canManageMembers} isManagement={role === "management"} onChanged={load} />

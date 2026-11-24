@@ -15,7 +15,7 @@ import Account from "../hub/Account";
 // Genomac Research Hub: private, staff only. Not linked anywhere on the site and kept out of search results.
 // Every call goes to /api/hub, which decides what each person may see; this page only shows what comes back.
 
-type View = { name: "home" | "projects" | "library" | "reports" | "team" | "people" | "log" | "account" } | { name: "project"; id: number; tab?: "overview" | "workspace" | "access" };
+type View = { name: "home" | "projects" | "library" | "reports" | "team" | "people" | "log" | "account" } | { name: "project"; id: number; tab?: "overview" | "workspace" | "qa" | "access" };
 
 const SignIn = ({ onDone }: { onDone: () => void }) => {
   const [email, setEmail] = useState("");

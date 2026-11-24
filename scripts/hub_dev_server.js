@@ -63,6 +63,7 @@ await store.setProfile(id["researchere@example.org"], { skills: "GWAS, populatio
 await store.setProfile(id["researcherx@example.org"], { skills: "Survival analysis, statistics, R, literature review", can_lead: false, can_qa: true, max_projects: 2, availability: "available" });
 await store.addMember(pid["GH-002"], id["leadb@example.org"], "lead");
 await store.addMember(pid["GH-002"], id["researchere@example.org"], "supporting");
+await store.addMember(pid["GH-002"], id["researcherx@example.org"], "Quality reviewer");
 await store.addMember(pid["GH-003"], id["researchere@example.org"], "supporting");
 await store.addMember(pid["GH-003"], id["researcherx@example.org"], "supporting");
 await store.addMember(pid["GH-001"], id["coordinator@example.org"], "coordinator");

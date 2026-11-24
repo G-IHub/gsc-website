@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { handleWorkspace } from "./_hub_workspace.js";
 import { handleReports } from "./_hub_reports.js";
 import { handleTeam } from "./_hub_team.js";
+import { handleQa, qaPassed } from "./_hub_qa.js";
 import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
@@ -379,6 +380,9 @@ export async function handleHub(req, store, env = {}) {
     const patch = {};
     if (body.status !== undefined) {
       if (!MILESTONE_STATUSES.includes(body.status)) return out(400, { error: "Bad status" });
+      if (n === 9 && body.status === "done" && !(await qaPassed(store, p.id))) {
+        return out(400, { error: "The QA checklist must be passed by the quality reviewer and signed off by the lead first" });
+      }
       patch.status = body.status;
       if (body.status === "done" && body.done === undefined && !row.done) patch.done = new Date().toISOString().slice(0, 10);
       if (body.status !== "done" && body.done === undefined) patch.done = null;
@@ -642,6 +646,8 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
+  const qa = await handleQa({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
+  if (qa) return qa;
   const rp = await handleReports({ action, method, body, query: req.query, user, store, out, deny, str, isoDate, canSeeProject, memberIds, env });
   if (rp) return rp;
   const tm = await handleTeam({ action, method, body, user, store, out, deny, str });
