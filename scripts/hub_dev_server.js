@@ -8,6 +8,7 @@ import http from "node:http";
 import { PGlite } from "@electric-sql/pglite";
 import { handleHub, hashPassword } from "../api/_hub_core.js";
 import { ensureSchema, makeStore } from "../api/_hub_store.js";
+import { DEFAULT_MILESTONES } from "../api/_hub_defaults.js";
 
 const db = new PGlite();
 const sql = { query: async (text, params) => (await db.query(text, params)).rows };
@@ -47,6 +48,14 @@ await store.updateProject(pid["GH-003"], { payment_status: "cleared" });
 // those three are past clearance, so their checklists are complete too
 for (const ref of ["GH-001", "GH-002", "GH-003"]) {
   for (const key of ["budget", "min_fee", "sheet_fee", "funds", "feasibility"]) await store.setClearance(pid[ref], key, true, id["finance@example.org"]);
+}
+// some milestones finished on different days this week (Home chart)
+{
+  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const day = (i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return d.toISOString().slice(0, 10); };
+  for (const ref of ["GH-001", "GH-002", "GH-003"]) await store.seedMilestones(pid[ref], DEFAULT_MILESTONES);
+  const done = [["GH-001", 1, 0], ["GH-001", 2, 1], ["GH-002", 1, 1], ["GH-002", 2, 2], ["GH-002", 3, 2], ["GH-002", 4, 2], ["GH-003", 1, 4]];
+  for (const [ref, n, i] of done) await store.updateMilestone(pid[ref], n, { status: "done", done: day(i) });
 }
 // sample expertise profiles (Team page)
 await store.setProfile(id["leadb@example.org"], { skills: "AMR, whole-genome sequencing, phylogenetics, Python", can_lead: true, can_qa: false, max_projects: 2, availability: "available" });

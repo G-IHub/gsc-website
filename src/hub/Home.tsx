@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type KpiLite = { key: string; name: string; value: string; progress: number; status: string };
 type Lite = { kpis: KpiLite[]; met: number; monthReceived?: number };
 const REPORT_ROLES = ["management", "finance", "director", "lead"];
 
 type MyTask = { id: number; project_id: number; ref: string; text: string; due: string | null; milestone: number | null };
+import { ArrowUpRight, Plus, TrendingUp } from "lucide-react";
 import { Card } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
 import { HEALTH_LABEL, HEALTH_STYLE, Pill, StatTile, ViewingAs, attentionFor, daysLeft, daysText } from "./bits";
@@ -143,96 +144,201 @@ const MemberHome = ({ me, projects, onOpen }: { me: Me; projects: Project[]; onO
   );
 };
 
-const Portfolio = ({ me, projects, onOpen, onAll, onReports }: { me: Me; projects: Project[]; onOpen: (id: number) => void; onAll: () => void; onReports: () => void }) => {
+type MileLite = { n: number; status: string; done: string | null };
+type TeamPerson = { user_id: number; name: string; role: string; skills: string; active: number; availability: string; filled: boolean };
+const TEAM_ROLES = ["management", "finance", "director", "lead"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const initialsOf = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// One number card. The first one on the page is the dark gradient card, the rest are white.
+const Stat = ({ label, value, note, dark, onClick }: { label: string; value: ReactNode; note?: string; dark?: boolean; onClick?: () => void }) => (
+  <div className={`relative overflow-hidden rounded-[22px] p-5 ${dark ? "bg-gradient-to-br from-plum via-plum-soft to-plum text-white" : "bg-white text-ink"}`}>
+    {dark && <svg className="absolute -right-12 -bottom-16 opacity-20" width="220" height="220" viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="80" fill="none" stroke="#cde24a" strokeWidth="1.5"/><circle cx="110" cy="110" r="105" fill="none" stroke="#b241b7" strokeWidth="1.5"/></svg>}
+    <div className="relative flex items-start justify-between gap-2">
+      <p className={`text-[15px] ${dark ? "text-white" : "text-ink"}`}>{label}</p>
+      {onClick && (
+        <button onClick={onClick} aria-label={`Open ${label}`} className={`w-8 h-8 rounded-full flex items-center justify-center ${dark ? "bg-white text-plum" : "border border-gray-300 text-ink hover:bg-mist"}`}>
+          <ArrowUpRight size={16} />
+        </button>
+      )}
+    </div>
+    <p className="relative mt-3 text-[40px] leading-none font-medium tracking-tight">{value}</p>
+    {note && <p className={`relative mt-3 text-xs flex items-center gap-1.5 ${dark ? "text-white/80" : "text-muted"}`}><TrendingUp size={14} aria-hidden="true" /> {note}</p>}
+  </div>
+);
+
+// Milestones completed on each day of this week, as rounded bars (empty days drawn hatched, as in the design)
+const WeekChart = ({ counts }: { counts: number[] }) => {
+  const max = Math.max(...counts, 1);
+  const top = counts.indexOf(Math.max(...counts));
+  const today = (new Date().getDay() + 6) % 7;
+  return (
+    <div className="flex items-end justify-between gap-2 sm:gap-4 h-52 pt-8">
+      {counts.map((c, i) => (
+        <div key={DAYS[i]} className="flex-1 h-full flex flex-col items-center justify-end">
+          {c > 0 && i === top && <span className="mb-1.5 rounded-md border border-lime bg-white px-1.5 py-0.5 text-[10px] text-plum">{c} done</span>}
+          <div
+            title={`${DAYS[i]}: ${c} milestone${c === 1 ? "" : "s"} done`}
+            className={`w-full max-w-14 rounded-full ${c > 0 ? "bg-gradient-to-b from-plum-soft to-plum" : "hub-hatch"}`}
+            style={{ height: c > 0 ? `${Math.max((c / max) * 100, 35)}%` : "55%" }}
+          />
+          <span className={`mt-2 text-xs ${i === today ? "text-plum font-medium" : "text-muted"}`}>{DAYS[i]}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Portfolio = ({ me, projects, onOpen, onAll, onReports, onPeople, onTeam }: { me: Me; projects: Project[]; onOpen: (id: number) => void; onAll: () => void; onReports: () => void; onPeople: () => void; onTeam: () => void }) => {
   const [lite, setLite] = useState<Lite | null>(null);
+  const [miles, setMiles] = useState<Record<number, MileLite[]>>({});
+  const [team, setTeam] = useState<TeamPerson[] | null>(null);
   useEffect(() => {
-    if (!REPORT_ROLES.includes(me.user.role)) return;
-    hub<Lite>("reports-summary", { query: { light: "1" } }).then((r) => r.ok && r.data && setLite(r.data));
+    if (REPORT_ROLES.includes(me.user.role)) hub<Lite>("reports-summary", { query: { light: "1" } }).then((r) => r.ok && r.data && setLite(r.data));
+    if (TEAM_ROLES.includes(me.user.role)) hub<{ directory: TeamPerson[] }>("team").then((r) => setTeam(r.ok && r.data ? r.data.directory : []));
   }, [me.user.role]);
+  useEffect(() => {
+    projects.forEach((p) => {
+      hub<{ milestones: MileLite[] }>("milestones", { query: { id: String(p.id) } }).then((r) => r.ok && r.data && setMiles((m) => ({ ...m, [p.id]: r.data!.milestones })));
+    });
+  }, [projects]);
+
   const money = me.user.role === "management" || me.user.role === "finance";
   const attention = attentionFor(projects);
-  const soon = projects.filter((p) => {
-    const d = daysLeft(p.target_date);
-    return d !== null && d >= 0 && d <= 14;
-  }).length;
-  const counts = (["red", "amber", "green"] as const).map((h) => `${projects.filter((p) => p.health === h).length} ${HEALTH_LABEL[h].toLowerCase()}`).join(" · ");
+  const closed = projects.filter((p) => miles[p.id]?.some((m) => m.n === 14 && m.status === "done")).length;
+  const open = projects.length - closed;
+  const onTrack = projects.filter((p) => p.health === "green").length;
+  const soon = projects.filter((p) => { const d = daysLeft(p.target_date); return d !== null && d >= 0 && d <= 14; }).length;
+  // this week's milestone completions, Monday to Sunday
+  const monday = new Date();
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const week = DAYS.map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return isoDay(d); });
+  const counts = week.map((day) => Object.values(miles).flat().filter((m) => m.status === "done" && m.done === day).length);
+  const doneThisWeek = counts.reduce((a, b) => a + b, 0);
+  const statusOf = (t: TeamPerson): [string, string] =>
+    t.availability === "unavailable" ? ["Not available", "bg-red-50 text-red-700 border-red-200"]
+    : t.active > 0 ? [`On ${t.active} ${t.active === 1 ? "project" : "projects"}`, "bg-amber-50 text-amber-800 border-amber-200"]
+    : ["Available", "bg-lime/30 text-plum border-lime"];
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl text-plum">Portfolio overview</h1>
-          <p className="text-sm text-muted mt-1">{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>
+          <h1>Dashboard</h1>
+          <p className="text-[15px] text-muted mt-1">Plan, track and deliver your research projects with ease.</p>
         </div>
-        <ViewingAs label={`${ROLE_LABEL[me.user.role]?.toLowerCase() ?? me.user.role}${["management", "finance"].includes(me.user.role) ? " (sees all projects)" : ""}`} />
+        <div className="flex flex-wrap gap-2">
+          {me.user.role === "management" && <button onClick={onAll} className="inline-flex items-center gap-1.5 rounded-full bg-plum hover:bg-plum-soft text-white px-4 py-2.5 text-sm"><Plus size={16} /> New project</button>}
+          {lite && <button onClick={onReports} className="rounded-full border border-plum text-plum px-4 py-2.5 text-sm hover:bg-white">Reports and KPIs</button>}
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Active projects" value={projects.length} note={counts} />
-        <StatTile label="Needs attention" value={attention.length} note="Late, due soon, payment, clearance" />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Stat dark label="Active projects" value={open} note={`${onTrack} on track`} onClick={onAll} />
+        <Stat label="Closed projects" value={closed} note="Close-out form done" onClick={onAll} />
+        <Stat label="Needs attention" value={attention.length} note="Late, due soon, payment, reports" />
         {money ? (
-          <StatTile label="Revenue received this month" value={lite?.monthReceived !== undefined ? `₦${lite.monthReceived.toLocaleString()}` : "…"} note="From the payment schedules" />
+          <Stat label="Revenue this month" value={lite?.monthReceived !== undefined ? `₦${Math.round(lite.monthReceived / 1000)}k` : "…"} note="From the payment schedules" onClick={onReports} />
         ) : (
-          <StatTile label="Due within 14 days" value={soon} />
+          <Stat label="Due within 14 days" value={soon} note="Target dates coming up" />
         )}
-        <StatTile label="Balance due" value={projects.filter((p) => p.payment_status === "balance_due").length} note="Projects waiting for the final payment" />
       </div>
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Card title="Projects" action={<button className="text-sm text-magenta-dark hover:underline" onClick={onAll}>All projects</button>}>
-            {projects.length === 0 ? (
-              <p className="text-sm text-muted">No projects yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Code</th><th className="py-2 pr-3 font-bold">Project</th><th className="py-2 pr-3 font-bold">Lead</th><th className="py-2 pr-3 font-bold">Stage</th><th className="py-2 pr-3 font-bold">Target</th><th className="py-2 font-bold">Health</th></tr></thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {projects.map((p) => (
-                      <tr key={p.id} className="hover:bg-mist cursor-pointer" onClick={() => onOpen(p.id)}>
-                        <td className="py-3 pr-3 whitespace-nowrap"><button className="text-magenta-dark font-medium hover:underline" onClick={() => onOpen(p.id)}>{p.ref}</button></td>
-                        <td className="py-3 pr-3 text-plum">{p.title}</td>
-                        <td className="py-3 pr-3 whitespace-nowrap">{p.lead ?? <span className="text-muted">—</span>}</td>
-                        <td className="py-3 pr-3 text-muted">{p.stage || "—"}</td>
-                        <td className="py-3 pr-3 whitespace-nowrap">{p.target_date ?? "—"}<span className="block text-xs text-muted">{daysText(daysLeft(p.target_date))}</span></td>
-                        <td className="py-3"><Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+      <div className="grid gap-5 xl:grid-cols-3">
+        <div className="xl:col-span-2 space-y-5">
+          <section className="bg-white rounded-[22px] p-5 md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg text-ink">Project analytics</h2>
+              <span className="text-xs text-muted">Milestones completed this week: {doneThisWeek}</span>
+            </div>
+            <WeekChart counts={counts} />
+          </section>
+
+          {team && (
+            <section className="bg-white rounded-[22px] p-5 md:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <h2 className="text-lg text-ink">Team collaboration</h2>
+                <div className="flex gap-2">
+                  <button onClick={onTeam} className="rounded-full border border-gray-300 px-3.5 py-1.5 text-xs text-ink hover:bg-mist">View team</button>
+                  {me.user.role === "management" && <button onClick={onPeople} className="inline-flex items-center gap-1 rounded-full border border-plum px-3.5 py-1.5 text-xs text-plum hover:bg-mist"><Plus size={13} /> Add member</button>}
+                </div>
               </div>
-            )}
-          </Card>
+              {team.length === 0 && <p className="text-sm text-muted">No staff yet.</p>}
+              <ul>
+                {team.slice(0, 6).map((t) => {
+                  const [label, cls] = statusOf(t);
+                  return (
+                    <li key={t.user_id} className="py-3 flex items-center gap-3">
+                      <span className="w-11 h-11 rounded-full bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-sm font-semibold shrink-0" aria-hidden="true">{initialsOf(t.name)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] text-ink">{t.name}</p>
+                        <p className="text-xs text-muted truncate">{ROLE_LABEL[t.role]}{t.filled ? ` — ${t.skills.split(",").slice(0, 3).join(",")}` : " — profile not filled in"}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-md border px-2 py-0.5 text-xs ${cls}`}>{label}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
         </div>
+
         <div className="space-y-5">
-        <Card title="Needs attention this week">
-          {attention.length === 0 && <p className="text-sm text-muted">Nothing needs attention right now.</p>}
-          <ul className="divide-y divide-gray-100">
-            {attention.slice(0, 8).map((a, i) => (
-              <li key={i} className="py-2.5 flex items-start gap-3 text-sm">
-                <Pill cls={a.cls}>{a.tag}</Pill>
-                <button className="text-left hover:underline" onClick={() => onOpen(a.project)}>{a.text}</button>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        {lite && (
-          <Card title={`30-day KPIs: ${lite.met} of ${lite.kpis.length} met`}>
-            <ul className="space-y-3">
-              {[...lite.kpis].sort((a, b) => Number(a.value === "Not entered") - Number(b.value === "Not entered")).slice(0, 5).map((k) => (
-                <li key={k.key} className="text-sm">
-                  <div className="flex justify-between gap-2"><span>{k.name}</span><span className="text-muted whitespace-nowrap">{k.value}</span></div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
+          <section className="bg-white rounded-[22px] p-5">
+            <h2 className="text-lg text-ink mb-2">Needs attention</h2>
+            {attention.length === 0 && <p className="text-sm text-muted">Nothing needs attention right now.</p>}
+            <ul className="divide-y divide-gray-100">
+              {attention.slice(0, 6).map((a, i) => (
+                <li key={i} className="py-2.5 flex items-start gap-3 text-sm">
+                  <Pill cls={a.cls}>{a.tag}</Pill>
+                  <button className="text-left hover:underline" onClick={() => onOpen(a.project)}>{a.text}</button>
                 </li>
               ))}
             </ul>
-            <button className="mt-4 inline-flex rounded-full bg-magenta hover:bg-magenta-dark text-white px-4 py-2 text-sm font-medium" onClick={onReports}>Open reports and KPIs</button>
-          </Card>
-        )}
+          </section>
+
+          <section className="bg-white rounded-[22px] p-5">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h2 className="text-lg text-ink">Projects</h2>
+              <button className="text-xs text-magenta-dark hover:underline" onClick={onAll}>See all</button>
+            </div>
+            {projects.length === 0 && <p className="text-sm text-muted">No projects yet.</p>}
+            <ul className="divide-y divide-gray-100">
+              {projects.slice(0, 6).map((p) => (
+                <li key={p.id} className="py-2.5">
+                  <button className="w-full text-left" onClick={() => onOpen(p.id)}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-ink truncate"><span className="text-magenta-dark">{p.ref}</span> · {p.title}</span>
+                      <Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill>
+                    </div>
+                    <p className="text-xs text-muted mt-0.5">{p.lead ? `${p.lead} · ` : ""}{p.target_date ? daysText(daysLeft(p.target_date)) : "No target date"}</p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {lite && (
+            <section className="bg-white rounded-[22px] p-5">
+              <h2 className="text-lg text-ink mb-3">30-day KPIs: {lite.met} of {lite.kpis.length} met</h2>
+              <ul className="space-y-3">
+                {[...lite.kpis].sort((a, b) => Number(a.value === "Not entered") - Number(b.value === "Not entered")).slice(0, 5).map((k) => (
+                  <li key={k.key} className="text-sm">
+                    <div className="flex justify-between gap-2"><span>{k.name}</span><span className="text-muted whitespace-nowrap">{k.value}</span></div>
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-plum" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const Home = ({ me, onOpen, onAll, onReports }: { me: Me; onOpen: (id: number, tab?: "overview" | "workspace" | "access") => void; onAll: () => void; onReports: () => void }) => {
+const Home = ({ me, onOpen, onAll, onReports, onPeople, onTeam }: { me: Me; onOpen: (id: number, tab?: "overview" | "workspace" | "access") => void; onAll: () => void; onReports: () => void; onPeople: () => void; onTeam: () => void }) => {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
@@ -243,7 +349,7 @@ const Home = ({ me, onOpen, onAll, onReports }: { me: Me; onOpen: (id: number, t
   }, []);
   if (error) return <p className="text-red-600">{error}</p>;
   if (!projects) return <p className="text-muted">Loading…</p>;
-  return me.user.role === "member" ? <MemberHome me={me} projects={projects} onOpen={onOpen} /> : <Portfolio me={me} projects={projects} onOpen={onOpen} onAll={onAll} onReports={onReports} />;
+  return me.user.role === "member" ? <MemberHome me={me} projects={projects} onOpen={onOpen} /> : <Portfolio me={me} projects={projects} onOpen={onOpen} onAll={onAll} onReports={onReports} onPeople={onPeople} onTeam={onTeam} />;
 };
 
 export default Home;

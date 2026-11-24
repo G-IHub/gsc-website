@@ -250,5 +250,19 @@ h2 {
 .hub-root section.rounded-3xl { padding: 16px 18px; }
 .hub-root .p-5 { padding: 14px 16px; }
 .hub-root aside { font-size: 13px; }
-.hub-root aside nav button, .hub-root aside nav > span[title] { padding: 8px 10px; font-size: 13px; }
+/* (old compact sidebar rule removed in the 2026-11-24 restyle) */
 .hub-root h1 { letter-spacing: -0.01em; }
+
+/* ---------- Research Hub restyle (2026-11-24): layered soft cards, one sans-serif ---------- */
+.hub-root, .hub-root h1, .hub-root h2, .hub-root h3, .hub-root .font-journal {
+  font-family: "Poppins", system-ui, sans-serif;
+}
+.hub-root h1 { font-size: 30px; font-weight: 500; color: var(--color-ink); letter-spacing: -0.02em; }
+.hub-root h2, .hub-root .font-journal { font-weight: 500; }
+.hub-root .hub-panel section.rounded-3xl { border-radius: 22px; border-color: transparent; box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04); }
+.hub-root .hub-panel .rounded-3xl { border-radius: 22px; }
+.hub-root .hub-nav { font-size: 14px; }
+.hub-root .hub-hatch {
+  background: repeating-linear-gradient(135deg, #e6e8ea 0 2px, #f7f8f8 2px 9px);
+  border: 1px solid #eceeef;
+}
