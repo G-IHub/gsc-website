@@ -64,38 +64,86 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
   const inWorkspace = role === "management" || d.members.some((m) => m.user_id === me.user.id);
   const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"], ["qa", "QA checklist"]] as [Tab, string][]) : []), ["access", "People and access"]];
 
+  const fmtDay = (iso?: string | null) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null);
+  const started = miles.find((m) => m.n === 2)?.done ?? null;
+  const dueTone = days === null ? "text-muted" : days < 0 ? "text-red-700" : days <= 7 ? "text-amber-700" : "text-ink";
+  const roleOf = (m: Member) => (m.project_role || ROLE_LABEL[m.role] || "").replace(/^./, (c) => c.toUpperCase());
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted">
-            <button className="hover:text-plum hover:underline" onClick={onHome}>Home</button> /{" "}
-            <button className="hover:text-plum hover:underline" onClick={onProjects}>Projects</button> / {p.ref}
+    <div className="space-y-3">
+      <p className="text-[11px] text-muted">
+        <button className="hover:text-plum hover:underline" onClick={onHome}>Home</button> /{" "}
+        <button className="hover:text-plum hover:underline" onClick={onProjects}>Projects</button> / {p.ref}
+      </p>
+
+      {/* header card: title, one quiet line, the team, one action */}
+      <section className="bg-white rounded-[16px] px-4 py-3.5 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="!text-[20px] leading-tight">{p.title} <span className="text-[12px] text-muted font-normal">· {p.ref}</span></h1>
+          <p className="text-[12px] text-muted mt-1">
+            {p.client && <span title={p.client.contact || undefined}>Client: {p.client.name || "not set"} · </span>}
+            {p.unit && <>Unit: {p.unit} · </>}
+            Stage: {p.stage || "not set"}
           </p>
-          <h1 className="text-2xl text-plum mt-2">{p.title}</h1>
-          {p.client && <p className="text-sm text-muted mt-1">Client (lead researcher): {p.client.name || "not set"}{p.client.contact ? `, ${p.client.contact}` : ""}</p>}
-          <div className="flex flex-wrap gap-2 mt-2">
-            <Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill>
-            {p.payment_status && <Pill cls={PAY_STYLE[p.payment_status]}>{`Payment: ${PAY_LABEL[p.payment_status]}`}</Pill>}
-            {p.unit && <Pill cls="bg-magenta-tint text-magenta-dark">{p.unit}</Pill>}
+          <div className="flex items-center mt-2.5">
+            {d.members.slice(0, 6).map((m) => (
+              <span key={m.user_id} title={`${m.name} · ${roleOf(m)}`} className="-ml-1.5 first:ml-0 w-7 h-7 rounded-full ring-2 ring-white bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-[10px] font-semibold">
+                {m.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("")}
+              </span>
+            ))}
+            <span className="ml-2 text-[11px] text-muted">
+              {d.members.length === 0 ? "No one on this project yet" : d.members.slice(0, 3).map((m) => `${m.name} (${roleOf(m)})`).join(", ") + (d.members.length > 3 ? ` +${d.members.length - 3}` : "")}
+            </span>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ViewingAs label={ROLE_LABEL[role]?.toLowerCase() ?? role} />
-          {days !== null && <Pill cls={days < 0 ? "bg-red-100 text-red-700" : days <= 7 ? "bg-amber-100 text-amber-800" : "bg-lime text-plum"}>{days < 0 ? daysText(days) : days === 0 ? "Due today" : `Due in ${days} ${days === 1 ? "day" : "days"}`}</Pill>}
-          {inWorkspace && (
-            <Btn onClick={() => { setTab("overview"); setOpenUpdate((n) => n + 1); setTimeout(() => document.getElementById("weekly-updates")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>Add weekly update</Btn>
-          )}
+        {inWorkspace && (
+          <button onClick={() => { setTab("overview"); setOpenUpdate((n) => n + 1); setTimeout(() => document.getElementById("weekly-updates")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}
+            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-plum hover:bg-plum-soft text-white px-3.5 py-1.5 text-[12px]">+ Add weekly update</button>
+        )}
+      </section>
+
+      {/* four compact tiles, like the dashboard */}
+      <div className="grid gap-2.5 grid-cols-2 lg:grid-cols-4">
+        <div className="bg-white rounded-[14px] px-3.5 py-3">
+          <p className="text-[11px] text-muted">Health</p>
+          <div className="mt-1.5"><Pill cls={HEALTH_STYLE[p.health]}>{HEALTH_LABEL[p.health]}</Pill></div>
+          <p className="text-[10.5px] text-muted mt-1.5 truncate">Stage: {p.stage || "not set"}</p>
         </div>
+        <div className="bg-white rounded-[14px] px-3.5 py-3">
+          <p className="text-[11px] text-muted">Due</p>
+          <p className={`text-[18px] font-medium leading-tight mt-1 ${dueTone}`}>{days === null ? "—" : days < 0 ? `${-days} ${-days === 1 ? "day" : "days"} late` : days === 0 ? "Today" : `${days} ${days === 1 ? "day" : "days"}`}</p>
+          <p className="text-[10.5px] text-muted mt-1 truncate">{fmtDay(p.target_date) ? `Target ${fmtDay(p.target_date)}` : "No target date"}</p>
+        </div>
+        <div className="bg-white rounded-[14px] px-3.5 py-3">
+          <p className="text-[11px] text-muted">Progress</p>
+          <p className="text-[18px] font-medium leading-tight mt-1">{progress.done}<span className="text-[12px] text-muted font-normal"> / {progress.total || 14} milestones</span></p>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-plum" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} /></div>
+          <p className="text-[10.5px] text-muted mt-1 truncate" title={progress.next?.name}>{progress.next ? `Next: ${progress.next.name}` : progress.total ? "All milestones done" : "No milestones yet"}</p>
+        </div>
+        {p.payment_status ? (
+          <div className="bg-white rounded-[14px] px-3.5 py-3">
+            <p className="text-[11px] text-muted">Clearance and payment</p>
+            <div className="mt-1.5"><Pill cls={PAY_STYLE[p.payment_status]}>{PAY_LABEL[p.payment_status]}</Pill></div>
+            <p className="text-[10.5px] text-muted mt-1.5 truncate">{started ? `Started ${fmtDay(started)}` : "Not started yet"}</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-[14px] px-3.5 py-3">
+            <p className="text-[11px] text-muted">Started</p>
+            <p className="text-[18px] font-medium leading-tight mt-1">{started ? fmtDay(started) : "Not yet"}</p>
+            <p className="text-[10.5px] text-muted mt-1">When the proposal was accepted</p>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-2" role="tablist">
-        {tabs.map(([key, label]) =>
-          (
+      {/* slim tab bar */}
+      <div className="flex items-end justify-between gap-3 border-b border-gray-200" role="tablist">
+        <div className="flex flex-wrap gap-5">
+          {tabs.map(([key, label]) => (
             <button key={key} role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
-              className={`rounded-full border px-4 py-2 text-sm transition-colors ${tab === key ? "bg-magenta border-magenta text-white" : "border-gray-200 bg-white text-plum hover:border-gray-300"}`}>{label}</button>
-          ),
-        )}
+              className={`-mb-px pb-2 pt-1 text-[13px] border-b-2 transition-colors ${tab === key ? "border-plum text-plum font-medium" : "border-transparent text-muted hover:text-ink"}`}>{label}</button>
+          ))}
+        </div>
+        <span className="hidden sm:block pb-2 text-[10.5px] text-muted">Viewing as {ROLE_LABEL[role]?.toLowerCase() ?? role}</span>
       </div>
 
       {tab === "qa" && inWorkspace ? (
@@ -106,32 +154,7 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
         <ProjectAccess projectId={p.id} members={d.members} people={people} canManage={d.canManageMembers} isManagement={role === "management"} onChanged={load} />
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card title="Genomac team">
-              {d.members.length === 0 && <p className="text-sm text-muted">Nobody is on this project yet.</p>}
-              <ul className="space-y-1.5 text-sm">
-                {d.members.map((m) => <li key={m.user_id}><span className="text-muted first-letter:uppercase inline-block">{m.project_role || ROLE_LABEL[m.role]}:</span> <span className="text-plum font-medium">{m.name}</span></li>)}
-              </ul>
-            </Card>
-            <Card title="Dates">
-              <dl className="space-y-2 text-sm">
-                <div><Label>Started</Label><dd className="mt-0.5">{miles.find((m) => m.n === 2)?.done ?? "Not started yet"}</dd></div>
-                <div><Label>Target delivery</Label><dd className="mt-0.5">{p.target_date ?? "Not set"}</dd></div>
-                {p.payment_status && <div><Label>Cleared to start</Label><dd className="mt-0.5">{p.payment_status === "not_cleared" ? "No" : "Yes"}</dd></div>}
-              </dl>
-            </Card>
-            <Card title="Progress">
-              {miles.length > 0 ? (
-                <>
-                  <p className="text-sm text-plum font-medium">{progress.done} of {progress.total} milestones done</p>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${(progress.done / progress.total) * 100}%` }} /></div>
-                </>
-              ) : <p className="text-sm text-muted">No milestones yet.</p>}
-              <p className="text-xs text-muted mt-2">Stage: {p.stage || "not set"}.{progress.next ? ` Next: ${progress.next.name}.` : ""}</p>
-            </Card>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-5">
               {miles.length > 0 && <Milestones projectId={p.id} rows={miles} onChanged={load} />}
               {d.canManageMembers ? (

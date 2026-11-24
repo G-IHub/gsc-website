@@ -3,7 +3,7 @@ import { handleWorkspace } from "./_hub_workspace.js";
 import { handleReports } from "./_hub_reports.js";
 import { handleTeam } from "./_hub_team.js";
 import { handleQa, qaPassed } from "./_hub_qa.js";
-import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
+import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, RETIRED_LIBRARY_QA, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
 // This file holds ALL the access decisions. It never talks to a database directly: it is given a `store`
@@ -402,10 +402,11 @@ export async function handleHub(req, store, env = {}) {
   if (action === "library" && method === "GET") {
     await store.seedLibrary(DEFAULT_LIBRARY);
     // the 2026-11-24 clean-up, done once (a document added again later with the same title stays)
-    if ((await store.getMeta("library_retired_2026_11_24")) === null) {
-      const n = await store.deleteLibraryByTitles(RETIRED_LIBRARY);
-      await store.setMeta("library_retired_2026_11_24", String(n));
-      if (n > 0) await store.log({ user_id: user.id, event: "library_deleted", detail: { retired: RETIRED_LIBRARY, count: n } });
+    for (const [key, titles] of [["library_retired_2026_11_24", RETIRED_LIBRARY], ["library_retired_2026_11_24_qa", RETIRED_LIBRARY_QA]]) {
+      if ((await store.getMeta(key)) !== null) continue;
+      const n = await store.deleteLibraryByTitles(titles);
+      await store.setMeta(key, String(n));
+      if (n > 0) await store.log({ user_id: user.id, event: "library_deleted", detail: { retired: titles, count: n } });
     }
     const mayMoney = MONEY_ROLES.includes(user.role);
     const rows = (await store.listLibrary()).filter(

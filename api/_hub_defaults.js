@@ -41,7 +41,6 @@ export const DEFAULT_LIBRARY = [
   { title: "Project Proposal Template", owner: "Lead researchers", version: "0.1", category: "Client documents", kind: "Word", audience: "all", description: "Scope, timeline, deliverables and fee for the client. Shows no internal costs." },
   { title: "Research Protocol Template", owner: "Lead researchers", version: "0.1", category: "Project planning", kind: "Word", audience: "all", description: "The full protocol: 15 sections and a change log." },
   { title: "Project Budget Template", owner: "Finance", version: "0.1", category: "Project planning", kind: "Excel", audience: "money", description: "Fee, staff cost, software and data, admin and margin. Management and Finance only." },
-  { title: "QA Checklist", owner: "Quality reviewers", version: "0.1", category: "Quality and delivery", kind: "Word", audience: "all", description: "43 checks across 11 sections, with an issues log and sign-off." },
   { title: "Project Close-out Form", owner: "Coordinator", version: "0.1", category: "Quality and delivery", kind: "Word", audience: "all", description: "Client delivery and acceptance, then our internal close-out checklist." },
   { title: "SOP: Research-to-Publication Service", owner: "Management", version: "0.1", category: "Team and reporting", kind: "Word", audience: "all", description: "The 15 stages from acquisition to close-out, the never-bend rules and escalation." },
   { title: "Decision Sheet: 12 Management Approvals", owner: "Management", version: "0.1", category: "Management", kind: "Word", audience: "management", description: "The twelve decisions management must approve before the pilot." },
@@ -57,3 +56,6 @@ export const RETIRED_LIBRARY = [
   "Responsibilities Matrix and Expertise Directory",
   "OMI Research Prompt Library",
 ];
+
+// Removed on 2026-11-24 (second clean-up): the QA Checklist is now the "QA checklist" tab of every project.
+export const RETIRED_LIBRARY_QA = ["QA Checklist"];
