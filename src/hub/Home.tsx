@@ -245,8 +245,7 @@ const Portfolio = ({ me, projects, onOpen, onAll, onReports, onPeople, onTeam }:
         )}
       </div>
 
-      <div className="grid gap-2.5 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-2.5">
+      <div className="hub-two grid gap-2.5 lg:grid-cols-2">
           <section className="bg-white rounded-[14px] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-[13px] text-ink">Project analytics</h2>
@@ -282,9 +281,7 @@ const Portfolio = ({ me, projects, onOpen, onAll, onReports, onPeople, onTeam }:
               </ul>
             </section>
           )}
-        </div>
 
-        <div className="space-y-2.5">
           <section className="bg-white rounded-[14px] p-3">
             <h2 className="text-[13px] text-ink mb-1">Needs attention</h2>
             {attention.length === 0 && <p className="text-sm text-muted">Nothing needs attention right now.</p>}
@@ -320,10 +317,10 @@ const Portfolio = ({ me, projects, onOpen, onAll, onReports, onPeople, onTeam }:
           </section>
 
           {lite && (
-            <section className="bg-white rounded-[14px] p-3">
+            <section className="bg-white rounded-[14px] p-3 lg:col-span-2">
               <h2 className="text-[13px] text-ink mb-1.5">30-day KPIs: {lite.met} of {lite.kpis.length} met</h2>
-              <ul className="space-y-2">
-                {[...lite.kpis].sort((a, b) => Number(a.value === "Not entered") - Number(b.value === "Not entered")).slice(0, 5).map((k) => (
+              <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {[...lite.kpis].sort((a, b) => Number(a.value === "Not entered") - Number(b.value === "Not entered")).slice(0, 6).map((k) => (
                   <li key={k.key} className="text-xs">
                     <div className="flex justify-between gap-2"><span>{k.name}</span><span className="text-muted whitespace-nowrap">{k.value}</span></div>
                     <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-plum" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
@@ -332,7 +329,6 @@ const Portfolio = ({ me, projects, onOpen, onAll, onReports, onPeople, onTeam }:
               </ul>
             </section>
           )}
-        </div>
       </div>
     </div>
   );
