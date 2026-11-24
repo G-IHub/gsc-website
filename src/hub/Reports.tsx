@@ -6,7 +6,7 @@ import { Pill, StatTile } from "./bits";
 type Kpi = { key: string; name: string; kind: "auto" | "manual"; value: string; progress: number; status: string; updated?: string | null };
 type Summary = {
   scope: "all" | "unit" | "mine";
-  tiles: { projects: number; delivered: number; deliveredOnTime: number; startedUncleared: number; cleared: number };
+  tiles: { projects: number; delivered: number; deliveredOnTime: number; startedUncleared: number; cleared: number; qaFirstPass: { passed: number; total: number } };
   kpis: Kpi[]; met: number;
   revenue?: { received30: number; weeks: { week_ending: string; amount: number }[] };
 };
@@ -133,8 +133,9 @@ const Reports = ({ me }: { me: Me }) => {
         <p className="text-sm text-muted mt-1">Week ending {short(w.week_ending)}. Numbers are worked out from the project records for {scopeText}, not typed in.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
         <StatTile label="On-time delivery" value={t.delivered ? `${Math.round((t.deliveredOnTime / t.delivered) * 100)}%` : "—"} note={`${t.deliveredOnTime} of ${t.delivered} delivered on time`} />
+        <StatTile label="QA first-pass" value={t.qaFirstPass.total ? `${Math.round((t.qaFirstPass.passed / t.qaFirstPass.total) * 100)}%` : "—"} note={`${t.qaFirstPass.passed} of ${t.qaFirstPass.total} passed at the first review`} />
         <StatTile label="Started without clearance" value={t.startedUncleared} note="Target: always 0" />
         <StatTile label="Cleared to start" value={`${t.cleared} of ${t.projects}`} note="All five clearance checks ticked" />
         {s.revenue ? <StatTile label="Fees received, last 30 days" value={fmt(s.revenue.received30)} note="Finance and management only" /> : <StatTile label="Projects" value={t.projects} />}

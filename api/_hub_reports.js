@@ -123,6 +123,9 @@ export async function handleReports({ action, method, body, query, user, store, 
       }
     }
     const n = projects.length;
+    const visible = new Set(projects.map((p) => p.id));
+    const firsts = (await store.listQaFirstRounds()).filter((r) => visible.has(r.project_id));
+    const qaFirstPass = { passed: firsts.filter((r) => r.outcome === "pass").length, total: firsts.length };
     const staff = (await store.listUsers()).filter((u) => u.active);
     const profiles = await store.countDirectoryProfiles();
     const manual = await store.listKpis();
@@ -152,7 +155,7 @@ export async function handleReports({ action, method, body, query, user, store, 
     }
     return out(200, {
       scope: SEE_ALL(user) ? "all" : user.role === "director" ? "unit" : "mine",
-      tiles: { projects: n, delivered, deliveredOnTime, startedUncleared, cleared },
+      tiles: { projects: n, delivered, deliveredOnTime, startedUncleared, cleared, qaFirstPass },
       kpis,
       met: kpis.filter((k) => k.status === "met").length,
       ...(money && !light ? { revenue } : {}),

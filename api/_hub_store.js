@@ -184,6 +184,43 @@ export const HUB_SCHEMA = [
      value TEXT NOT NULL DEFAULT '',
      at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_qa_rounds (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     round INT NOT NULL,
+     version TEXT NOT NULL DEFAULT '',
+     outcome TEXT,
+     comments TEXT NOT NULL DEFAULT '',
+     reviewer_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     reviewer_signed_at TIMESTAMPTZ,
+     lead_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     lead_signed_at TIMESTAMPTZ,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     UNIQUE (project_id, round)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_qa_checks (
+     round_id BIGINT NOT NULL REFERENCES hub_qa_rounds(id) ON DELETE CASCADE,
+     n INT NOT NULL,
+     result TEXT NOT NULL DEFAULT '',
+     note TEXT NOT NULL DEFAULT '',
+     by_user BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     PRIMARY KEY (round_id, n)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_qa_issues (
+     id BIGSERIAL PRIMARY KEY,
+     round_id BIGINT NOT NULL REFERENCES hub_qa_rounds(id) ON DELETE CASCADE,
+     text TEXT NOT NULL,
+     check_n INT,
+     severity TEXT NOT NULL DEFAULT 'must',
+     status TEXT NOT NULL DEFAULT 'open',
+     by_user BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     fixed_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     fixed_at TIMESTAMPTZ,
+     rechecked_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     rechecked_at TIMESTAMPTZ,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -614,6 +651,53 @@ export const makeStore = (sql) => ({
     await sql.query(`INSERT INTO hub_meta (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, at = now()`, [key, value]);
   },
   deleteLibraryByTitles: async (titles) => (await sql.query(`DELETE FROM hub_library WHERE title = ANY($1::text[]) RETURNING id`, [titles])).length,
+
+  // QA checklist: rounds, checks, issues
+  latestQaRound: async (pid) =>
+    (await sql.query(
+      `SELECT r.id::int AS id, r.round, r.version, r.outcome, r.comments, rv.name AS reviewer, to_char(r.reviewer_signed_at, 'YYYY-MM-DD') AS reviewer_signed_at,
+              ld.name AS lead, to_char(r.lead_signed_at, 'YYYY-MM-DD') AS lead_signed_at
+       FROM hub_qa_rounds r LEFT JOIN hub_users rv ON rv.id = r.reviewer_id LEFT JOIN hub_users ld ON ld.id = r.lead_id
+       WHERE r.project_id = $1 ORDER BY r.round DESC LIMIT 1`,
+      [pid],
+    ))[0] ?? null,
+  newQaRound: async (pid, round, version) => {
+    await sql.query(`INSERT INTO hub_qa_rounds (project_id, round, version) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`, [pid, round, version]);
+    return (await sql.query(`SELECT id::int AS id, round, version, outcome, lead_signed_at FROM hub_qa_rounds WHERE project_id = $1 AND round = $2`, [pid, round]))[0];
+  },
+  setQaRound: async (id, patch) => {
+    for (const [k, v] of Object.entries(patch)) {
+      if (!["version", "outcome", "comments", "reviewer_id", "reviewer_signed_at", "lead_id", "lead_signed_at"].includes(k)) continue;
+      await sql.query(`UPDATE hub_qa_rounds SET ${k} = $1 WHERE id = $2`, [v, id]);
+    }
+  },
+  listQaChecks: async (rid) =>
+    sql.query(`SELECT c.n, c.result, c.note, u.name AS by_name FROM hub_qa_checks c LEFT JOIN hub_users u ON u.id = c.by_user WHERE c.round_id = $1 ORDER BY c.n`, [rid]),
+  setQaCheck: async (rid, n, result, note, uid) => {
+    await sql.query(
+      `INSERT INTO hub_qa_checks (round_id, n, result, note, by_user, at) VALUES ($1,$2,$3,$4,$5, now())
+       ON CONFLICT (round_id, n) DO UPDATE SET result = EXCLUDED.result, note = EXCLUDED.note, by_user = EXCLUDED.by_user, at = now()`,
+      [rid, n, result, note, uid],
+    );
+  },
+  listQaIssues: async (rid) =>
+    sql.query(
+      `SELECT i.id::int AS id, i.text, i.check_n, i.severity, i.status, a.name AS by_name, f.name AS fixed_by, to_char(i.fixed_at, 'YYYY-MM-DD') AS fixed_at,
+              c.name AS rechecked_by, to_char(i.rechecked_at, 'YYYY-MM-DD') AS rechecked_at
+       FROM hub_qa_issues i LEFT JOIN hub_users a ON a.id = i.by_user LEFT JOIN hub_users f ON f.id = i.fixed_by LEFT JOIN hub_users c ON c.id = i.rechecked_by
+       WHERE i.round_id = $1 ORDER BY i.id`,
+      [rid],
+    ),
+  addQaIssue: async (rid, i) => {
+    await sql.query(`INSERT INTO hub_qa_issues (round_id, text, check_n, severity, by_user) VALUES ($1,$2,$3,$4,$5)`, [rid, i.text, i.check_n, i.severity, i.by]);
+  },
+  setQaIssueStatus: async (id, status, uid) => {
+    if (status === "fixed") await sql.query(`UPDATE hub_qa_issues SET status = 'fixed', fixed_by = $1, fixed_at = now() WHERE id = $2`, [uid, id]);
+    else if (status === "rechecked") await sql.query(`UPDATE hub_qa_issues SET status = 'rechecked', rechecked_by = $1, rechecked_at = now() WHERE id = $2`, [uid, id]);
+    else await sql.query(`UPDATE hub_qa_issues SET status = 'open', fixed_by = NULL, fixed_at = NULL, rechecked_by = NULL, rechecked_at = NULL WHERE id = $1`, [id]);
+  },
+  // first review round of every project that has an outcome (QA first-pass rate)
+  listQaFirstRounds: async () => sql.query(`SELECT project_id::int AS project_id, outcome FROM hub_qa_rounds WHERE round = 1 AND outcome IS NOT NULL`),
 
   // log
   log: async (e) => {

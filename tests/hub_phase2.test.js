@@ -83,7 +83,7 @@ test("milestones: who can change them", async () => {
 test("library: everyone reads by audience; only management changes; links must be https", async () => {
   const mem = await get("memE", "library");
   assert.equal(mem.status, 200);
-  assert.ok(mem.body.documents.length >= 7);
+  assert.ok(mem.body.documents.length >= 6);
   assert.ok(!mem.body.documents.some((d) => /Budget Template|Decision Sheet/.test(d.title)), "a restricted document was shown to a team member");
   assert.equal(mem.body.canEdit, false);
   assert.ok((await get("fin", "library")).body.documents.some((d) => /Budget Template/.test(d.title)));
@@ -118,9 +118,9 @@ test("library: everyone reads by audience; only management changes; links must b
   assert.equal(after.version, "0.3");
   assert.equal(after.owner, "Legal");
   // documents saved before owners existed (as on the live site) get the starter owner once, without touching set ones
-  await sql.query(`UPDATE hub_library SET owner = '' WHERE title = 'QA Checklist'`);
-  const qa = (await get("memE", "library")).body.documents.find((d) => d.title === "QA Checklist");
-  assert.equal(qa.owner, "Quality reviewers");
+  await sql.query(`UPDATE hub_library SET owner = '' WHERE title = 'Project Close-out Form'`);
+  const co = (await get("memE", "library")).body.documents.find((d) => d.title === "Project Close-out Form");
+  assert.equal(co.owner, "Coordinator");
   assert.equal((await get("memE", "library")).body.documents.find((d) => d.id === short.id).owner, "Legal");
   // the starter list is not re-added once it exists
   assert.equal((await get("mgmt", "library")).body.documents.length, mg.body.documents.length);

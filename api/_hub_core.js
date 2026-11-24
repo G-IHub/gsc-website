@@ -2,7 +2,8 @@ import crypto from "node:crypto";
 import { handleWorkspace } from "./_hub_workspace.js";
 import { handleReports } from "./_hub_reports.js";
 import { handleTeam } from "./_hub_team.js";
-import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
+import { handleQa, qaPassed } from "./_hub_qa.js";
+import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, RETIRED_LIBRARY_QA, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
 // This file holds ALL the access decisions. It never talks to a database directly: it is given a `store`
@@ -379,6 +380,9 @@ export async function handleHub(req, store, env = {}) {
     const patch = {};
     if (body.status !== undefined) {
       if (!MILESTONE_STATUSES.includes(body.status)) return out(400, { error: "Bad status" });
+      if (n === 9 && body.status === "done" && !(await qaPassed(store, p.id))) {
+        return out(400, { error: "The QA checklist must be passed by the quality reviewer and signed off by the lead first" });
+      }
       patch.status = body.status;
       if (body.status === "done" && body.done === undefined && !row.done) patch.done = new Date().toISOString().slice(0, 10);
       if (body.status !== "done" && body.done === undefined) patch.done = null;
@@ -398,10 +402,11 @@ export async function handleHub(req, store, env = {}) {
   if (action === "library" && method === "GET") {
     await store.seedLibrary(DEFAULT_LIBRARY);
     // the 2026-11-24 clean-up, done once (a document added again later with the same title stays)
-    if ((await store.getMeta("library_retired_2026_11_24")) === null) {
-      const n = await store.deleteLibraryByTitles(RETIRED_LIBRARY);
-      await store.setMeta("library_retired_2026_11_24", String(n));
-      if (n > 0) await store.log({ user_id: user.id, event: "library_deleted", detail: { retired: RETIRED_LIBRARY, count: n } });
+    for (const [key, titles] of [["library_retired_2026_11_24", RETIRED_LIBRARY], ["library_retired_2026_11_24_qa", RETIRED_LIBRARY_QA]]) {
+      if ((await store.getMeta(key)) !== null) continue;
+      const n = await store.deleteLibraryByTitles(titles);
+      await store.setMeta(key, String(n));
+      if (n > 0) await store.log({ user_id: user.id, event: "library_deleted", detail: { retired: titles, count: n } });
     }
     const mayMoney = MONEY_ROLES.includes(user.role);
     const rows = (await store.listLibrary()).filter(
@@ -642,6 +647,8 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
+  const qa = await handleQa({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
+  if (qa) return qa;
   const rp = await handleReports({ action, method, body, query: req.query, user, store, out, deny, str, isoDate, canSeeProject, memberIds, env });
   if (rp) return rp;
   const tm = await handleTeam({ action, method, body, user, store, out, deny, str });

@@ -28,6 +28,10 @@ const LABEL: Record<string, string> = {
   kpi_set: "Entered a KPI",
   raci_set: "Changed the responsibilities matrix",
   profile_set: "Updated their expertise profile",
+  qa_issue_added: "Logged a QA issue",
+  qa_outcome: "Gave the QA outcome",
+  qa_signed: "Signed off the QA review (lead)",
+  qa_round_new: "Started a new QA round",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };
