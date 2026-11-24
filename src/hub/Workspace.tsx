@@ -4,6 +4,23 @@ import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Avatar, Pill } from "./bits";
 import type { Member } from "./ProjectAccess";
+import type { ReactNode } from "react";
+
+// One card, in the same style as the dashboard
+const Panel = ({ title, action, children, className = "" }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) => (
+  <section className={`bg-white rounded-[14px] p-3.5 ${className}`}>
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+      <h2 className="text-[13px] text-ink font-medium">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+const KIND_TILE: Record<string, [string, string]> = {
+  Word: ["W", "bg-blue-100 text-blue-800"], Excel: ["X", "bg-lime text-plum"], PDF: ["P", "bg-red-100 text-red-700"],
+  Notebook: ["N", "bg-amber-100 text-amber-800"], Zip: ["Z", "bg-gray-200 text-gray-700"], Link: ["L", "bg-magenta-tint text-magenta-dark"], Other: ["·", "bg-gray-100 text-gray-600"],
+};
+const smallBtn = "inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px]";
 
 // The project Workspace tab: files kept as links (Drive / OneDrive) with versions and an "editing" mark,
 // a discussion thread, tasks and recent activity. Only the people on the project and management see it.
@@ -12,7 +29,7 @@ type FileRow = {
   id: number; name: string; folder: string; kind: string; status: string; editing_id: number | null; editing_name: string | null;
   version: number; link: string; note: string; by_name: string | null; at: string; canClearEditing: boolean;
 };
-type Comment = { id: number; author: string | null; text: string; at: string; canDelete: boolean };
+type Comment = { id: number; author_id: number | null; author: string | null; text: string; at: string; canDelete: boolean };
 type Task = { id: number; text: string; assignee: string | null; due: string | null; milestone: number | null; done: boolean; canDelete: boolean };
 type Activity = { id: number; at: string; who: string; event: string; name: string; version: number | null };
 
@@ -80,7 +97,7 @@ const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: numbe
   );
 
   return (
-    <Card title="Files" action={!adding ? <Btn variant="primary" onClick={() => setAdding(true)}>Upload file</Btn> : undefined}>
+    <Panel title={`Files (${files?.length ?? 0})`} action={!adding ? <button className={`${smallBtn} bg-plum hover:bg-plum-soft text-white`} onClick={() => setAdding(true)}>+ Upload file</button> : undefined}>
       {adding && (
         <form onSubmit={addFile} className="grid gap-3 sm:grid-cols-2 mb-4 rounded-2xl bg-mist p-4">
           <Field label="Name"><input className={smallInput} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
@@ -101,15 +118,20 @@ const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: numbe
       {files && shown.length === 0 && <p className="text-sm text-muted">No files here yet.</p>}
       {shown.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Name</th><th className="py-2 pr-3 font-bold">Version</th><th className="py-2 pr-3 font-bold">Last change</th><th className="py-2 pr-3 font-bold">Status</th><th className="py-2 font-bold"></th></tr></thead>
+          <table className="w-full text-[12px]">
+            <thead><tr className="text-left text-[10px] uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Name</th><th className="py-2 pr-3 font-bold">Version</th><th className="py-2 pr-3 font-bold">Last change</th><th className="py-2 pr-3 font-bold">Status</th><th className="py-2 font-bold"></th></tr></thead>
             <tbody className="divide-y divide-gray-100">
               {shown.map((x) => {
                 const editingByMe = x.editing_id === meId;
                 return (
                   <tr key={x.id} className="align-top">
-                    <td className="py-2.5 pr-3"><b className="text-plum font-medium">{x.name}</b><div className="text-xs text-muted">{x.kind} · {x.folder}</div>{x.note && <div className="text-xs text-muted">{x.note}</div>}</td>
-                    <td className="py-2.5 pr-3">v{x.version}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-semibold shrink-0 ${KIND_TILE[x.kind]?.[1] ?? KIND_TILE.Other![1]}`} aria-hidden="true">{KIND_TILE[x.kind]?.[0] ?? "·"}</span>
+                        <div className="min-w-0"><b className="text-ink font-medium">{x.name}</b><div className="text-[10.5px] text-muted">{x.kind} · {x.folder}{x.note ? ` · ${x.note}` : ""}</div></div>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-3 text-muted">v{x.version}</td>
                     <td className="py-2.5 pr-3">{x.by_name ?? "—"}<div className="text-xs text-muted">{day(x.at)}</div></td>
                     <td className="py-2.5 pr-3">
                       {x.editing_id ? <Pill cls="bg-amber-100 text-amber-800">{editingByMe ? "You are editing" : `${x.editing_name} is editing`}</Pill>
@@ -138,11 +160,11 @@ const Files = ({ projectId, meId, onActivity }: { projectId: number; meId: numbe
       )}
       <p className="mt-3 rounded-2xl bg-blue-50 text-blue-800 text-xs p-3">Files stay in your team's Drive or OneDrive; this keeps the links. Every new version is kept, so nothing is lost. "I'm editing" tells the others not to change the file at the same time. Do not put client-identifiable data here.</p>
       {msg && <p className="text-sm text-red-600 mt-2" role="alert">{msg}</p>}
-    </Card>
+    </Panel>
   );
 };
 
-const Discussion = ({ projectId, onActivity }: { projectId: number; onActivity: () => void }) => {
+const Discussion = ({ projectId, meId, onActivity }: { projectId: number; meId: number; onActivity: () => void }) => {
   const [list, setList] = useState<Comment[] | null>(null);
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
@@ -171,26 +193,29 @@ const Discussion = ({ projectId, onActivity }: { projectId: number; onActivity: 
     else setMsg(errorText(r));
   };
   return (
-    <Card title="Discussion">
-      {list && list.length === 0 && <p className="text-sm text-muted">No messages yet.</p>}
-      <ul className="space-y-3">
-        {list?.map((c) => (
-          <li key={c.id} className="flex gap-3 text-sm">
-            <Avatar name={c.author ?? "?"} />
-            <div className="flex-1 min-w-0">
-              <div><b className="text-plum font-medium">{c.author ?? "Former team member"}</b> <span className="text-muted text-xs">· {when(c.at)}</span>
-                {c.canDelete && <button className="ml-2 text-xs text-muted hover:text-red-600" onClick={() => remove(c.id)}>Remove</button>}</div>
-              <p className="whitespace-pre-wrap">{c.text}</p>
+    <Panel title="Discussion" className="h-full flex flex-col">
+      <div className="flex-1 max-h-80 overflow-y-auto pr-1 space-y-2.5">
+        {list && list.length === 0 && <p className="text-[12px] text-muted">No messages yet. Start the conversation below.</p>}
+        {list?.map((c) => {
+          const mine = c.author_id === meId;
+          return (
+            <div key={c.id} className={`flex gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+              {!mine && <Avatar name={c.author ?? "?"} />}
+              <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${mine ? "bg-plum text-white rounded-tr-sm" : "bg-mist text-ink rounded-tl-sm"}`}>
+                <p className={`text-[10.5px] ${mine ? "text-white/70" : "text-muted"}`}>{mine ? "You" : c.author ?? "Former team member"} · {when(c.at)}
+                  {c.canDelete && <button className={`ml-2 ${mine ? "text-white/70 hover:text-white" : "hover:text-red-600"}`} onClick={() => remove(c.id)}>Remove</button>}</p>
+                <p className="text-[12px] whitespace-pre-wrap mt-0.5">{c.text}</p>
+              </div>
             </div>
-          </li>
-        ))}
-      </ul>
-      <form onSubmit={post} className="mt-4 space-y-2">
-        <Field label="Reply to the team"><textarea className={smallInput} rows={2} value={text} onChange={(e) => setText(e.target.value)} /></Field>
-        {msg && <p className="text-sm text-red-600" role="alert">{msg}</p>}
-        <Btn variant="primary" type="submit" disabled={!text.trim()}>Post comment</Btn>
+          );
+        })}
+      </div>
+      <form onSubmit={post} className="mt-3 flex items-end gap-2">
+        <textarea className={`${smallInput} flex-1`} rows={1} placeholder="Write to the team…" value={text} onChange={(e) => setText(e.target.value)} aria-label="Reply to the team" />
+        <button type="submit" disabled={!text.trim()} className={`${smallBtn} bg-plum hover:bg-plum-soft text-white disabled:opacity-50 py-2`}>Send</button>
       </form>
-    </Card>
+      {msg && <p className="text-[12px] text-red-600 mt-1" role="alert">{msg}</p>}
+    </Panel>
   );
 };
 
@@ -226,17 +251,19 @@ const Tasks = ({ projectId, members, onActivity }: { projectId: number; members:
     }
   };
   return (
-    <Card title="Tasks">
-      {list && list.length === 0 && <p className="text-sm text-muted">No tasks yet.</p>}
+    <Panel title={`Tasks${list ? ` (${list.filter((t) => !t.done).length} open)` : ""}`} className="h-full" action={!adding ? <button className={`${smallBtn} border border-plum text-plum hover:bg-mist`} onClick={() => setAdding(true)}>+ Add task</button> : undefined}>
+      {list && list.length === 0 && <p className="text-[12px] text-muted">No tasks yet.</p>}
       <ul className="divide-y divide-gray-100">
         {list?.map((t) => (
-          <li key={t.id} className="py-2.5 flex items-start gap-3 text-sm">
-            <input type="checkbox" className="mt-1" checked={t.done} onChange={(e) => send("task-done", { id: t.id, done: e.target.checked })} aria-label={`Done: ${t.text}`} />
+          <li key={t.id} className="py-2 flex items-center gap-2.5 text-[12px]">
+            <input type="checkbox" className="accent-plum" checked={t.done} onChange={(e) => send("task-done", { id: t.id, done: e.target.checked })} aria-label={`Done: ${t.text}`} />
             <div className="flex-1 min-w-0">
-              <div className={t.done ? "line-through text-muted" : ""}>{t.text}</div>
-              <div className="text-xs text-muted">{t.assignee ?? "Not assigned"}{t.due ? ` · due ${t.due}` : ""}{t.milestone ? ` · Milestone ${t.milestone}` : ""}</div>
+              <div className={t.done ? "line-through text-muted" : "text-ink"}>{t.text}</div>
+              <div className="text-[10.5px] text-muted">{t.milestone ? `Milestone ${t.milestone}` : "No milestone"}</div>
             </div>
-            {t.canDelete && <button className="text-xs text-muted hover:text-red-600" onClick={() => send("task-delete", { id: t.id })}>Remove</button>}
+            {t.due && <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10.5px] ${t.done ? "bg-gray-100 text-muted" : "bg-amber-50 text-amber-800"}`}>{day(t.due)}</span>}
+            <span title={t.assignee ?? "Not assigned"} className="shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-[9px] font-semibold">{(t.assignee ?? "?").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("")}</span>
+            {t.canDelete && <button className="text-[10.5px] text-muted hover:text-red-600" onClick={() => send("task-delete", { id: t.id })}>Remove</button>}
           </li>
         ))}
       </ul>
@@ -250,9 +277,9 @@ const Tasks = ({ projectId, members, onActivity }: { projectId: number; members:
           </div>
           <div className="flex gap-2"><Btn variant="primary" type="submit" disabled={!f.text.trim()}>Add task</Btn><Btn onClick={() => setAdding(false)}>Cancel</Btn></div>
         </form>
-      ) : <Btn className="mt-2" onClick={() => setAdding(true)}>Add task</Btn>}
+      ) : null}
       {msg && <p className="text-sm text-red-600 mt-2" role="alert">{msg}</p>}
-    </Card>
+    </Panel>
   );
 };
 
@@ -262,17 +289,17 @@ const RecentActivity = ({ projectId, tick }: { projectId: number; tick: number }
     hub<{ activity: Activity[] }>("activity", { query: { id: String(projectId) } }).then((r) => setList(r.ok && r.data ? r.data.activity : []));
   }, [projectId, tick]);
   return (
-    <Card title="Recent activity">
-      {list && list.length === 0 && <p className="text-sm text-muted">Nothing yet.</p>}
-      <ul className="divide-y divide-gray-100">
+    <Panel title="Recent activity">
+      {list && list.length === 0 && <p className="text-[12px] text-muted">Nothing yet.</p>}
+      <ul className="grid gap-x-6 sm:grid-cols-2">
         {list?.map((a) => (
-          <li key={a.id} className="py-2.5 flex gap-3 text-sm">
+          <li key={a.id} className="py-1.5 flex gap-2.5 text-[12px] border-b border-gray-50">
             <Avatar name={a.who || "?"} />
-            <div><div>{a.who} {(ACT[a.event] ?? (() => a.event))(a)}</div><div className="text-xs text-muted">{when(a.at)}</div></div>
+            <div className="min-w-0"><div className="truncate">{a.who} {(ACT[a.event] ?? (() => a.event))(a)}</div><div className="text-[10.5px] text-muted">{when(a.at)}</div></div>
           </li>
         ))}
       </ul>
-    </Card>
+    </Panel>
   );
 };
 
@@ -280,18 +307,14 @@ const Workspace = ({ projectId, meId, members }: { projectId: number; meId: numb
   const [tick, setTick] = useState(0);
   const bump = () => setTick((t) => t + 1);
   return (
-    <div className="space-y-5">
-      <p className="text-sm text-muted">Only the {members.length} {members.length === 1 ? "person" : "people"} on this project (and management) can see this workspace.</p>
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-5">
-          <Files projectId={projectId} meId={meId} onActivity={bump} />
-          <Discussion projectId={projectId} onActivity={bump} />
-        </div>
-        <div className="space-y-5">
-          <Tasks projectId={projectId} members={members} onActivity={bump} />
-          <RecentActivity projectId={projectId} tick={tick} />
-        </div>
+    <div className="space-y-2.5">
+      <p className="text-[11px] text-muted">Only the {members.length} {members.length === 1 ? "person" : "people"} on this project (and management) can see this workspace.</p>
+      <Files projectId={projectId} meId={meId} onActivity={bump} />
+      <div className="hub-two grid gap-2.5 lg:grid-cols-2">
+        <Discussion projectId={projectId} meId={meId} onActivity={bump} />
+        <Tasks projectId={projectId} members={members} onActivity={bump} />
       </div>
+      <RecentActivity projectId={projectId} tick={tick} />
     </div>
   );
 };

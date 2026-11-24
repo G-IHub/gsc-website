@@ -272,3 +272,5 @@ h2 {
 .hub-root .hub-panel .text-2xl { font-size: 18px; }
 .hub-root .hub-panel .text-3xl { font-size: 21px; }
 .hub-root .hub-panel .text-xl { font-size: 13px; }
+/* dashboard and workspace: cards in the same row share one height */
+.hub-root .hub-two > section, .hub-root .hub-two > div > section { height: 100%; }
