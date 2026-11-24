@@ -83,7 +83,7 @@ test("milestones: who can change them", async () => {
 test("library: everyone reads by audience; only management changes; links must be https", async () => {
   const mem = await get("memE", "library");
   assert.equal(mem.status, 200);
-  assert.ok(mem.body.documents.length >= 10);
+  assert.ok(mem.body.documents.length >= 7);
   assert.ok(!mem.body.documents.some((d) => /Budget Template|Decision Sheet/.test(d.title)), "a restricted document was shown to a team member");
   assert.equal(mem.body.canEdit, false);
   assert.ok((await get("fin", "library")).body.documents.some((d) => /Budget Template/.test(d.title)));

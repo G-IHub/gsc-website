@@ -37,17 +37,23 @@ export const LIBRARY_AUDIENCES = ["all", "money", "management"];
 export const LIBRARY_KINDS = ["Word", "Excel", "PDF", "Link", "Other"];
 export const DEFAULT_LIBRARY = [
   { title: "Client Agreement: Short Form", owner: "Management", version: "0.2", category: "Client documents", kind: "Word", audience: "all", description: "Three pages: twelve plain-language points, the Project Sheet and how we work together. The version clients sign." },
-  { title: "Client Agreement Pack: Master Agreement and Project Schedule", owner: "Management", version: "0.1", category: "Client documents", kind: "Word", audience: "all", description: "The long version, kept as the lawyer's reference and backup. Not lawyer-reviewed yet." },
   { title: "Research Intake Form", owner: "Lead researchers", version: "0.1", category: "Client documents", kind: "Word", audience: "all", description: "Client form (topic, aim, methods) plus our feasibility review." },
   { title: "Project Proposal Template", owner: "Lead researchers", version: "0.1", category: "Client documents", kind: "Word", audience: "all", description: "Scope, timeline, deliverables and fee for the client. Shows no internal costs." },
   { title: "Research Protocol Template", owner: "Lead researchers", version: "0.1", category: "Project planning", kind: "Word", audience: "all", description: "The full protocol: 15 sections and a change log." },
-  { title: "Project Tracking Template", owner: "Coordinator", version: "0.1", category: "Project planning", kind: "Excel", audience: "all", description: "Portfolio, one sheet per project, updates log and change log." },
   { title: "Project Budget Template", owner: "Finance", version: "0.1", category: "Project planning", kind: "Excel", audience: "money", description: "Fee, staff cost, software and data, admin and margin. Management and Finance only." },
   { title: "QA Checklist", owner: "Quality reviewers", version: "0.1", category: "Quality and delivery", kind: "Word", audience: "all", description: "43 checks across 11 sections, with an issues log and sign-off." },
   { title: "Project Close-out Form", owner: "Coordinator", version: "0.1", category: "Quality and delivery", kind: "Word", audience: "all", description: "Client delivery and acceptance, then our internal close-out checklist." },
-  { title: "Weekly Report and KPI Sheet", owner: "Management", version: "0.1", category: "Team and reporting", kind: "Excel", audience: "all", description: "Weekly report form, the 30-day KPIs and the Monday, Wednesday and Friday rhythm." },
-  { title: "Responsibilities Matrix and Expertise Directory", owner: "Subsidiary directors", version: "0.1", category: "Team and reporting", kind: "Excel", audience: "all", description: "Who does what across the 36 activities, and who has which skills." },
   { title: "SOP: Research-to-Publication Service", owner: "Management", version: "0.1", category: "Team and reporting", kind: "Word", audience: "all", description: "The 15 stages from acquisition to close-out, the never-bend rules and escalation." },
-  { title: "OMI Research Prompt Library", owner: "Farouk", version: "0.1", category: "Team and reporting", kind: "Word", audience: "all", description: "Twelve prompt types for Omi, each with what Omi does and the human check." },
   { title: "Decision Sheet: 12 Management Approvals", owner: "Management", version: "0.1", category: "Management", kind: "Word", audience: "management", description: "The twelve decisions management must approve before the pilot." },
+];
+
+// Removed from the library on 2026-11-24 at the owner's request: the long agreement pack (the short form is the one
+// clients sign) and four documents the hub now replaces (Projects, Reports and KPIs, Team, the prompt library tab).
+// Deleted once from an existing library; never re-added by the starter list.
+export const RETIRED_LIBRARY = [
+  "Client Agreement Pack: Master Agreement and Project Schedule",
+  "Project Tracking Template",
+  "Weekly Report and KPI Sheet",
+  "Responsibilities Matrix and Expertise Directory",
+  "OMI Research Prompt Library",
 ];

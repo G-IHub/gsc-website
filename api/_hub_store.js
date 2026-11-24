@@ -179,6 +179,11 @@ export const HUB_SCHEMA = [
   `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS version TEXT NOT NULL DEFAULT '0.1'`,
   `ALTER TABLE hub_library ADD COLUMN IF NOT EXISTS owner TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE hub_raci ADD COLUMN IF NOT EXISTS section TEXT NOT NULL DEFAULT ''`,
+  `CREATE TABLE IF NOT EXISTS hub_meta (
+     key TEXT PRIMARY KEY,
+     value TEXT NOT NULL DEFAULT '',
+     at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -602,6 +607,13 @@ export const makeStore = (sql) => ({
        WHERE NOT EXISTS (SELECT 1 FROM hub_milestones x WHERE x.project_id = m.project_id AND x.n = 14 AND x.status = 'done')
        GROUP BY m.user_id`,
     ),
+
+  // one-off markers (for example: a library clean-up already done)
+  getMeta: async (key) => (await sql.query(`SELECT value FROM hub_meta WHERE key = $1`, [key]))[0]?.value ?? null,
+  setMeta: async (key, value) => {
+    await sql.query(`INSERT INTO hub_meta (key, value) VALUES ($1,$2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, at = now()`, [key, value]);
+  },
+  deleteLibraryByTitles: async (titles) => (await sql.query(`DELETE FROM hub_library WHERE title = ANY($1::text[]) RETURNING id`, [titles])).length,
 
   // log
   log: async (e) => {
