@@ -4,6 +4,7 @@ import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import { Pill } from "./bits";
 import PromptReader from "./PromptReader";
+import DocReader from "./DocReader";
 
 type Doc = { id: number; title: string; category: string; kind: string; audience: string; description: string; link: string; version: string; owner: string; updated: string };
 const KINDS = ["Word", "Excel", "PDF", "Link", "Other"];
@@ -35,7 +36,7 @@ const Editor = ({ doc, onDone, onCancel }: { doc: Doc; onDone: () => void; onCan
         <Field label="Who can see it">
           <select className={smallInput} value={f.audience} onChange={set("audience")}>{Object.entries(AUDIENCE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         </Field>
-        <Field label="Link to the file" hint="Paste the share link from Google Drive or OneDrive. It must start with https://" className="sm:col-span-2">
+        <Field label="Link to the file" hint="Paste the Google Drive share link (it must start with https://). Files saved as Google Docs or Sheets can be read here and downloaded as PDF; a Word or Excel file uploaded as it is can be read and downloaded, but not as PDF." className="sm:col-span-2">
           <input className={smallInput} value={f.link} onChange={set("link")} placeholder="https://" />
         </Field>
         <Field label="What it is for" className="sm:col-span-2"><input className={smallInput} value={f.description} onChange={set("description")} /></Field>
@@ -57,6 +58,7 @@ const Library = () => {
   const [editing, setEditing] = useState<Doc | null>(null);
   const [cat, setCat] = useState("All");
   const [view, setView] = useState<"docs" | "prompts">("docs");
+  const [reading, setReading] = useState<Doc | null>(null);
 
   const load = useCallback(async () => {
     const r = await hub<{ documents: Doc[]; canEdit: boolean }>("library");
@@ -106,7 +108,7 @@ const Library = () => {
         ))}
       </div>
 
-      {view === "prompts" ? <PromptReader /> : (
+      {view === "prompts" ? <PromptReader /> : reading ? <DocReader doc={reading} onBack={() => setReading(null)} /> : (
       <>
       {editing && <Editor doc={editing} onCancel={() => setEditing(null)} onDone={() => { setEditing(null); load(); }} />}
       <div>
@@ -127,12 +129,12 @@ const Library = () => {
                   <span className="text-muted">{d.category}</span>
                   {d.audience !== "all" && <Pill cls="bg-amber-100 text-amber-800">{AUDIENCE_LABEL[d.audience]}</Pill>}
                 </div>
-                <p className="text-plum font-medium mt-2">{d.title}</p>
+                <button className="text-left text-plum font-medium mt-2 hover:underline" onClick={() => setReading(d)}>{d.title}</button>
                 <p className="text-xs text-muted mt-1">Version {d.version || "0.1"}{d.owner ? ` · ${d.owner}` : ""}{d.updated ? ` · updated ${short(d.updated)}` : ""}</p>
                 <p className="text-sm text-muted mt-2 flex-1">{d.description}</p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {d.link ? (
-                    <a href={d.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-magenta hover:bg-magenta-dark text-white px-3.5 py-1.5 text-sm font-medium">Open <ExternalLink size={14} aria-hidden="true" /></a>
+                    <button onClick={() => setReading(d)} className="inline-flex items-center gap-1.5 rounded-full bg-plum hover:bg-plum-soft text-white px-3 py-1 text-[11px] font-medium">Read <ExternalLink size={12} aria-hidden="true" /></button>
                   ) : (
                     <span className="text-xs text-muted">{canEdit ? "No link yet" : "File not added yet"}</span>
                   )}
