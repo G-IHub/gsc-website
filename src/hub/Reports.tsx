@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { ArrowUpRight, Plus, TrendingUp } from "lucide-react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub, type Me } from "./hubApi";
 import { Pill, StatTile } from "./bits";
@@ -18,6 +19,24 @@ const RAG: Record<string, [string, string]> = { green: ["Green", "bg-lime text-p
 const fmt = (n: number) => `₦${n.toLocaleString()}`;
 const short = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
+const Stat = ({ label, value, note, dark }: { label: string; value: ReactNode; note?: string; dark?: boolean }) => (
+  <div className={`relative overflow-hidden rounded-[14px] p-3 ${dark ? "bg-gradient-to-br from-plum via-plum-soft to-plum text-white" : "bg-white text-ink"}`}>
+    {dark && <svg className="absolute -right-12 -bottom-16 opacity-20" width="200" height="200" viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="80" fill="none" stroke="#cde24a" strokeWidth="1.5"/><circle cx="110" cy="110" r="105" fill="none" stroke="#b241b7" strokeWidth="1.5"/></svg>}
+    <p className="relative text-[12px]">{label}</p>
+    <p className="relative mt-1.5 text-[22px] leading-none font-medium tracking-tight">{value}</p>
+    {note && <p className={`relative mt-1.5 text-[10px] flex items-center gap-1 ${dark ? "text-white/80" : "text-muted"}`}><TrendingUp size={11} aria-hidden="true" /> {note}</p>}
+  </div>
+);
+const Panel = ({ title, action, children, className = "" }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) => (
+  <section className={`bg-white rounded-[14px] p-3.5 ${className}`}>
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+      <h2 className="text-[13px] text-ink font-medium">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+
 const KpiRow = ({ k, canEdit, onSaved }: { k: Kpi; canEdit: boolean; onSaved: () => void }) => {
   const [edit, setEdit] = useState(false);
   const [f, setF] = useState({ value: k.value === "Not entered" ? "" : k.value, progress: String(k.progress), status: k.status });
@@ -31,39 +50,38 @@ const KpiRow = ({ k, canEdit, onSaved }: { k: Kpi; canEdit: boolean; onSaved: ()
   };
   const [label, cls] = KPI_STATUS[k.status] ?? KPI_STATUS.progress!;
   return (
-    <tr className="align-top">
-      <td className="py-2.5 pr-3">{k.name}<div className="text-xs text-muted">{k.kind === "auto" ? "Worked out by the hub" : k.updated ? `Entered by management, ${k.updated}` : "Entered by management"}</div></td>
-      <td className="py-2.5 pr-3 w-40">
-        {edit ? (
-          <div className="space-y-1.5">
-            <input className={smallInput} value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder="For example 3 of 4" aria-label="Value" />
-            <input className={smallInput} type="number" min={0} max={100} value={f.progress} onChange={(e) => setF({ ...f, progress: e.target.value })} aria-label="Progress percent" />
-          </div>
-        ) : (
-          <>
-            <div className="text-plum">{k.value}</div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mt-1.5"><i className="block h-full bg-magenta" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
-          </>
-        )}
-      </td>
-      <td className="py-2.5 whitespace-nowrap">
-        {edit ? (
-          <div className="space-y-1.5">
-            <select className={smallInput} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} aria-label="Status">
-              {Object.entries(KPI_STATUS).map(([v, [l]]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            <div className="flex gap-1"><Btn variant="primary" onClick={save}>Save</Btn><Btn variant="ghost" onClick={() => setEdit(false)}>Cancel</Btn></div>
-            {msg && <p className="text-xs text-red-600">{msg}</p>}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2"><Pill cls={cls}>{label}</Pill>{canEdit && k.kind === "manual" && <button className="text-xs text-muted hover:text-plum" onClick={() => setEdit(true)}>Edit</button>}</div>
-        )}
-      </td>
-    </tr>
+    <li className="py-2 border-b border-gray-50">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-[12px] text-ink">{k.name}</p>
+          <p className="text-[10px] text-muted">{k.kind === "auto" ? "Worked out by the hub" : k.updated ? `Entered by management, ${k.updated}` : "Entered by management"}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {!edit && <span className="text-[11px] text-muted whitespace-nowrap">{k.value}</span>}
+          <Pill cls={cls}>{label}</Pill>
+        </div>
+      </div>
+      {edit ? (
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <input className={smallInput} value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} placeholder="e.g. 3 of 4" aria-label="Value" />
+          <input className={smallInput} type="number" min={0} max={100} value={f.progress} onChange={(e) => setF({ ...f, progress: e.target.value })} aria-label="Progress percent" />
+          <select className={smallInput} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} aria-label="Status">
+            {Object.entries(KPI_STATUS).map(([v, [l]]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <div className="col-span-3 flex gap-1"><Btn variant="primary" onClick={save}>Save</Btn><Btn variant="ghost" onClick={() => setEdit(false)}>Cancel</Btn></div>
+          {msg && <p className="col-span-3 text-[11px] text-red-600">{msg}</p>}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden"><i className="block h-full bg-plum" style={{ width: `${Math.max(k.progress, 2)}%` }} /></div>
+          {canEdit && k.kind === "manual" && <button className="text-[10.5px] text-magenta-dark hover:underline" onClick={() => setEdit(true)}>Edit</button>}
+        </div>
+      )}
+    </li>
   );
 };
 
-const SubmitReport = ({ workstreams, onDone }: { workstreams: string[]; onDone: () => void }) => {
+const SubmitReport = ({ workstreams, onDone, onClose }: { workstreams: string[]; onDone: () => void; onClose: () => void }) => {
   const [f, setF] = useState({ week_ending: "", workstream: workstreams[0] ?? "", status: "green", done: "", deliverables: "", challenges: "", next: "" });
   const [msg, setMsg] = useState("");
   const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
@@ -77,7 +95,7 @@ const SubmitReport = ({ workstreams, onDone }: { workstreams: string[]; onDone: 
     } else setMsg(errorText(r));
   };
   return (
-    <Card title="Submit your weekly report">
+    <Panel title="Submit your weekly report" action={<button className="text-[11px] text-muted hover:text-plum" onClick={onClose}>Close</button>}>
       <form onSubmit={submit} className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Week ending" hint="Leave empty for this week"><input type="date" className={smallInput} value={f.week_ending} onChange={set("week_ending")} /></Field>
@@ -91,7 +109,7 @@ const SubmitReport = ({ workstreams, onDone }: { workstreams: string[]; onDone: 
         {msg && <p className="text-sm text-muted" role="status">{msg}</p>}
         <Btn variant="primary" type="submit" disabled={!f.done.trim()}>Submit report</Btn>
       </form>
-    </Card>
+    </Panel>
   );
 };
 
@@ -100,6 +118,7 @@ const Reports = ({ me }: { me: Me }) => {
   const [w, setW] = useState<Week | null>(null);
   const [week, setWeek] = useState("");
   const [open, setOpen] = useState<number | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
 
   const loadSummary = useCallback(async () => {
@@ -126,87 +145,97 @@ const Reports = ({ me }: { me: Me }) => {
   const maxRev = Math.max(1, ...(s.revenue?.weeks.map((x) => x.amount) ?? [1]));
   const scopeText = s.scope === "all" ? "all projects" : s.scope === "unit" ? "your unit's projects" : "your projects";
 
+  const inCount = w.reports.filter(Boolean).length;
+  const ragDot: Record<string, string> = { green: "bg-lime", amber: "bg-amber-400", red: "bg-red-500" };
+  const top = s.revenue ? s.revenue.weeks.reduce((m, x, i, arr) => (x.amount > arr[m]!.amount ? i : m), 0) : -1;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl text-plum">Reports and KPIs</h1>
-        <p className="text-sm text-muted mt-1">Week ending {short(w.week_ending)}. Numbers are worked out from the project records for {scopeText}, not typed in.</p>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1>Reports and KPIs</h1>
+          <p className="text-[12px] text-muted mt-0.5">Worked out from the project records for {scopeText}, not typed in.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="rounded-full border border-gray-300 bg-white px-3 py-1 text-[11px]" value={week || w.week_ending} onChange={(e) => setWeek(e.target.value)} aria-label="Week">
+            {[...new Set([w.week_ending, ...w.weeks])].map((x) => <option key={x} value={x}>Week ending {short(x)}</option>)}
+          </select>
+          {!showForm && <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1 rounded-full bg-plum hover:bg-plum-soft text-white px-3 py-1 text-[11px]"><Plus size={12} /> Submit weekly report</button>}
+        </div>
       </div>
 
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
-        <StatTile label="On-time delivery" value={t.delivered ? `${Math.round((t.deliveredOnTime / t.delivered) * 100)}%` : "—"} note={`${t.deliveredOnTime} of ${t.delivered} delivered on time`} />
-        <StatTile label="QA first-pass" value={t.qaFirstPass.total ? `${Math.round((t.qaFirstPass.passed / t.qaFirstPass.total) * 100)}%` : "—"} note={`${t.qaFirstPass.passed} of ${t.qaFirstPass.total} passed at the first review`} />
-        <StatTile label="Started without clearance" value={t.startedUncleared} note="Target: always 0" />
-        <StatTile label="Cleared to start" value={`${t.cleared} of ${t.projects}`} note="All five clearance checks ticked" />
-        {s.revenue ? <StatTile label="Fees received, last 30 days" value={fmt(s.revenue.received30)} note="Finance and management only" /> : <StatTile label="Projects" value={t.projects} />}
+      <div className="grid gap-2.5 grid-cols-2 lg:grid-cols-5">
+        <Stat dark label="On-time delivery" value={t.delivered ? `${Math.round((t.deliveredOnTime / t.delivered) * 100)}%` : "—"} note={`${t.deliveredOnTime} of ${t.delivered} delivered on time`} />
+        <Stat label="QA first-pass" value={t.qaFirstPass.total ? `${Math.round((t.qaFirstPass.passed / t.qaFirstPass.total) * 100)}%` : "—"} note={`${t.qaFirstPass.passed} of ${t.qaFirstPass.total} at the first review`} />
+        <Stat label="Started without clearance" value={t.startedUncleared} note="Target: always 0" />
+        <Stat label="Cleared to start" value={`${t.cleared} of ${t.projects}`} note="All five checks ticked" />
+        {s.revenue ? <Stat label="Fees received, 30 days" value={`₦${Math.round(s.revenue.received30 / 1000)}k`} note="Finance and management only" /> : <Stat label="Projects" value={t.projects} note={scopeText} />}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-3 space-y-5">
-          <Card title="This week's workstream reports" action={
-            <select className={`${smallInput} w-auto`} value={week || w.week_ending} onChange={(e) => setWeek(e.target.value)} aria-label="Week">
-              {[...new Set([w.week_ending, ...w.weeks])].map((x) => <option key={x} value={x}>Week ending {short(x)}</option>)}
-            </select>
-          }>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Workstream</th><th className="py-2 pr-3 font-bold">Lead</th><th className="py-2 pr-3 font-bold">Status</th><th className="py-2 font-bold">Report</th></tr></thead>
-                <tbody className="divide-y divide-gray-100">
-                  {w.workstreams.map((ws, i) => {
-                    const r = w.reports[i];
-                    return (
-                      <tr key={ws} className="align-top">
-                        <td className="py-2.5 pr-3">{ws}{r?.author && <div className="text-xs text-muted">{r.author}, {r.submitted}</div>}</td>
-                        <td className="py-2.5 pr-3 text-muted whitespace-nowrap">{w.leads[i]}</td>
-                        <td className="py-2.5 pr-3">{r ? <Pill cls={RAG[r.status]?.[1] ?? ""}>{RAG[r.status]?.[0] ?? r.status}</Pill> : "—"}</td>
-                        <td className="py-2.5">
-                          {r ? (
-                            <span className="inline-flex items-center gap-2 whitespace-nowrap"><Pill cls="bg-lime text-plum">Submitted</Pill><button className="text-magenta-dark hover:underline text-xs" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? "Hide" : "Read"}</button></span>
-                          ) : <Pill cls="bg-amber-100 text-amber-800">Not in yet</Pill>}
-                          {r && open === r.id && (
-                            <div className="mt-2 space-y-1.5 text-sm">
-                              <p><b className="text-plum font-medium">Completed:</b> {r.done}</p>
-                              {r.deliverables && <p><b className="text-plum font-medium">Deliverables:</b> {r.deliverables}</p>}
-                              {r.challenges && <p><b className="text-plum font-medium">Challenges:</b> {r.challenges}</p>}
-                              {r.next && <p><b className="text-plum font-medium">Next week:</b> {r.next}</p>}
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+      {showForm && <SubmitReport workstreams={w.workstreams} onDone={() => { loadWeek(); setShowForm(false); }} onClose={() => setShowForm(false)} />}
+
+      <div className="hub-two grid gap-2.5 lg:grid-cols-2">
+        <Panel title={`Workstream reports · week ending ${short(w.week_ending)}`} action={<span className="text-[11px] text-muted">{inCount} of {w.workstreams.length} in</span>}>
+          <ul className="divide-y divide-gray-100">
+            {w.workstreams.map((ws, i) => {
+              const r = w.reports[i];
+              const isOpen = r && open === r.id;
+              return (
+                <li key={ws} className="py-2">
+                  <button disabled={!r} onClick={() => r && setOpen(isOpen ? null : r.id)} className="w-full flex items-center gap-2.5 text-left disabled:cursor-default">
+                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${r ? ragDot[r.status] ?? "bg-gray-300" : "bg-gray-200"}`} aria-hidden="true" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] text-ink truncate">{ws}</p>
+                      <p className="text-[10.5px] text-muted">{w.leads[i]}{r?.author ? ` · ${r.author}, ${r.submitted}` : ""}</p>
+                    </div>
+                    {r ? <Pill cls={RAG[r.status]?.[1] ?? ""}>{RAG[r.status]?.[0] ?? r.status}</Pill> : <Pill cls="bg-amber-50 text-amber-800">Not in yet</Pill>}
+                    {r && <ArrowUpRight size={13} className={`text-muted transition-transform ${isOpen ? "rotate-90" : ""}`} aria-hidden="true" />}
+                  </button>
+                  {r && isOpen && (
+                    <div className="mt-2 ml-5 rounded-xl bg-mist p-3 space-y-1.5 text-[12px]">
+                      <p><b className="text-plum font-medium">Completed:</b> {r.done}</p>
+                      {r.deliverables && <p><b className="text-plum font-medium">Deliverables:</b> {r.deliverables}</p>}
+                      {r.challenges && <p><b className="text-plum font-medium">Challenges:</b> {r.challenges}</p>}
+                      {r.next && <p><b className="text-plum font-medium">Next week:</b> {r.next}</p>}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </Panel>
+
+        {s.revenue ? (
+          <Panel title="Revenue received per week" action={<span className="text-[11px] text-muted">₦ thousands</span>}>
+            <div className="flex items-end justify-between gap-3 h-36 pt-5">
+              {s.revenue.weeks.map((x, i) => (
+                <div key={x.week_ending} className="flex-1 h-full flex flex-col items-center justify-end">
+                  {x.amount > 0 && i === top && <span className="mb-1 rounded-md border border-lime bg-white px-1.5 py-0.5 text-[10px] text-plum">₦{Math.round(x.amount / 1000)}k</span>}
+                  <div title={fmt(x.amount)} className={`w-full max-w-9 rounded-full ${x.amount > 0 ? "bg-gradient-to-b from-plum-soft to-plum" : "hub-hatch"}`}
+                    style={{ height: x.amount > 0 ? `${Math.max((x.amount / maxRev) * 100, 30)}%` : "50%" }} />
+                  <span className="mt-1 text-[10px] text-muted">{short(x.week_ending)}</span>
+                </div>
+              ))}
             </div>
-          </Card>
-          <SubmitReport workstreams={w.workstreams} onDone={loadWeek} />
-        </div>
-
-        <div className="lg:col-span-2 space-y-5">
-          <Card title={`30-day KPIs: ${s.met} of ${s.kpis.length} met`}>
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">KPI</th><th className="py-2 pr-3 font-bold">Progress</th><th className="py-2 font-bold">Status</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">
-                {s.kpis.map((k) => <KpiRow key={k.key} k={k} canEdit={me.user.role === "management"} onSaved={loadSummary} />)}
-              </tbody>
-            </table>
-          </Card>
-          {s.revenue && (
-            <Card title="Revenue received per week (₦ thousands)">
-              <div className="flex items-end gap-3 h-40 pt-4">
-                {s.revenue.weeks.map((x) => (
-                  <div key={x.week_ending} className="flex-1 flex flex-col items-center justify-end h-full">
-                    <span className="text-[11px] text-muted mb-1">{x.amount ? `₦${Math.round(x.amount / 1000)}k` : "0"}</span>
-                    <div className="w-full rounded-t-md bg-magenta" style={{ height: `${Math.max((x.amount / maxRev) * 100, 1)}%` }} title={fmt(x.amount)} />
-                    <span className="text-[11px] text-muted mt-1">{short(x.week_ending)}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted mt-3">From payments marked Received in the payment schedules. Finance and management only.</p>
-            </Card>
-          )}
-        </div>
+            <p className="text-[10.5px] text-muted mt-2">From payments marked Received in the payment schedules. Finance and management only.</p>
+          </Panel>
+        ) : (
+          <Panel title="How the reports work">
+            <ul className="list-disc pl-5 space-y-1.5 text-[12px] text-ink">
+              <li>Each workstream lead submits one report a week (Friday is the week's end).</li>
+              <li>Green, Amber or Red is the lead's own overall status for that week.</li>
+              <li>Monday, Wednesday and Friday reviews use these reports.</li>
+              <li>The KPIs below are worked out from the projects you can see.</li>
+            </ul>
+          </Panel>
+        )}
       </div>
+
+      <Panel title={`30-day KPIs · ${s.met} of ${s.kpis.length} met`}>
+        <ul className="grid gap-x-8 sm:grid-cols-2">
+          {s.kpis.map((k) => <KpiRow key={k.key} k={k} canEdit={me.user.role === "management"} onSaved={loadSummary} />)}
+        </ul>
+      </Panel>
     </div>
   );
 };
