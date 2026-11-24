@@ -126,9 +126,9 @@ const Hub = () => {
     <button
       onClick={() => setView(it.go!)}
       aria-current={section === it.key ? "page" : undefined}
-      className={`hub-nav w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left whitespace-nowrap transition-colors ${section === it.key ? "bg-plum/10 text-plum font-medium" : "text-muted hover:text-plum hover:bg-white"}`}
+      className={`hub-nav w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left whitespace-nowrap transition-colors ${section === it.key ? "bg-plum/10 text-plum font-medium" : "text-muted hover:text-plum hover:bg-white"}`}
     >
-      <it.icon size={16} strokeWidth={section === it.key ? 2.4 : 1.8} aria-hidden="true" /> {it.label}
+      <it.icon size={14} strokeWidth={section === it.key ? 2.4 : 1.8} aria-hidden="true" /> {it.label}
     </button>
   );
   const initialsOf = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
@@ -137,47 +137,47 @@ const Hub = () => {
     <div className="hub-root min-h-screen bg-[#e9ebec] p-0 md:p-3">
       <div className="hub-frame md:rounded-[28px] bg-white md:p-3 md:flex gap-3 min-h-screen md:min-h-[calc(100vh-24px)]">
         {/* sidebar */}
-        <aside className="hub-side md:w-52 md:shrink-0 bg-[#f3f4f4] md:rounded-[22px] flex flex-col md:sticky md:top-6 md:self-start md:h-[calc(100vh-48px)] md:overflow-y-auto">
-          <div className="px-4 pt-4 pb-1 flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-plum to-plum-soft text-lime flex items-center justify-center text-xs font-bold" aria-hidden="true">G</span>
+        <aside className="hub-side md:w-44 md:shrink-0 bg-[#f3f4f4] md:rounded-[22px] flex flex-col md:sticky md:top-6 md:self-start md:h-[calc(100vh-48px)] md:overflow-y-auto">
+          <div className="px-3 pt-3 pb-0.5 flex items-center gap-2">
+            <span className="w-6 h-6 rounded-md bg-gradient-to-br from-plum to-plum-soft text-lime flex items-center justify-center text-[10px] font-bold" aria-hidden="true">G</span>
             <div className="leading-tight">
-              <p className="text-[13px] font-semibold text-plum">Genomac</p>
-              <p className="text-[10px] text-muted">Research Hub · staff only</p>
+              <p className="text-[12px] font-semibold text-plum">Genomac</p>
+              <p className="text-[9px] text-muted">Research Hub · staff only</p>
             </div>
           </div>
-          <nav className="px-2 md:px-3 flex md:flex-col gap-0.5 overflow-x-auto md:overflow-visible pb-2 md:pb-0" aria-label="Hub">
-            <p className="hidden md:block px-2.5 pt-3 pb-1 text-[10px] tracking-widest text-muted">MENU</p>
+          <nav className="px-2 flex md:flex-col gap-0.5 overflow-x-auto md:overflow-visible pb-2 md:pb-0" aria-label="Hub">
+            <p className="hidden md:block px-2 pt-2.5 pb-0.5 text-[9px] tracking-widest text-muted">MENU</p>
             {main.map((it) => <NavItem key={it.key} it={it} />)}
-            <p className="hidden md:block px-2.5 pt-3 pb-1 text-[10px] tracking-widest text-muted">GENERAL</p>
+            <p className="hidden md:block px-2 pt-2.5 pb-0.5 text-[9px] tracking-widest text-muted">GENERAL</p>
             {admin.map((it) => <NavItem key={it.key} it={it} />)}
-            <button onClick={signOut} className="hub-nav w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left whitespace-nowrap text-muted hover:text-plum hover:bg-white">
-              <LogOut size={16} strokeWidth={1.8} aria-hidden="true" /> Sign out
+            <button onClick={signOut} className="hub-nav w-full flex items-center gap-2 rounded-lg px-2 py-1.5 text-left whitespace-nowrap text-muted hover:text-plum hover:bg-white">
+              <LogOut size={14} strokeWidth={1.8} aria-hidden="true" /> Sign out
             </button>
           </nav>
-          <div className="hub-promo hidden md:block mt-auto p-3">
-            <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-br from-plum via-plum-soft to-plum p-4 text-white">
+          <div className="hub-promo hidden md:block mt-auto p-2">
+            <div className="relative overflow-hidden rounded-[14px] bg-gradient-to-br from-plum via-plum-soft to-plum p-3 text-white">
               <svg className="absolute -right-10 -top-6 opacity-25" width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="70" fill="none" stroke="#cde24a" strokeWidth="1.5"/><circle cx="100" cy="100" r="45" fill="none" stroke="#b241b7" strokeWidth="1.5"/><circle cx="100" cy="100" r="95" fill="none" stroke="#fff" strokeWidth="1"/></svg>
-              <BookOpen size={16} className="text-lime" aria-hidden="true" />
-              <p className="mt-2 text-[13px] font-semibold leading-snug">Resource library</p>
-              <p className="text-[10px] text-white/70 mt-0.5">Templates, guides and prompts in one place.</p>
-              <button onClick={() => setView({ name: "library" })} className="relative mt-3 w-full rounded-lg bg-white text-plum py-1.5 text-xs font-semibold hover:bg-lime transition-colors">Open library</button>
+              <BookOpen size={13} className="text-lime" aria-hidden="true" />
+              <p className="mt-1.5 text-[11px] font-semibold leading-snug">Resource library</p>
+              <p className="text-[9px] text-white/70 mt-0.5 leading-snug">Templates, guides and prompts.</p>
+              <button onClick={() => setView({ name: "library" })} className="relative mt-2 w-full rounded-md bg-white text-plum py-1 text-[10px] font-semibold hover:bg-lime transition-colors">Open library</button>
             </div>
           </div>
         </aside>
 
         {/* main column */}
         <div className="flex-1 min-w-0 flex flex-col gap-3 p-2 md:p-0">
-          <header className="bg-[#f3f4f4] rounded-[18px] px-4 py-2 flex flex-wrap items-center justify-between gap-3">
+          <header className="bg-[#f3f4f4] rounded-[14px] px-3 py-1.5 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-[11px] font-semibold" aria-hidden="true">{initialsOf(me.user.name)}</span>
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-[10px] font-semibold" aria-hidden="true">{initialsOf(me.user.name)}</span>
               <div className="leading-tight">
-                <p className="text-[13px] text-ink font-medium">{me.user.name}</p>
-                <p className="text-[11px] text-muted">{me.user.email} · {ROLE_LABEL[role] ?? role}</p>
+                <p className="text-[12px] text-ink font-medium">{me.user.name}</p>
+                <p className="text-[10px] text-muted">{me.user.email} · {ROLE_LABEL[role] ?? role}</p>
               </div>
             </div>
-            <span className="hidden sm:inline-flex rounded-full bg-white px-3 py-1 text-xs text-muted">{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
+            <span className="hidden sm:inline-flex rounded-full bg-white px-2.5 py-0.5 text-[10px] text-muted">{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}</span>
           </header>
-          <main className="hub-panel flex-1 bg-[#f3f4f4] rounded-[22px] px-3 md:px-5 py-4 md:py-5 min-w-0">
+          <main className="hub-panel flex-1 bg-[#f3f4f4] rounded-[18px] px-3 md:px-4 py-3 md:py-4 min-w-0">
             {view.name === "home" && <Home me={me} onOpen={(id, tab) => setView({ name: "project", id, tab })} onAll={() => setView({ name: "projects" })} onReports={() => setView({ name: "reports" })} onPeople={() => setView({ name: "people" })} onTeam={() => setView({ name: "team" })} />}
             {view.name === "projects" && <Projects me={me} onOpen={(id) => setView({ name: "project", id })} />}
             {view.name === "project" && <ProjectPage key={`${view.id}-${view.tab ?? ""}`} id={view.id} initialTab={view.tab} me={me} onHome={() => setView({ name: "home" })} onProjects={() => setView({ name: "projects" })} />}
