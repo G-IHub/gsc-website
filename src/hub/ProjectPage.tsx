@@ -11,11 +11,12 @@ import Payments from "./Payments";
 import ChangeLog from "./ChangeLog";
 import Workspace from "./Workspace";
 import QaChecklist from "./QaChecklist";
+import ClientTab from "./ClientTab";
 
 // One project: header, tabs (Overview, Workspace, People and access)
 
 type Detail = { project: Project; members: Member[]; canSeeMoney: boolean; canManageMembers: boolean };
-export type Tab = "overview" | "workspace" | "qa" | "access";
+export type Tab = "overview" | "workspace" | "qa" | "client" | "access";
 
 const Label = ({ children }: { children: string }) => <p className="text-xs uppercase tracking-widest text-muted font-bold">{children}</p>;
 
@@ -62,7 +63,7 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
   };
 
   const inWorkspace = role === "management" || d.members.some((m) => m.user_id === me.user.id);
-  const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"], ["qa", "QA checklist"]] as [Tab, string][]) : []), ["access", "People and access"]];
+  const tabs: [Tab, string][] = [["overview", "Overview"], ...(inWorkspace ? ([["workspace", "Workspace"], ["qa", "QA checklist"], ["client", "Client"]] as [Tab, string][]) : []), ["access", "People and access"]];
 
   const fmtDay = (iso?: string | null) => (iso ? new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null);
   const started = miles.find((m) => m.n === 2)?.done ?? null;
@@ -146,7 +147,9 @@ const ProjectPage = ({ id, me, onHome, onProjects, initialTab = "overview" }: { 
         <span className="hidden sm:block pb-2 text-[10.5px] text-muted">Viewing as {ROLE_LABEL[role]?.toLowerCase() ?? role}</span>
       </div>
 
-      {tab === "qa" && inWorkspace ? (
+      {tab === "client" && inWorkspace ? (
+        <ClientTab projectId={p.id} />
+      ) : tab === "qa" && inWorkspace ? (
         <QaChecklist projectId={p.id} onChanged={load} />
       ) : tab === "workspace" && inWorkspace ? (
         <Workspace projectId={p.id} meId={me.user.id} members={d.members} />

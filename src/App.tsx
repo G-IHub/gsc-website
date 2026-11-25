@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 // Loaded only when someone opens /admin, so visitors never download it
 const Admin = lazy(() => import("./pages/Admin"));
 const Hub = lazy(() => import("./pages/Hub")); // staff-only Research Hub, opened at /hub
+const ClientPortal = lazy(() => import("./pages/ClientPortal")); // client portal, opened at /client
 
 const titles: Record<string, string> = {
   "/": "Genomac Services & Consult — Scientific Research & Consulting",
@@ -115,7 +116,7 @@ const ScrollManager = () => {
 
 const App = () => {
   const { pathname } = useLocation();
-  const bare = pathname.startsWith("/admin") || pathname.startsWith("/hub"); // these private pages have no site header or footer
+  const bare = pathname.startsWith("/admin") || pathname.startsWith("/hub") || pathname.startsWith("/client"); // these private pages have no site header or footer
   return (
   <>
     <ScrollManager />
@@ -142,6 +143,14 @@ const App = () => {
           element={
             <Suspense fallback={null}>
               <Admin />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/client"
+          element={
+            <Suspense fallback={null}>
+              <ClientPortal />
             </Suspense>
           }
         />

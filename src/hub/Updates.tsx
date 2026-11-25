@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 
-type Update = { id: number; date: string; author: string; done: string; next: string; blockers: string; canDelete: boolean };
+type Update = { id: number; date: string; author: string; done: string; next: string; blockers: string; canDelete: boolean; share_client?: boolean };
 
 // Weekly updates for one project. Add and read only: an update can be removed, never rewritten.
 const Updates = ({ projectId, onChanged, openSignal = 0 }: { projectId: number; onChanged: () => void; openSignal?: number }) => {
   const [list, setList] = useState<Update[] | null>(null);
   const [canAdd, setCanAdd] = useState(false);
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ done: "", next: "", blockers: "" });
+  const [f, setF] = useState({ done: "", next: "", blockers: "", share_client: false });
   const [msg, setMsg] = useState("");
 
   const load = useCallback(async () => {
@@ -33,7 +33,7 @@ const Updates = ({ projectId, onChanged, openSignal = 0 }: { projectId: number; 
     e.preventDefault();
     const r = await hub("update-add", { method: "POST", body: { project_id: projectId, ...f } });
     if (r.ok) {
-      setF({ done: "", next: "", blockers: "" });
+      setF({ done: "", next: "", blockers: "", share_client: false });
       setOpen(false);
       setMsg("");
       load();
@@ -55,7 +55,8 @@ const Updates = ({ projectId, onChanged, openSignal = 0 }: { projectId: number; 
         <form onSubmit={submit} className="space-y-3 mb-4 rounded-2xl bg-mist p-4">
           <Field label="Done this week"><textarea className={smallInput} rows={3} value={f.done} onChange={(e) => setF({ ...f, done: e.target.value })} /></Field>
           <Field label="Next"><textarea className={smallInput} rows={2} value={f.next} onChange={(e) => setF({ ...f, next: e.target.value })} /></Field>
-          <Field label="Blockers" hint="Write none if there are none"><input className={smallInput} value={f.blockers} onChange={(e) => setF({ ...f, blockers: e.target.value })} /></Field>
+          <Field label="Blockers" hint="Write none if there are none. Never shown to the client."><input className={smallInput} value={f.blockers} onChange={(e) => setF({ ...f, blockers: e.target.value })} /></Field>
+          <label className="flex items-center gap-2 text-[12px] text-ink"><input type="checkbox" checked={f.share_client} onChange={(e) => setF({ ...f, share_client: e.target.checked })} /> Share with the client (Done and Next only)</label>
           {msg && <p className="text-sm text-red-600" role="alert">{msg}</p>}
           <div className="flex gap-2">
             <Btn variant="primary" type="submit" disabled={!f.done.trim()}>Save update</Btn>
@@ -70,7 +71,13 @@ const Updates = ({ projectId, onChanged, openSignal = 0 }: { projectId: number; 
           <li key={u.id} className="py-3 text-sm">
             <div className="flex items-start justify-between gap-3">
               <div><b className="text-plum">{u.date}</b> <span className="text-muted">· {u.author}</span></div>
-              {u.canDelete && <button className="text-xs text-muted hover:text-red-600" onClick={() => remove(u.id)}>Remove</button>}
+              <span className="flex items-center gap-2">
+                <button className={`text-[10.5px] rounded-full px-2 py-0.5 ${u.share_client ? "bg-lime text-plum" : "border border-gray-200 text-muted hover:text-plum"}`}
+                  onClick={async () => { const r = await hub("update-share", { method: "POST", body: { project_id: projectId, id: u.id, share: !u.share_client } }); if (r.ok) load(); else setMsg(errorText(r)); }}>
+                  {u.share_client ? "Shared with client" : "Share with client"}
+                </button>
+                {u.canDelete && <button className="text-xs text-muted hover:text-red-600" onClick={() => remove(u.id)}>Remove</button>}
+              </span>
             </div>
             <p className="mt-1 whitespace-pre-wrap">{u.done}</p>
             {u.next && <p className="mt-1 text-muted whitespace-pre-wrap">Next: {u.next}</p>}

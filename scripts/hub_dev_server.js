@@ -7,6 +7,7 @@
 import http from "node:http";
 import { PGlite } from "@electric-sql/pglite";
 import { handleHub, hashPassword } from "../api/_hub_core.js";
+import { handleClient } from "../api/_client_core.js";
 import { ensureSchema, makeStore } from "../api/_hub_store.js";
 import { DEFAULT_MILESTONES } from "../api/_hub_defaults.js";
 
@@ -15,7 +16,7 @@ const sql = { query: async (text, params) => (await db.query(text, params)).rows
 await ensureSchema(sql);
 const store = makeStore(sql);
 const PW = "hub-demo-pass-1";
-const env = { HUB_ENABLED: "1", SESSION_SECRET: "dev-only-secret-dev-only-secret", HUB_DIRECTORS_SEE_MONEY: process.env.HUB_DIRECTORS_SEE_MONEY ?? "" };
+const env = { CLIENT_PORTAL_ENABLED: "1", HUB_ENABLED: "1", SESSION_SECRET: "dev-only-secret-dev-only-secret", HUB_DIRECTORS_SEE_MONEY: process.env.HUB_DIRECTORS_SEE_MONEY ?? "" };
 
 const people = [
   ["mgmt@example.org", "Sample Management", "management", ""],
@@ -80,7 +81,7 @@ http
       } catch {
         body = undefined;
       }
-      const r = await handleHub(
+      const r = await (url.pathname.startsWith("/api/client") ? handleClient : handleHub)(
         { method: req.method, action: url.searchParams.get("action") ?? "", query: Object.fromEntries(url.searchParams), body, headers: req.headers, ip: "127.0.0.1" },
         store,
         env,

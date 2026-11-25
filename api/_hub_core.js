@@ -3,6 +3,7 @@ import { handleWorkspace } from "./_hub_workspace.js";
 import { handleReports } from "./_hub_reports.js";
 import { handleTeam } from "./_hub_team.js";
 import { handleQa, qaPassed } from "./_hub_qa.js";
+import { handleClientStaff } from "./_client_core.js";
 import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, RETIRED_LIBRARY_QA, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
@@ -446,7 +447,7 @@ export async function handleHub(req, store, env = {}) {
     const rows = await store.listUpdates(p.id);
     const mayAdd = user.role === "management" || memberIds.has(p.id);
     return out(200, {
-      updates: rows.map((u) => ({ id: u.id, date: u.date, author: u.author || "Former team member", done: u.done, next: u.next, blockers: u.blockers, canDelete: user.role === "management" || u.author_id === user.id })),
+      updates: rows.map((u) => ({ id: u.id, date: u.date, author: u.author || "Former team member", done: u.done, next: u.next, blockers: u.blockers, share_client: Boolean(u.share_client), canDelete: user.role === "management" || u.author_id === user.id })),
       canAdd: mayAdd,
     });
   }
@@ -460,6 +461,7 @@ export async function handleHub(req, store, env = {}) {
     const blockers = str(body.blockers, 1000);
     if (!done) return out(400, { error: "Say what was done this week" });
     const id = await store.addUpdate(p.id, user.id, { done, next, blockers });
+    if (body.share_client) await store.setUpdateShare(id, true); // the client sees it in their portal (never the Blockers line)
     await store.log({ user_id: user.id, event: "update_added", detail: { project: p.id } });
     return out(200, { ok: true, id });
   }
@@ -647,6 +649,8 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
+  const cl = await handleClientStaff({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
+  if (cl) return cl;
   const qa = await handleQa({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
   if (qa) return qa;
   const rp = await handleReports({ action, method, body, query: req.query, user, store, out, deny, str, isoDate, canSeeProject, memberIds, env });
