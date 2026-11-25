@@ -44,7 +44,7 @@ const Payments = ({ projectId }: { projectId: number }) => {
   if (!rows) {
     return (
       <Card title="Payments">
-        <p className="text-sm text-muted mb-3">Fee and payment schedule. Opening this is recorded in the access log.</p>
+        <p className="text-sm text-muted mb-3">Fee and payment schedule. Opening this is recorded in the access log. The client sees the fee, what is paid and these rows (except "Not used") in their portal.</p>
         <Btn onClick={show}>Show payments</Btn>
         {msg && <p className="text-sm text-red-600 mt-3">{msg}</p>}
       </Card>

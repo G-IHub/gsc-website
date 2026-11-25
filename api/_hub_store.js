@@ -920,6 +920,18 @@ export const makeStore = (sql) => ({
     await sql.query(`DELETE FROM hub_releases WHERE project_id = $1`, [pid]);
   },
 
+  // how a client pays: the bank details and contact from the admin billing settings (none if not set up)
+  getPayInstructions: async () => {
+    try {
+      const [row] = await sql.query(`SELECT data->'bank' AS bank, data->'company'->>'email' AS email, data->>'terms' AS terms FROM billing_settings WHERE id = 1`);
+      const b = row?.bank || {};
+      if (!b.accountNumber) return null;
+      return { accountName: b.accountName || "", bankName: b.bankName || "", accountNumber: b.accountNumber, extra: b.extra || "", email: row.email || "", terms: row.terms || "" };
+    } catch {
+      return null; // billing not set up on this database
+    }
+  },
+
   // log
   log: async (e) => {
     await sql.query(`INSERT INTO hub_access_log (user_id, event, detail) VALUES ($1,$2,$3::jsonb)`, [e.user_id, e.event, JSON.stringify(e.detail ?? {})]);

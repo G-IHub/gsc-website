@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { hashPassword, newTempPassword, passwordProblem, verifyPassword } from "./_hub_core.js";
 import { handleClientDocs, handleStaffDocs } from "./_client_docs.js";
 import { handleClientFiles, handleStaffFiles } from "./_client_files.js";
+import { handleClientPayments } from "./_client_payments.js";
 
 // Genomac SC client portal (part 1): the client's own sign-in, their projects' progress, the updates the team
 // chose to share, and a conversation thread with the team. All access decisions live here.
@@ -122,6 +123,8 @@ export async function handleClient(req, store, env = {}) {
   if (docs) return docs;
   const files = await handleClientFiles({ action, method, req, store, projectOr404, out });
   if (files) return files;
+  const pays = await handleClientPayments({ action, method, req, store, projectOr404, out });
+  if (pays) return pays;
 
   if (action === "messages" && method === "GET") {
     const p = await projectOr404(req.query?.id);
