@@ -246,6 +246,55 @@ export const HUB_SCHEMA = [
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
   `ALTER TABLE hub_updates ADD COLUMN IF NOT EXISTS share_client BOOLEAN NOT NULL DEFAULT false`,
+  `CREATE TABLE IF NOT EXISTS hub_documents (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     kind TEXT NOT NULL,
+     title TEXT NOT NULL,
+     countersign BOOLEAN NOT NULL DEFAULT false,
+     sent BOOLEAN NOT NULL DEFAULT false,
+     created_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_document_versions (
+     id BIGSERIAL PRIMARY KEY,
+     doc_id BIGINT NOT NULL REFERENCES hub_documents(id) ON DELETE CASCADE,
+     version INT NOT NULL,
+     body TEXT NOT NULL,
+     hash TEXT NOT NULL,
+     created_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     UNIQUE (doc_id, version)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_signatures (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     doc_id BIGINT REFERENCES hub_documents(id) ON DELETE CASCADE,
+     version INT,
+     milestone_n INT,
+     signer TEXT NOT NULL,
+     client_id BIGINT REFERENCES hub_client_users(id) ON DELETE SET NULL,
+     staff_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     typed_name TEXT NOT NULL,
+     ip TEXT NOT NULL DEFAULT '',
+     user_agent TEXT NOT NULL DEFAULT '',
+     hash TEXT NOT NULL,
+     signed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_doc_comments (
+     id BIGSERIAL PRIMARY KEY,
+     doc_id BIGINT NOT NULL REFERENCES hub_documents(id) ON DELETE CASCADE,
+     client_id BIGINT REFERENCES hub_client_users(id) ON DELETE SET NULL,
+     staff_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     text TEXT NOT NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_intake (
+     project_id BIGINT PRIMARY KEY REFERENCES hub_projects(id) ON DELETE CASCADE,
+     data JSONB NOT NULL DEFAULT '{}',
+     submitted_at TIMESTAMPTZ,
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -771,6 +820,64 @@ export const makeStore = (sql) => ({
     ),
   setUpdateShare: async (id, share) => {
     await sql.query(`UPDATE hub_updates SET share_client = $1 WHERE id = $2`, [share, id]);
+  },
+
+  // client documents, versions, signatures, comments, intake form
+  listDocuments: async (pid) =>
+    sql.query(`SELECT id::int AS id, project_id::int AS project_id, kind, title, countersign, sent FROM hub_documents WHERE project_id = $1 ORDER BY id`, [pid]),
+  getDocument: async (id) =>
+    (await sql.query(`SELECT id::int AS id, project_id::int AS project_id, kind, title, countersign, sent FROM hub_documents WHERE id = $1`, [id]))[0] ?? null,
+  createDocument: async (pid, d) =>
+    (await sql.query(`INSERT INTO hub_documents (project_id, kind, title, countersign, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id::int AS id`, [pid, d.kind, d.title, d.countersign, d.by]))[0].id,
+  setDocument: async (id, patch) => {
+    for (const [k, v] of Object.entries(patch)) {
+      if (!["title", "sent"].includes(k)) continue;
+      await sql.query(`UPDATE hub_documents SET ${k} = $1 WHERE id = $2`, [v, id]);
+    }
+  },
+  listDocVersions: async (did) =>
+    sql.query(`SELECT version, body, hash, to_char(created_at, 'YYYY-MM-DD') AS created FROM hub_document_versions WHERE doc_id = $1 ORDER BY version`, [did]),
+  addDocVersion: async (did, version, body, hash, by) => {
+    await sql.query(`INSERT INTO hub_document_versions (doc_id, version, body, hash, created_by) VALUES ($1,$2,$3,$4,$5)`, [did, version, body, hash, by]);
+  },
+  replaceDocVersion: async (did, version, body, hash) => {
+    await sql.query(`UPDATE hub_document_versions SET body = $1, hash = $2, created_at = now() WHERE doc_id = $3 AND version = $4`, [body, hash, did, version]);
+  },
+  listSignatures: async ({ doc_id }) =>
+    sql.query(
+      `SELECT version, signer, typed_name, ip, hash, signed_at FROM hub_signatures WHERE doc_id = $1 ORDER BY signed_at`,
+      [doc_id],
+    ),
+  addSignature: async (s) => {
+    await sql.query(
+      `INSERT INTO hub_signatures (project_id, doc_id, version, milestone_n, signer, client_id, staff_id, typed_name, ip, user_agent, hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      [s.project_id, s.doc_id, s.version, s.milestone_n, s.signer, s.client_id, s.staff_id, s.typed_name, s.ip, s.user_agent, s.hash],
+    );
+  },
+  listMilestoneSignatures: async (pid) =>
+    sql.query(`SELECT milestone_n, typed_name, signed_at, hash FROM hub_signatures WHERE project_id = $1 AND milestone_n IS NOT NULL ORDER BY signed_at`, [pid]),
+  listDocComments: async (did) =>
+    sql.query(
+      `SELECT k.id::int AS id, k.text, k.created_at AS at, k.client_id::int AS client_id, c.name AS client_name, s.name AS staff_name
+       FROM hub_doc_comments k LEFT JOIN hub_client_users c ON c.id = k.client_id LEFT JOIN hub_users s ON s.id = k.staff_id
+       WHERE k.doc_id = $1 ORDER BY k.created_at, k.id`,
+      [did],
+    ),
+  addDocComment: async (did, k) => {
+    await sql.query(`INSERT INTO hub_doc_comments (doc_id, client_id, staff_id, text) VALUES ($1,$2,$3,$4)`, [did, k.client_id, k.staff_id, k.text]);
+  },
+  getIntake: async (pid) =>
+    (await sql.query(`SELECT data, to_char(submitted_at, 'YYYY-MM-DD') AS submitted_at, to_char(updated_at, 'YYYY-MM-DD') AS updated_at FROM hub_intake WHERE project_id = $1`, [pid]))[0] ?? null,
+  saveIntake: async (pid, data, submit) => {
+    await sql.query(
+      `INSERT INTO hub_intake (project_id, data, submitted_at, updated_at) VALUES ($1, $2::jsonb, CASE WHEN $3 THEN now() END, now())
+       ON CONFLICT (project_id) DO UPDATE SET data = EXCLUDED.data, submitted_at = CASE WHEN $3 THEN now() ELSE hub_intake.submitted_at END, updated_at = now()`,
+      [pid, JSON.stringify(data), submit],
+    );
+  },
+  reopenIntake: async (pid) => {
+    await sql.query(`UPDATE hub_intake SET submitted_at = NULL WHERE project_id = $1`, [pid]);
   },
 
   // log

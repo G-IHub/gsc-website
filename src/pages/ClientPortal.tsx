@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowLeft, Check, LogOut } from "lucide-react";
+import Reader, { DocList } from "../client/PortalDocs";
+import PortalIntake from "../client/PortalIntake";
+import MilestoneSignoff from "../client/MilestoneSignoff";
 
 // Genomac SC client portal: the client's own view of their research project.
 // Separate from the staff hub (own sign-in, own address /client). The server decides what a client may see.
@@ -115,15 +118,18 @@ const Thread = ({ projectId }: { projectId: number }) => {
 const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void; showBack: boolean }) => {
   const [d, setD] = useState<Detail | null>(null);
   const [msg, setMsg] = useState("");
+  const [tick, setTick] = useState(0);
+  const [doc, setDoc] = useState<number | null>(null);
   useEffect(() => {
     api<Detail>("project", { query: { id: String(id) } }).then((r) => (r.ok && r.data ? setD(r.data) : setMsg(errText(r))));
-  }, [id]);
+  }, [id, tick]);
   if (msg) return <p className="text-[13px] text-red-600">{msg}</p>;
   if (!d) return <p className="text-[13px] text-muted">Loading…</p>;
   const total = d.milestones.length || 14;
   const done = d.milestones.filter((m) => m.status === "done").length;
   const next = d.milestones.find((m) => m.status !== "done");
   const waiting = d.milestones.filter((m) => m.signoff && m.status === "done" && !m.signed);
+  if (doc !== null) return <Reader projectId={d.project.id} docId={doc} onBack={() => setDoc(null)} />;
   return (
     <div className="space-y-3">
       {showBack && <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-plum"><ArrowLeft size={14} /> All my projects</button>}
@@ -139,9 +145,7 @@ const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void;
         </div>
       </section>
 
-      {waiting.length > 0 && (
-        <p className="rounded-xl bg-amber-50 text-amber-800 text-[12px] px-3.5 py-2.5">{waiting.length} {waiting.length === 1 ? "step is" : "steps are"} ready for your sign-off. Online sign-off is coming soon; for now please confirm with your lead in the messages.</p>
-      )}
+      <MilestoneSignoff projectId={d.project.id} steps={waiting} onSigned={() => setTick((t) => t + 1)} />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <Panel title="Project progress" className="h-full">
@@ -159,6 +163,11 @@ const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void;
           </ol>
         </Panel>
         <Thread projectId={d.project.id} />
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-2 items-start">
+        <DocList projectId={d.project.id} onOpen={setDoc} />
+        <PortalIntake projectId={d.project.id} />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">
@@ -183,7 +192,7 @@ const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void;
               </li>
             ))}
           </ul>
-          <p className="text-[11px] text-muted mt-3">You lead the research; your Genomac team supports it. Agreements and sign-offs will be available here soon.</p>
+          <p className="text-[11px] text-muted mt-3">You lead the research; your Genomac team supports it. Your documents to sign are under "Your documents".</p>
         </Panel>
       </div>
     </div>

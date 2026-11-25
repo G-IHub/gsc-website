@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { hashPassword, newTempPassword, passwordProblem, verifyPassword } from "./_hub_core.js";
+import { handleClientDocs, handleStaffDocs } from "./_client_docs.js";
 
 // Genomac SC client portal (part 1): the client's own sign-in, their projects' progress, the updates the team
 // chose to share, and a conversation thread with the team. All access decisions live here.
@@ -106,13 +107,18 @@ export async function handleClient(req, store, env = {}) {
     const ms = await store.listMilestones(p.id);
     const team = (await store.listMembers(p.id)).map((m) => ({ name: m.name, project_role: m.project_role || "" }));
     const updates = (await store.listSharedUpdates(p.id)).map((u) => ({ id: u.id, date: u.date, author: u.author || "Genomac team", done: u.done, next: u.next }));
+    const msigs = await store.listMilestoneSignatures(p.id);
     return out(200, {
       project: { id: p.id, ref: p.ref, title: p.title, stage: p.stage, target_date: p.target_date || null },
+      milestoneSignatures: msigs.map((x) => ({ n: x.milestone_n, name: x.typed_name, at: x.signed_at })),
       milestones: ms.map((m) => ({ n: m.n, name: m.name, status: m.status, done: m.done, planned: m.planned, signoff: m.signoff, signed: m.signed })),
       team,
       updates,
     });
   }
+
+  const docs = await handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str });
+  if (docs) return docs;
 
   if (action === "messages" && method === "GET") {
     const p = await projectOr404(req.query?.id);
@@ -137,7 +143,9 @@ export async function handleClient(req, store, env = {}) {
 // ---- the team's side, called from the staff hub (_hub_core.js) ----
 // Who: reading the client tab = people on the project and management; inviting and removing clients = the project's
 // lead or management; writing to the client = anyone on the project or management.
-export async function handleClientStaff({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s }) {
+export async function handleClientStaff({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s, req }) {
+  const sd = await handleStaffDocs({ req: req ?? { query, headers: {}, ip: "" }, action, method, body, user, store, memberIds, projectOr404, deny, out: send, str: s });
+  if (sd) return sd;
   const acts = ["client-list", "client-invite", "client-revoke", "client-messages", "client-message-post", "update-share"];
   if (!acts.includes(action)) return null;
   const p = await projectOr404(method === "GET" ? query?.id : body.project_id);
