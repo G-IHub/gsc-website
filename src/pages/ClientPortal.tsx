@@ -3,6 +3,7 @@ import { ArrowLeft, Check, LogOut } from "lucide-react";
 import Reader, { DocList } from "../client/PortalDocs";
 import PortalIntake from "../client/PortalIntake";
 import MilestoneSignoff from "../client/MilestoneSignoff";
+import PortalFiles from "../client/PortalFiles";
 
 // Genomac SC client portal: the client's own view of their research project.
 // Separate from the staff hub (own sign-in, own address /client). The server decides what a client may see.
@@ -169,6 +170,8 @@ const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void;
         <DocList projectId={d.project.id} onOpen={setDoc} />
         <PortalIntake projectId={d.project.id} />
       </div>
+
+      <PortalFiles projectId={d.project.id} />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <Panel title="Updates from your team" className="h-full">

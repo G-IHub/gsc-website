@@ -295,6 +295,22 @@ export const HUB_SCHEMA = [
      submitted_at TIMESTAMPTZ,
      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_deliverables (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     title TEXT NOT NULL,
+     kind TEXT NOT NULL DEFAULT 'Other',
+     note TEXT NOT NULL DEFAULT '',
+     version TEXT NOT NULL DEFAULT '',
+     link TEXT NOT NULL,
+     added_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_releases (
+     project_id BIGINT PRIMARY KEY REFERENCES hub_projects(id) ON DELETE CASCADE,
+     released_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     released_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -878,6 +894,30 @@ export const makeStore = (sql) => ({
   },
   reopenIntake: async (pid) => {
     await sql.query(`UPDATE hub_intake SET submitted_at = NULL WHERE project_id = $1`, [pid]);
+  },
+
+  // final files for the client, and their release
+  listDeliverables: async (pid) =>
+    sql.query(
+      `SELECT d.id::int AS id, d.title, d.kind, d.note, d.version, d.link, to_char(d.updated_at, 'YYYY-MM-DD') AS updated, u.name AS added_by
+       FROM hub_deliverables d LEFT JOIN hub_users u ON u.id = d.added_by WHERE d.project_id = $1 ORDER BY d.id`,
+      [pid],
+    ),
+  addDeliverable: async (pid, f) =>
+    (await sql.query(`INSERT INTO hub_deliverables (project_id, title, kind, note, version, link, added_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id::int AS id`, [pid, f.title, f.kind, f.note, f.version, f.link, f.by]))[0].id,
+  updateDeliverable: async (id, f) => {
+    await sql.query(`UPDATE hub_deliverables SET title = $1, kind = $2, note = $3, version = $4, link = $5, updated_at = now() WHERE id = $6`, [f.title, f.kind, f.note, f.version, f.link, id]);
+  },
+  deleteDeliverable: async (id) => {
+    await sql.query(`DELETE FROM hub_deliverables WHERE id = $1`, [id]);
+  },
+  getRelease: async (pid) =>
+    (await sql.query(`SELECT r.released_at, u.name AS released_by FROM hub_releases r LEFT JOIN hub_users u ON u.id = r.released_by WHERE r.project_id = $1`, [pid]))[0] ?? null,
+  setRelease: async (pid, by) => {
+    await sql.query(`INSERT INTO hub_releases (project_id, released_by) VALUES ($1, $2) ON CONFLICT (project_id) DO NOTHING`, [pid, by]);
+  },
+  clearRelease: async (pid) => {
+    await sql.query(`DELETE FROM hub_releases WHERE project_id = $1`, [pid]);
   },
 
   // log

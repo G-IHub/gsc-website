@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { hashPassword, newTempPassword, passwordProblem, verifyPassword } from "./_hub_core.js";
 import { handleClientDocs, handleStaffDocs } from "./_client_docs.js";
+import { handleClientFiles, handleStaffFiles } from "./_client_files.js";
 
 // Genomac SC client portal (part 1): the client's own sign-in, their projects' progress, the updates the team
 // chose to share, and a conversation thread with the team. All access decisions live here.
@@ -119,6 +120,8 @@ export async function handleClient(req, store, env = {}) {
 
   const docs = await handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str });
   if (docs) return docs;
+  const files = await handleClientFiles({ action, method, req, store, projectOr404, out });
+  if (files) return files;
 
   if (action === "messages" && method === "GET") {
     const p = await projectOr404(req.query?.id);
@@ -146,6 +149,8 @@ export async function handleClient(req, store, env = {}) {
 export async function handleClientStaff({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s, req }) {
   const sd = await handleStaffDocs({ req: req ?? { query, headers: {}, ip: "" }, action, method, body, user, store, memberIds, projectOr404, deny, out: send, str: s });
   if (sd) return sd;
+  const sf = await handleStaffFiles({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s });
+  if (sf) return sf;
   const acts = ["client-list", "client-invite", "client-revoke", "client-messages", "client-message-post", "update-share"];
   if (!acts.includes(action)) return null;
   const p = await projectOr404(method === "GET" ? query?.id : body.project_id);
