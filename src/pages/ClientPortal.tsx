@@ -4,6 +4,7 @@ import Reader, { DocList } from "../client/PortalDocs";
 import PortalIntake from "../client/PortalIntake";
 import MilestoneSignoff from "../client/MilestoneSignoff";
 import PortalFiles from "../client/PortalFiles";
+import PortalPayments from "../client/PortalPayments";
 
 // Genomac SC client portal: the client's own view of their research project.
 // Separate from the staff hub (own sign-in, own address /client). The server decides what a client may see.
@@ -172,6 +173,7 @@ const ProjectView = ({ id, onBack, showBack }: { id: number; onBack: () => void;
       </div>
 
       <PortalFiles projectId={d.project.id} />
+      <PortalPayments projectId={d.project.id} />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <Panel title="Updates from your team" className="h-full">

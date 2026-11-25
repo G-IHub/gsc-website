@@ -82,8 +82,8 @@ test("a client sees only their own project, and none of the internal parts", asy
   for (const secret of ["987654", "INTERNAL", "Rival", "rival@secret", "payment_status", "health", "fee"]) assert.ok(!text.includes(secret), `leaked: ${secret}`);
   assert.deepEqual(one.body.team.map((t) => t.name).sort(), ["lead", "memE"]);
   // staff actions are not reachable through the portal
-  // ("files" in the portal is the client's own final files, part 3; tests/client_files.test.js checks it)
-  for (const a of ["money", "users", "comments", "clearance", "payments", "tasks"]) assert.equal((await portal(clientCookie, "GET", a, { query: { id: P1 } })).status, 404, a);
+  // ("files" and "payments" in the portal are the client's own final files and payments, parts 3 and 4; see client_files / client_payments tests)
+  for (const a of ["money", "users", "comments", "clearance", "tasks", "changes"]) assert.equal((await portal(clientCookie, "GET", a, { query: { id: P1 } })).status, 404, a);
 });
 
 test("updates reach the client only when shared, and without the Blockers line", async () => {

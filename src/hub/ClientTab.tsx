@@ -129,8 +129,8 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
           ))}
         </ul>
         <div className="mt-3 rounded-xl bg-blue-50 text-blue-800 text-[11px] p-3 space-y-1">
-          <p><b>The client sees:</b> project code and title, stage, target date, the 14 steps, the team's names and roles, updates you mark "Share with client", documents you send, the final files once released, and this conversation.</p>
-          <p><b>Never:</b> health, payment or clearance flags, fees, the internal discussion, files, tasks, QA or other projects.</p>
+          <p><b>The client sees:</b> project code and title, stage, target date, the 14 steps, the team's names and roles, updates you mark "Share with client", documents you send, the final files once released, their fee, payments and balance (from the payment schedule), and this conversation.</p>
+          <p><b>Never:</b> health, the internal payment or clearance flags, budget, cost or margin, the internal discussion, files, tasks, QA or other projects.</p>
         </div>
         {msg && <p className="text-[12px] text-muted mt-2" role="status">{msg}</p>}
       </section>
