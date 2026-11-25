@@ -221,6 +221,31 @@ export const HUB_SCHEMA = [
      rechecked_at TIMESTAMPTZ,
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
+  `CREATE TABLE IF NOT EXISTS hub_client_users (
+     id BIGSERIAL PRIMARY KEY,
+     email TEXT NOT NULL UNIQUE,
+     name TEXT NOT NULL,
+     organization TEXT NOT NULL DEFAULT '',
+     password_hash TEXT NOT NULL,
+     active BOOLEAN NOT NULL DEFAULT true,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_client_access (
+     client_id BIGINT NOT NULL REFERENCES hub_client_users(id) ON DELETE CASCADE,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     added_by BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     PRIMARY KEY (client_id, project_id)
+   )`,
+  `CREATE TABLE IF NOT EXISTS hub_client_messages (
+     id BIGSERIAL PRIMARY KEY,
+     project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,
+     client_id BIGINT REFERENCES hub_client_users(id) ON DELETE SET NULL,
+     staff_id BIGINT REFERENCES hub_users(id) ON DELETE SET NULL,
+     text TEXT NOT NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+   )`,
+  `ALTER TABLE hub_updates ADD COLUMN IF NOT EXISTS share_client BOOLEAN NOT NULL DEFAULT false`,
   `CREATE TABLE IF NOT EXISTS hub_access_log (
      id BIGSERIAL PRIMARY KEY,
      at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -404,7 +429,7 @@ export const makeStore = (sql) => ({
   // weekly updates: add and read only (no edits), so the record stays honest
   listUpdates: async (pid) =>
     sql.query(
-      `SELECT u.id::int AS id, u.author_id::int AS author_id, a.name AS author, u.done, u.next, u.blockers,
+      `SELECT u.id::int AS id, u.author_id::int AS author_id, a.name AS author, u.done, u.next, u.blockers, u.share_client,
               to_char(u.created_at, 'YYYY-MM-DD') AS date, u.created_at
        FROM hub_updates u LEFT JOIN hub_users a ON a.id = u.author_id WHERE u.project_id = $1 ORDER BY u.created_at DESC, u.id DESC LIMIT 30`,
       [pid],
@@ -698,6 +723,55 @@ export const makeStore = (sql) => ({
   },
   // first review round of every project that has an outcome (QA first-pass rate)
   listQaFirstRounds: async () => sql.query(`SELECT project_id::int AS project_id, outcome FROM hub_qa_rounds WHERE round = 1 AND outcome IS NOT NULL`),
+
+  // client portal: client accounts, which projects they may see, the client thread, shared updates
+  getClientUserByEmail: async (email) =>
+    (await sql.query(`SELECT id::int AS id, email, name, organization, password_hash, active FROM hub_client_users WHERE email = $1`, [email]))[0] ?? null,
+  getClientUserById: async (id) =>
+    (await sql.query(`SELECT id::int AS id, email, name, organization, password_hash, active FROM hub_client_users WHERE id = $1`, [id]))[0] ?? null,
+  createClientUser: async (c) =>
+    (await sql.query(
+      `INSERT INTO hub_client_users (email, name, organization, password_hash) VALUES ($1,$2,$3,$4) RETURNING id::int AS id, email, name, organization, active`,
+      [c.email, c.name, c.organization, c.password_hash],
+    ))[0],
+  updateClientUser: async (id, patch) => {
+    for (const [k, v] of Object.entries(patch)) {
+      if (!["password_hash", "active", "name", "organization"].includes(k)) continue;
+      await sql.query(`UPDATE hub_client_users SET ${k} = $1 WHERE id = $2`, [v, id]);
+    }
+  },
+  grantClientAccess: async (cid, pid, by) => {
+    await sql.query(`INSERT INTO hub_client_access (client_id, project_id, added_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`, [cid, pid, by]);
+  },
+  revokeClientAccess: async (cid, pid) => {
+    await sql.query(`DELETE FROM hub_client_access WHERE client_id = $1 AND project_id = $2`, [cid, pid]);
+  },
+  clientProjectIds: async (cid) => (await sql.query(`SELECT project_id::int AS id FROM hub_client_access WHERE client_id = $1`, [cid])).map((r) => r.id),
+  listProjectClients: async (pid) =>
+    sql.query(
+      `SELECT c.id::int AS id, c.name, c.email, c.organization, c.active, to_char(a.created_at, 'YYYY-MM-DD') AS added
+       FROM hub_client_access a JOIN hub_client_users c ON c.id = a.client_id WHERE a.project_id = $1 ORDER BY c.name`,
+      [pid],
+    ),
+  listClientMessages: async (pid) =>
+    sql.query(
+      `SELECT m.id::int AS id, m.text, m.created_at AS at, m.client_id::int AS client_id, m.staff_id::int AS staff_id, c.name AS client_name, s.name AS staff_name
+       FROM hub_client_messages m LEFT JOIN hub_client_users c ON c.id = m.client_id LEFT JOIN hub_users s ON s.id = m.staff_id
+       WHERE m.project_id = $1 ORDER BY m.created_at, m.id LIMIT 300`,
+      [pid],
+    ),
+  addClientMessage: async (pid, m) => {
+    await sql.query(`INSERT INTO hub_client_messages (project_id, client_id, staff_id, text) VALUES ($1,$2,$3,$4)`, [pid, m.client_id, m.staff_id, m.text]);
+  },
+  listSharedUpdates: async (pid) =>
+    sql.query(
+      `SELECT u.id::int AS id, a.name AS author, u.done, u.next, to_char(u.created_at, 'YYYY-MM-DD') AS date
+       FROM hub_updates u LEFT JOIN hub_users a ON a.id = u.author_id WHERE u.project_id = $1 AND u.share_client ORDER BY u.created_at DESC, u.id DESC LIMIT 30`,
+      [pid],
+    ),
+  setUpdateShare: async (id, share) => {
+    await sql.query(`UPDATE hub_updates SET share_client = $1 WHERE id = $2`, [share, id]);
+  },
 
   // log
   log: async (e) => {

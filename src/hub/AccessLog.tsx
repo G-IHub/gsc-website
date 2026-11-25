@@ -32,6 +32,11 @@ const LABEL: Record<string, string> = {
   qa_outcome: "Gave the QA outcome",
   qa_signed: "Signed off the QA review (lead)",
   qa_round_new: "Started a new QA round",
+  client_invited: "Invited a client to the portal",
+  client_removed: "Removed a client's portal access",
+  client_message_team: "Wrote to the client",
+  update_shared: "Shared an update with the client",
+  update_unshared: "Stopped sharing an update",
   library_saved: "Saved a library document",
   library_deleted: "Removed a library document",
 };
