@@ -3,6 +3,7 @@ import { Copy, Plus } from "lucide-react";
 import { Btn, Field, smallInput } from "../admin/ui";
 import { errorText, hub } from "./hubApi";
 import ClientDocs from "./ClientDocs";
+import ClientFiles from "./ClientFiles";
 
 // The project's "Client" tab in the staff hub: who the client is in the portal, inviting them, and the
 // conversation with them (separate from the team's internal discussion, which the client never sees).
@@ -66,6 +67,7 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
   return (
     <div className="space-y-2.5">
     <ClientDocs projectId={projectId} />
+    <ClientFiles projectId={projectId} />
     <div className="hub-two grid gap-2.5 lg:grid-cols-2">
       <section className="bg-white rounded-[14px] p-3.5 flex flex-col">
         <div className="flex items-center justify-between gap-2 mb-2">
@@ -127,7 +129,7 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
           ))}
         </ul>
         <div className="mt-3 rounded-xl bg-blue-50 text-blue-800 text-[11px] p-3 space-y-1">
-          <p><b>The client sees:</b> project code and title, stage, target date, the 14 steps, the team's names and roles, updates you mark "Share with client", documents you send, and this conversation.</p>
+          <p><b>The client sees:</b> project code and title, stage, target date, the 14 steps, the team's names and roles, updates you mark "Share with client", documents you send, the final files once released, and this conversation.</p>
           <p><b>Never:</b> health, payment or clearance flags, fees, the internal discussion, files, tasks, QA or other projects.</p>
         </div>
         {msg && <p className="text-[12px] text-muted mt-2" role="status">{msg}</p>}
