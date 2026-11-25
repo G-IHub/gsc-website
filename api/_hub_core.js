@@ -649,7 +649,7 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
-  const cl = await handleClientStaff({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
+  const cl = await handleClientStaff({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str, req });
   if (cl) return cl;
   const qa = await handleQa({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
   if (qa) return qa;

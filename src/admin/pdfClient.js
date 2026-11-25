@@ -20,7 +20,7 @@ const blobToDataUrl = (blob) =>
   });
 
 let assets;
-const loadAssets = () => {
+export const loadAssets = () => {
   assets ??= (async () => {
     const [regular, bold] = await Promise.all([regularUrl, boldUrl].map((u) => fetch(u).then((r) => r.arrayBuffer())));
     let logo = null;
