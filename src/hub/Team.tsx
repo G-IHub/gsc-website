@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Btn, Card, Field, smallInput } from "../admin/ui";
 import { ROLE_LABEL, errorText, hub, type Me, type Project } from "./hubApi";
 import { SKILL_AREAS, inArea } from "./skillAreas";
@@ -28,11 +28,32 @@ const ROLES_TEXT: [string, string, string][] = [
   ["Procurement / IT", "Plagiarism and AI-use tools, staff access.", "To be named"],
 ];
 const COLUMN_TITLES = ROLES_TEXT.map((r) => r[0]);
+const Panel = ({ title, action, children, className = "" }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) => (
+  <section className={`bg-white rounded-[14px] p-3.5 ${className}`}>
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+      <h2 className="text-[13px] text-ink font-medium">{title}</h2>
+      {action}
+    </div>
+    {children}
+  </section>
+);
+const Tile = ({ label, value, note, dark }: { label: string; value: ReactNode; note: string; dark?: boolean }) => (
+  <div className={`relative overflow-hidden rounded-[14px] p-3 ${dark ? "bg-gradient-to-br from-plum via-plum-soft to-plum text-white" : "bg-white text-ink"}`}>
+    {dark && <svg className="absolute -right-12 -bottom-16 opacity-20" width="200" height="200" viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="80" fill="none" stroke="#cde24a" strokeWidth="1.5"/><circle cx="110" cy="110" r="105" fill="none" stroke="#b241b7" strokeWidth="1.5"/></svg>}
+    <p className="relative text-[12px]">{label}</p>
+    <p className="relative mt-1.5 text-[22px] leading-none font-medium tracking-tight">{value}</p>
+    <p className={`relative mt-1.5 text-[10px] ${dark ? "text-white/80" : "text-muted"}`}>{note}</p>
+  </div>
+);
+const initialsOf = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
+
 const tags = (s: string) => s.split(/[,;]/).map((x) => x.trim().toLowerCase()).filter(Boolean);
 
 const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
   const [msg, setMsg] = useState("");
   const [newName, setNewName] = useState("");
+  const [editing, setEditing] = useState(false); // clean pills by default; dropdowns only while editing
+  const edit = d.canEdit && editing;
   const setCell = async (row: RaciRow, i: number, code: string) => {
     const cells = row.cells.map((c, j) => (j === i ? code : c));
     const r = await hub("raci-set", { method: "POST", body: { id: row.id, cells } });
@@ -54,21 +75,22 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
   };
   const problems = d.raci.filter((r) => r.check !== "OK").length;
   return (
-    <div className="grid gap-5 lg:grid-cols-4">
-      <div className="lg:col-span-3">
-        <Card title="Responsibilities matrix">
-          <div className="flex flex-wrap gap-3 text-xs text-muted mb-3">
-            <span><Pill cls={CODE_STYLE.A!}>A</Pill> accountable: makes the final call (one per row)</span>
+    <div className="space-y-2.5">
+        <Panel title={`Responsibilities matrix · ${d.raci.length} activities`} action={
+          <div className="flex flex-wrap gap-2 text-[10.5px] text-muted">
+            <span title="Accountable: makes the final call (one per row)"><Pill cls={CODE_STYLE.A!}>A</Pill> accountable</span>
             <span><Pill cls={CODE_STYLE.R!}>R</Pill> does the work</span>
             <span><Pill cls={CODE_STYLE.C!}>C</Pill> asked first</span>
             <span><Pill cls={CODE_STYLE.I!}>I</Pill> told after</span>
-            <span><Pill cls={CODE_STYLE["A/R"]!}>A/R</Pill> accountable and does the work</span>
+            <span><Pill cls={CODE_STYLE["A/R"]!}>A/R</Pill> both</span>
+            {d.canEdit && <button onClick={() => setEditing(!editing)} className={`ml-1 rounded-full px-3 py-0.5 text-[11px] ${editing ? "bg-plum text-white" : "border border-plum text-plum hover:bg-mist"}`}>{editing ? "Done" : "Edit matrix"}</button>}
           </div>
+        }>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-muted">
-                  <th className="py-2 pr-2 text-left font-bold uppercase tracking-widest">Activity ({d.raci.length})</th>
+                  <th className="py-2 pr-2 text-left font-bold uppercase tracking-widest text-[10px]">Activity</th>
                   {d.columns.map((c, i) => <th key={c} title={COLUMN_TITLES[i]} className="py-2 px-1 font-bold text-center whitespace-nowrap">{c}</th>)}
                   <th className="py-2 pl-2 font-bold text-left">Check</th>
                 </tr>
@@ -79,10 +101,10 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
                     <tr key={`s-${r.id}`}><td colSpan={d.columns.length + 2} className="pt-4 pb-1 text-[11px] font-bold uppercase tracking-widest text-magenta-dark">{r.section}</td></tr>
                   ) : null,
                   <tr key={r.id}>
-                    <td className="py-1.5 pr-2 text-sm min-w-48">{r.name}{d.canEdit && <button className="ml-2 text-[11px] text-muted hover:text-red-600" onClick={() => remove(r)}>Remove</button>}</td>
+                    <td className="py-1.5 pr-2 text-[12px] min-w-56">{r.name}{edit && <button className="ml-2 text-[11px] text-muted hover:text-red-600" onClick={() => remove(r)}>Remove</button>}</td>
                     {r.cells.map((c, i) => (
                       <td key={i} className="py-1.5 px-1 text-center">
-                        {d.canEdit ? (
+                        {edit ? (
                           <select value={c} onChange={(e) => setCell(r, i, e.target.value)} aria-label={`${r.name}: ${d.columns[i]}`}
                             className={`rounded-md border-0 text-[11px] font-medium px-1 py-0.5 ${c ? CODE_STYLE[c] : "bg-gray-50 text-gray-400"}`}>
                             {d.codes.map((x) => <option key={x} value={x}>{x || "·"}</option>)}
@@ -96,19 +118,26 @@ const Matrix = ({ d, reload }: { d: Data; reload: () => void }) => {
               </tbody>
             </table>
           </div>
-          {d.canEdit && (
+          {edit && (
             <div className="flex flex-wrap gap-2 mt-3">
               <input className={`${smallInput} max-w-sm`} placeholder="Add an activity" value={newName} onChange={(e) => setNewName(e.target.value)} aria-label="New activity" />
               <Btn onClick={add} disabled={!newName.trim()}>Add</Btn>
             </div>
           )}
-          <p className="mt-3 rounded-2xl bg-blue-50 text-blue-800 text-xs p-3">The check turns red if a row has no accountable person, more than one, or nobody doing the work.{problems ? ` ${problems} ${problems === 1 ? "row needs" : "rows need"} fixing.` : ""} {d.canEdit ? "You can edit any cell." : "Management edits the matrix."}</p>
-          {msg && <p className="text-sm text-red-600 mt-2" role="alert">{msg}</p>}
-        </Card>
-      </div>
-      <Card title="Roles">
-        <ul className="space-y-3 text-sm">{ROLES_TEXT.map(([n, w, who]) => <li key={n}><b className="text-plum font-medium">{n}</b><div className="text-muted">{w}</div><div className="text-xs text-magenta-dark mt-0.5">{who}</div></li>)}</ul>
-      </Card>
+          <p className="mt-3 rounded-xl bg-blue-50 text-blue-800 text-[11px] px-3 py-2">The check turns red if a row has no accountable person, more than one, or nobody doing the work.{problems ? ` ${problems} ${problems === 1 ? "row needs" : "rows need"} fixing.` : ""} {d.canEdit ? (editing ? "Change any cell, then press Done." : "Press Edit matrix to change cells.") : "Management edits the matrix."}</p>
+          {msg && <p className="text-[12px] text-red-600 mt-2" role="alert">{msg}</p>}
+        </Panel>
+        <Panel title="The roles in the matrix">
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {ROLES_TEXT.map(([n, w, who], i) => (
+              <li key={n} className="rounded-xl bg-mist px-3 py-2.5">
+                <p className="text-[12px] text-ink font-medium"><span className="text-[10px] text-magenta-dark mr-1">{d.columns[i]}</span>{n}</p>
+                <p className="text-[11px] text-muted mt-0.5">{w}</p>
+                <p className="text-[10.5px] text-plum mt-1">{who}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
     </div>
   );
 };
@@ -150,43 +179,50 @@ const Directory = ({ d, me }: { d: Data; me: Me }) => {
   const filled = people.filter((p) => p.filled).length;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-3">
-      <div className="lg:col-span-2">
-        <Card title="Researcher expertise directory">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-widest text-muted"><th className="py-2 pr-3 font-bold">Name</th><th className="py-2 pr-3 font-bold">Fields and methods</th><th className="py-2 pr-2 font-bold">Lead</th><th className="py-2 pr-2 font-bold">QA</th><th className="py-2 pr-2 font-bold">Active / max</th><th className="py-2 pr-2 font-bold">Spare</th><th className="py-2 font-bold">Availability</th></tr></thead>
-              <tbody className="divide-y divide-gray-100">
-                {people.map((p) => (
-                  <tr key={p.user_id} className="align-top">
-                    <td className="py-2.5 pr-3"><b className="text-plum font-medium">{p.name}</b><div className="text-xs text-muted">{ROLE_LABEL[p.role]}{p.unit ? ` · ${p.unit}` : ""}</div></td>
-                    <td className="py-2.5 pr-3">{p.filled ? p.skills : <span className="text-muted">Not filled in yet</span>}</td>
-                    <td className="py-2.5 pr-2">{p.can_lead ? "Yes" : "No"}</td>
-                    <td className="py-2.5 pr-2">{p.can_qa ? "Yes" : "No"}</td>
-                    <td className="py-2.5 pr-2">{p.active} / {p.max_projects}</td>
-                    <td className="py-2.5 pr-2"><Pill cls={p.spare > 0 ? "bg-lime text-plum" : "bg-red-100 text-red-700"}>{String(p.spare)}</Pill></td>
-                    <td className="py-2.5"><Pill cls={AVAIL[p.availability]?.[1] ?? ""}>{AVAIL[p.availability]?.[0] ?? p.availability}</Pill></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-3 rounded-2xl bg-blue-50 text-blue-800 text-xs p-3">Each person fills in their own row under My account ({filled} of {people.length} done). "Active" comes from the projects they are on that are not closed. Pilot rule: no lead on more than 2 active projects.</p>
-        </Card>
-      </div>
-      <div className="space-y-5">
-        <Card title="Skill coverage">
-          <p className="text-xs text-muted mb-2">Red means nobody with spare capacity can lead that kind of work.</p>
+    <div className="space-y-2.5">
+      <Panel title={`Expertise directory · ${filled} of ${people.length} profiles filled in`} action={<span className="text-[10.5px] text-muted">Each person fills in their own under My account. Pilot rule: no lead on more than 2 active projects.</span>}>
+        <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          {people.map((p) => {
+            const load = p.max_projects > 0 ? Math.min(p.active / p.max_projects, 1) : 1;
+            return (
+              <li key={p.user_id} className="rounded-xl border border-gray-100 p-3">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-8 h-8 rounded-full bg-gradient-to-br from-magenta to-plum text-white flex items-center justify-center text-[10px] font-semibold shrink-0" aria-hidden="true">{initialsOf(p.name)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] text-ink font-medium truncate">{p.name}</p>
+                    <p className="text-[10.5px] text-muted truncate">{ROLE_LABEL[p.role]}{p.unit ? ` · ${p.unit}` : ""}</p>
+                  </div>
+                  <Pill cls={AVAIL[p.availability]?.[1] ?? ""}>{AVAIL[p.availability]?.[0] ?? p.availability}</Pill>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2 min-h-[22px]">
+                  {p.filled ? tags(p.skills).slice(0, 5).map((t) => <span key={t} className="rounded-md bg-mist px-1.5 py-0.5 text-[10.5px] text-ink">{t}</span>)
+                    : <span className="text-[10.5px] text-muted">Profile not filled in yet</span>}
+                </div>
+                <div className="flex items-center gap-3 mt-2 text-[10.5px] text-muted">
+                  <span className={p.can_lead ? "text-plum" : ""}>{p.can_lead ? "✓" : "–"} Can lead</span>
+                  <span className={p.can_qa ? "text-plum" : ""}>{p.can_qa ? "✓" : "–"} Can review</span>
+                </div>
+                <div className="mt-2">
+                  <div className="flex justify-between text-[10.5px] text-muted"><span>{p.active} of {p.max_projects} projects</span><span className={p.spare > 0 ? "text-plum" : "text-red-700"}>{p.spare > 0 ? `${p.spare} free` : "Full"}</span></div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1"><i className={`block h-full ${p.spare > 0 ? "bg-plum" : "bg-red-500"}`} style={{ width: `${Math.max(load * 100, 3)}%` }} /></div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
+      <div className="hub-two grid gap-2.5 lg:grid-cols-2">
+        <Panel title="Skill coverage" action={<span className="text-[10.5px] text-muted">Red: nobody free can lead it</span>}>
           <ul className="divide-y divide-gray-100">
             {coverage.map((c) => (
-              <li key={c.skill} className="py-2 flex items-start justify-between gap-2 text-sm">
-                <div><span className="text-plum">{c.skill}</span><div className="text-xs text-muted">{c.detail}</div></div>
+              <li key={c.skill} className="py-1.5 flex items-start justify-between gap-2 text-[12px]">
+                <div><span className="text-ink">{c.skill}</span><div className="text-[10.5px] text-muted">{c.detail}</div></div>
                 <Pill cls={c.cls}>{c.label}</Pill>
               </li>
             ))}
           </ul>
-        </Card>
-        <Card title="Find people for a new project">
+        </Panel>
+        <Panel title="Find people for a new project">
           <Field label="Skills needed" hint="Separate with commas, for example AMR, phylogenetics"><input className={smallInput} value={need} onChange={(e) => setNeed(e.target.value)} /></Field>
           {suggestion && (
             <ul className="mt-3 space-y-1.5 text-sm">
@@ -215,8 +251,8 @@ const Directory = ({ d, me }: { d: Data; me: Me }) => {
               {assignMsg && <p className="text-xs text-muted" role="status">{assignMsg}</p>}
             </div>
           )}
-          {!mayAssign && <p className="text-xs text-muted mt-3">A lead or management adds people to a project.</p>}
-        </Card>
+          {!mayAssign && <p className="text-[11px] text-muted mt-3">A lead or management adds people to a project.</p>}
+        </Panel>
       </div>
     </div>
   );
@@ -237,16 +273,26 @@ const Team = ({ me }: { me: Me }) => {
   }, [load]);
   if (error) return <p className="text-red-600">{error}</p>;
   if (!d) return <p className="text-muted">Loading…</p>;
+  const people = d.directory;
+  const filledN = people.filter((p) => p.filled).length;
+  const leadsFree = people.filter((p) => p.can_lead && p.spare > 0 && p.availability !== "unavailable").length;
+  const ok = d.raci.filter((r) => r.check === "OK").length;
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div>
-        <h1 className="text-2xl text-plum">Team</h1>
-        <p className="text-sm text-muted mt-1">{tab === "matrix" ? "Who does what on every stage of a project." : "Who can do what, and who has room for a new project."}</p>
+        <h1>Team</h1>
+        <p className="text-[12px] text-muted mt-0.5">Who does what on every project, who can do what, and who has room for new work.</p>
       </div>
-      <div className="flex gap-2" role="tablist">
+      <div className="grid gap-2.5 grid-cols-2 lg:grid-cols-4">
+        <Tile dark label="Team members" value={people.length} note={`${people.filter((p) => p.availability === "available").length} available`} />
+        <Tile label="Profiles filled in" value={`${filledN} of ${people.length}`} note="Under My account" />
+        <Tile label="Can lead, with room" value={leadsFree} note="Spare capacity for a new project" />
+        <Tile label="Matrix rows OK" value={`${ok} of ${d.raci.length}`} note={ok === d.raci.length ? "Every row has one accountable person" : "Some rows need fixing"} />
+      </div>
+      <div className="flex items-end gap-5 border-b border-gray-200" role="tablist">
         {([["matrix", "Responsibilities"], ["directory", "Expertise and capacity"]] as const).map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-            className={`rounded-full border px-4 py-2 text-sm ${tab === k ? "bg-magenta border-magenta text-white" : "border-gray-200 bg-white text-plum hover:border-gray-300"}`}>{l}</button>
+            className={`-mb-px pb-2 pt-1 text-[13px] border-b-2 transition-colors ${tab === k ? "border-plum text-plum font-medium" : "border-transparent text-muted hover:text-ink"}`}>{l}</button>
         ))}
       </div>
       {tab === "matrix" ? <Matrix d={d} reload={load} /> : <Directory d={d} me={me} />}
