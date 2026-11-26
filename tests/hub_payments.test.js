@@ -47,7 +47,7 @@ test("payments: the standard schedule, receiving a payment updates Received, and
   const std = await post("fin", "payment-standard", { project_id: P1 });
   assert.equal(std.status, 200);
   assert.deepEqual(std.body.payments.map((r) => [r.name, r.amount, r.status]), [
-    ["Commitment fee (refundable)", 20000, "planned"],
+    ["Commitment fee (non-refundable)", 20000, "planned"],
     ["Middle payment", 0, "not_used"],
     ["Balance", 290000, "planned"],
   ]);

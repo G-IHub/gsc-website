@@ -57,7 +57,7 @@ const Payments = ({ projectId }: { projectId: number }) => {
     <Card title="Payments">
       {rows.length === 0 ? (
         <div className="space-y-3">
-          <p className="text-sm text-muted">No schedule yet. The standard one is a refundable commitment fee of ₦20,000, an optional middle payment, and the balance when the work is ready.</p>
+          <p className="text-sm text-muted">No schedule yet. The standard one is a non-refundable commitment fee of ₦20,000 (credited to the total), an optional middle payment, and the balance when the work is ready.</p>
           <div className="flex flex-wrap gap-2">
             <Btn variant="primary" onClick={() => send("payment-standard", {})}>Add the standard schedule</Btn>
             <Btn onClick={() => send("payment-save", { name: "Payment", amount: 0, status: "planned" })}>Add one payment</Btn>
