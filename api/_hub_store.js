@@ -246,6 +246,8 @@ export const HUB_SCHEMA = [
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
   `ALTER TABLE hub_updates ADD COLUMN IF NOT EXISTS share_client BOOLEAN NOT NULL DEFAULT false`,
+  // 2026-11-27: the commitment fee is non-refundable (agreement point 8); rename rows made by the old standard schedule
+  `UPDATE hub_payments SET name = 'Commitment fee (non-refundable)' WHERE name = 'Commitment fee (refundable)'`,
   `CREATE TABLE IF NOT EXISTS hub_documents (
      id BIGSERIAL PRIMARY KEY,
      project_id BIGINT NOT NULL REFERENCES hub_projects(id) ON DELETE CASCADE,

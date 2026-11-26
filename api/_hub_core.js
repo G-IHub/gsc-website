@@ -525,7 +525,7 @@ export async function handleHub(req, store, env = {}) {
     if (action === "payment-standard") {
       if ((await store.listPayments(p.id)).length > 0) return out(409, { error: "This project already has a payment schedule" });
       const fee = (await store.getMoney(p.id))?.fee ?? 0;
-      await store.savePayment(p.id, { name: "Commitment fee (refundable)", amount: COMMITMENT_FEE, due_date: null, received_date: null, status: "planned" });
+      await store.savePayment(p.id, { name: "Commitment fee (non-refundable)", amount: COMMITMENT_FEE, due_date: null, received_date: null, status: "planned" });
       await store.savePayment(p.id, { name: "Middle payment", amount: 0, due_date: null, received_date: null, status: "not_used" });
       await store.savePayment(p.id, { name: "Balance", amount: Math.max(fee - COMMITMENT_FEE, 0), due_date: null, received_date: null, status: "planned" });
     } else {
