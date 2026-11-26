@@ -5,6 +5,8 @@ import PortalIntake from "../client/PortalIntake";
 import MilestoneSignoff from "../client/MilestoneSignoff";
 import PortalFiles from "../client/PortalFiles";
 import PortalPayments from "../client/PortalPayments";
+import ChangePassword from "../client/ChangePassword";
+import { PRIVACY_APPROVED } from "../../shared/privacyNotice.js";
 
 // Genomac SC client portal: the client's own view of their research project.
 // Separate from the staff hub (own sign-in, own address /client). The server decides what a client may see.
@@ -66,7 +68,8 @@ const SignIn = ({ onDone }: { onDone: () => void }) => {
       <input className={input} type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} aria-label="Password" />
       {msg && <p className="text-[12px] text-red-600" role="alert">{msg}</p>}
       <button type="submit" disabled={!email || !password} className="w-full rounded-full bg-plum hover:bg-plum-soft disabled:opacity-50 text-white py-2.5 text-[13px]">Sign in</button>
-      <p className="text-[11px] text-muted">Your project lead sends you your sign-in details.</p>
+      <p className="text-[11px] text-muted">Your project lead sends you your sign-in details. Forgot your password? Ask your project lead for a new one.</p>
+      {PRIVACY_APPROVED && <p className="text-[11px]"><a href="/client/privacy" className="text-plum underline">Privacy notice</a></p>}
     </form>
   );
 };
@@ -208,6 +211,7 @@ const ClientPortal = () => {
   const [me, setMe] = useState<Me | null | "loading" | "off">("loading");
   const [projects, setProjects] = useState<ProjectLite[] | null>(null);
   const [open, setOpen] = useState<number | null>(null);
+  const [pwOpen, setPwOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Client portal — Genomac Services & Consult";
@@ -257,6 +261,7 @@ const ClientPortal = () => {
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right leading-tight"><p className="text-[12px] text-ink">{me.name}</p><p className="text-[10px] text-muted">{me.organization || me.email}</p></div>
+            <button onClick={() => setPwOpen(true)} className="text-[12px] text-muted hover:text-plum">Password</button>
             <button onClick={signOut} className="inline-flex items-center gap-1 text-[12px] text-muted hover:text-plum"><LogOut size={14} /> Sign out</button>
           </div>
         </header>
@@ -281,7 +286,9 @@ const ClientPortal = () => {
             </div>
           )}
         </main>
+        {PRIVACY_APPROVED && <footer className="text-center text-[11px] text-muted pb-1"><a href="/client/privacy" className="hover:text-plum">Privacy notice</a></footer>}
       </div>
+      {pwOpen && <ChangePassword onClose={() => setPwOpen(false)} />}
     </div>
   );
 };

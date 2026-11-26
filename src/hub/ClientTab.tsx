@@ -19,7 +19,7 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [inviting, setInviting] = useState(false);
   const [f, setF] = useState({ name: "", email: "", organization: "" });
-  const [temp, setTemp] = useState<{ email: string; password: string } | null>(null);
+  const [temp, setTemp] = useState<{ email: string; password: string; reset?: boolean } | null>(null);
   const [text, setText] = useState("");
   const [msg, setMsg] = useState("");
   const [copied, setCopied] = useState(false);
@@ -48,6 +48,12 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
       setInviting(false);
       load();
     } else setMsg(errorText(r));
+  };
+  const reset = async (c: Client) => {
+    if (!window.confirm(`Give ${c.name} a new one-time password? Their old password stops working and they are signed out everywhere.`)) return;
+    const r = await hub<{ tempPassword: string; email: string }>("client-reset", { method: "POST", body: { project_id: projectId, client_id: c.id } });
+    if (r.ok && r.data) { setTemp({ email: r.data.email, password: r.data.tempPassword, reset: true }); setMsg(""); }
+    else setMsg(errorText(r));
   };
   const revoke = async (c: Client) => {
     if (!window.confirm(`Remove ${c.name}'s access to this project in the client portal?`)) return;
@@ -109,7 +115,7 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
         )}
         {temp && (
           <div className="rounded-xl bg-magenta-tint/60 p-3 mb-3 text-[12px]">
-            <p className="text-plum font-medium">Client account created for {temp.email}</p>
+            <p className="text-plum font-medium">{temp.reset ? "New password" : "Client account created"} for {temp.email}</p>
             <p className="text-[11px] text-muted mt-0.5">Send them the address <b>genomacsc.com/client</b> and this one-time password privately. They change it after signing in.</p>
             <div className="flex items-center gap-2 mt-2">
               <code className="bg-white px-2.5 py-1 rounded-md text-[13px]">{temp.password}</code>
@@ -124,6 +130,7 @@ const ClientTab = ({ projectId }: { projectId: number }) => {
             <li key={c.id} className="py-2 flex items-center gap-2.5">
               <span className="w-8 h-8 rounded-full bg-lime text-plum flex items-center justify-center text-[10px] font-semibold shrink-0" aria-hidden="true">{initials(c.name)}</span>
               <div className="flex-1 min-w-0"><p className="text-[12px] text-ink truncate">{c.name}{!c.active && <span className="ml-1 text-[10px] text-muted">(switched off)</span>}</p><p className="text-[10.5px] text-muted truncate">{c.email}{c.organization ? ` · ${c.organization}` : ""} · added {c.added}</p></div>
+              {canInvite && <button onClick={() => reset(c)} className="text-[11px] text-muted hover:text-plum">Reset password</button>}
               {canInvite && <button onClick={() => revoke(c)} className="text-[11px] text-muted hover:text-red-600">Remove</button>}
             </li>
           ))}

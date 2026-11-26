@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 const Admin = lazy(() => import("./pages/Admin"));
 const Hub = lazy(() => import("./pages/Hub")); // staff-only Research Hub, opened at /hub
 const ClientPortal = lazy(() => import("./pages/ClientPortal")); // client portal, opened at /client
+const ClientPrivacy = lazy(() => import("./pages/ClientPrivacy")); // its privacy notice, /client/privacy
 
 const titles: Record<string, string> = {
   "/": "Genomac Services & Consult — Scientific Research & Consulting",
@@ -151,6 +152,14 @@ const App = () => {
           element={
             <Suspense fallback={null}>
               <ClientPortal />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/client/privacy"
+          element={
+            <Suspense fallback={null}>
+              <ClientPrivacy />
             </Suspense>
           }
         />

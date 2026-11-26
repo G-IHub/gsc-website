@@ -3,6 +3,7 @@ import { hashPassword, newTempPassword, passwordProblem, verifyPassword } from "
 import { handleClientDocs, handleStaffDocs } from "./_client_docs.js";
 import { handleClientFiles, handleStaffFiles } from "./_client_files.js";
 import { handleClientPayments } from "./_client_payments.js";
+import { clientRecipients, makeNotifier, teamRecipients } from "./_client_notify.js";
 
 // Genomac SC client portal (part 1): the client's own sign-in, their projects' progress, the updates the team
 // chose to share, and a conversation thread with the team. All access decisions live here.
@@ -21,11 +22,21 @@ const SESSION_HOURS = 12;
 const MAX_FAILURES = 5;
 
 const sign = (payload, secret) => crypto.createHmac("sha256", `client:${secret}`).update(payload).digest("base64url");
-export const makeClientCookie = (cid, secret, now = Date.now()) => {
-  const payload = Buffer.from(JSON.stringify({ cid, exp: now + SESSION_HOURS * 3600 * 1000 })).toString("base64url");
+export const passwordPrint = (hash) => crypto.createHash("sha256").update(String(hash ?? "")).digest("base64url").slice(0, 16);
+export const makeClientCookie = (cid, secret, now = Date.now(), pv = "") => {
+  const payload = Buffer.from(JSON.stringify({ cid, exp: now + SESSION_HOURS * 3600 * 1000, pv })).toString("base64url");
   return `${CLIENT_COOKIE}=${payload}.${sign(payload, secret)}; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age=${SESSION_HOURS * 3600}`;
 };
 const clearCookie = () => `${CLIENT_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age=0`;
+// only call after readClientCookie accepted the signature
+const cookiePv = (header = "") => {
+  try {
+    const raw = String(header).split(";").map((c) => c.trim()).find((c) => c.startsWith(`${CLIENT_COOKIE}=`));
+    return JSON.parse(Buffer.from(raw.slice(CLIENT_COOKIE.length + 1).split(".")[0], "base64url").toString()).pv ?? "";
+  } catch {
+    return "";
+  }
+};
 export const readClientCookie = (header = "", secret, now = Date.now()) => {
   const raw = String(header).split(";").map((c) => c.trim()).find((c) => c.startsWith(`${CLIENT_COOKIE}=`));
   if (!raw) return null;
@@ -67,13 +78,16 @@ export async function handleClient(req, store, env = {}) {
       return out(401, { error: "Wrong email or password" });
     }
     await store.log({ user_id: null, event: "client_login", detail: { client: c.id } });
-    return out(200, { ok: true }, makeClientCookie(c.id, secret));
+    return out(200, { ok: true }, makeClientCookie(c.id, secret, Date.now(), passwordPrint(c.password_hash)));
   }
   if (action === "logout" && method === "POST") return out(200, { ok: true }, clearCookie());
 
   const cid = readClientCookie(req.headers?.cookie, secret);
   const client = cid ? await store.getClientUserById(cid) : null;
   if (!client || !client.active) return out(401, { error: "Not signed in" });
+  // a password reset or change ends sessions that started with the old password
+  if (cookiePv(req.headers?.cookie) !== passwordPrint(client.password_hash)) return out(401, { error: "Not signed in" });
+  const notify = makeNotifier(store, env);
   const mine = new Set(await store.clientProjectIds(client.id));
   const projectOr404 = async (id) => {
     const n = Number(id);
@@ -89,7 +103,7 @@ export async function handleClient(req, store, env = {}) {
     if (bad) return out(400, { error: bad });
     if (!verifyPassword(String(body.oldPassword ?? ""), client.password_hash)) return out(403, { error: "Current password is wrong" });
     await store.updateClientUser(client.id, { password_hash: hashPassword(body.newPassword) });
-    return out(200, { ok: true });
+    return out(200, { ok: true }, makeClientCookie(client.id, secret, Date.now(), passwordPrint((await store.getClientUserById(client.id)).password_hash)));
   }
 
   if (action === "projects" && method === "GET") {
@@ -119,7 +133,7 @@ export async function handleClient(req, store, env = {}) {
     });
   }
 
-  const docs = await handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str });
+  const docs = await handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str, notify });
   if (docs) return docs;
   const files = await handleClientFiles({ action, method, req, store, projectOr404, out });
   if (files) return files;
@@ -140,6 +154,7 @@ export async function handleClient(req, store, env = {}) {
     if (!text) return out(400, { error: "Write something first" });
     await store.addClientMessage(p.id, { client_id: client.id, staff_id: null, text });
     await store.log({ user_id: null, event: "client_message", detail: { project: p.id, client: client.id } });
+    await notify("client_message", p, await teamRecipients(store, p.id));
     return out(200, { ok: true });
   }
 
@@ -149,12 +164,13 @@ export async function handleClient(req, store, env = {}) {
 // ---- the team's side, called from the staff hub (_hub_core.js) ----
 // Who: reading the client tab = people on the project and management; inviting and removing clients = the project's
 // lead or management; writing to the client = anyone on the project or management.
-export async function handleClientStaff({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s, req }) {
-  const sd = await handleStaffDocs({ req: req ?? { query, headers: {}, ip: "" }, action, method, body, user, store, memberIds, projectOr404, deny, out: send, str: s });
+export async function handleClientStaff({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s, req, env = {} }) {
+  const notify = makeNotifier(store, env);
+  const sd = await handleStaffDocs({ req: req ?? { query, headers: {}, ip: "" }, action, method, body, user, store, memberIds, projectOr404, deny, out: send, str: s, notify });
   if (sd) return sd;
-  const sf = await handleStaffFiles({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s });
+  const sf = await handleStaffFiles({ action, method, body, query, user, store, memberIds, projectOr404, deny, out: send, str: s, notify });
   if (sf) return sf;
-  const acts = ["client-list", "client-invite", "client-revoke", "client-messages", "client-message-post", "update-share"];
+  const acts = ["client-list", "client-invite", "client-revoke", "client-reset", "client-messages", "client-message-post", "update-share"];
   if (!acts.includes(action)) return null;
   const p = await projectOr404(method === "GET" ? query?.id : body.project_id);
   if (!p) return send(404, { error: "Not found" });
@@ -192,6 +208,17 @@ export async function handleClientStaff({ action, method, body, query, user, sto
     await log("client_removed", { client: cid });
     return send(200, { ok: true });
   }
+  if (action === "client-reset" && method === "POST") {
+    // a new one-time password for a client of THIS project; their old password and sessions stop working
+    if (!isLead) return deny("reset client password", { project: p.id });
+    const cid = Number(body.client_id);
+    const c = (await store.listProjectClients(p.id)).find((x) => x.id === cid);
+    if (!c) return send(404, { error: "Not found" });
+    const tempPassword = newTempPassword();
+    await store.updateClientUser(cid, { password_hash: hashPassword(tempPassword), active: true });
+    await log("client_password_reset", { client: cid });
+    return send(200, { ok: true, email: c.email, tempPassword });
+  }
   if (action === "client-messages" && method === "GET") {
     const rows = await store.listClientMessages(p.id);
     return send(200, { messages: rows.map((m) => ({ id: m.id, at: m.at, text: m.text, from: m.client_id ? "client" : "team", who: m.client_id ? m.client_name : m.staff_name || "", mine: m.staff_id === user.id })) });
@@ -201,6 +228,7 @@ export async function handleClientStaff({ action, method, body, query, user, sto
     if (!text) return send(400, { error: "Write something first" });
     await store.addClientMessage(p.id, { client_id: null, staff_id: user.id, text });
     await log("client_message_team");
+    await notify("team_message", p, await clientRecipients(store, p.id));
     return send(200, { ok: true });
   }
   if (action === "update-share" && method === "POST") {
