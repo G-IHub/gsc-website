@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { DOC_TEMPLATES } from "../shared/docTemplates.js";
 import { cleanIntake } from "../shared/intakeForm.js";
+import { clientRecipients, teamRecipients } from "./_client_notify.js";
 
 // Client portal part 2: documents, online signing, milestone sign-offs and the online intake form.
 //
@@ -45,7 +46,7 @@ const docView = async (store, doc, { forClient }) => {
 const ua = (req) => String((req.headers || {})["user-agent"] ?? "").slice(0, 300);
 
 // ---------------- the client's side ----------------
-export async function handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str }) {
+export async function handleClientDocs({ req, action, method, body, client, store, projectOr404, out, str, notify = async () => 0 }) {
   const acts = ["docs", "doc", "doc-sign", "doc-comment", "milestone-sign", "intake", "intake-save"];
   if (!acts.includes(action)) return null;
   const p = await projectOr404(method === "GET" ? req.query?.id : body.project_id);
@@ -81,6 +82,9 @@ export async function handleClientDocs({ req, action, method, body, client, stor
     if ((await store.listSignatures({ doc_id: d.id })).some((s) => s.version === latest.version && s.signer === "client")) return out(409, { error: "Already signed" });
     await store.addSignature({ project_id: p.id, doc_id: d.id, version: latest.version, milestone_n: null, signer: "client", client_id: client.id, staff_id: null, typed_name: name, ip: String(req.ip || ""), user_agent: ua(req), hash: latest.hash });
     await log("doc_signed_client", { doc: d.id, version: latest.version });
+    await notify("client_signed", p, await teamRecipients(store, p.id));
+    if (d.countersign) await notify("countersign_needed", p, await teamRecipients(store, p.id, { management: true }));
+    else await notify("doc_complete", p, await clientRecipients(store, p.id));
     return out(200, { document: await docView(store, d, { forClient: true }) });
   }
   if (action === "doc-comment" && method === "POST") {
@@ -90,6 +94,7 @@ export async function handleClientDocs({ req, action, method, body, client, stor
     if (!text) return out(400, { error: "Write your comment first" });
     await store.addDocComment(d.id, { client_id: client.id, staff_id: null, text });
     await log("doc_comment_client", { doc: d.id });
+    await notify("client_comment", p, await teamRecipients(store, p.id));
     return out(200, { document: await docView(store, d, { forClient: true }) });
   }
   if (action === "milestone-sign" && method === "POST") {
@@ -103,6 +108,7 @@ export async function handleClientDocs({ req, action, method, body, client, stor
     await store.updateMilestone(p.id, n, { signed: true });
     await store.addSignature({ project_id: p.id, doc_id: null, version: null, milestone_n: n, signer: "client", client_id: client.id, staff_id: null, typed_name: name, ip: String(req.ip || ""), user_agent: ua(req), hash: milestonePrint(p.id, n, m.name, m.done) });
     await log("milestone_signed_client", { n });
+    await notify("client_signoff", p, await teamRecipients(store, p.id));
     return out(200, { ok: true });
   }
   if (action === "intake" && method === "GET") {
@@ -114,14 +120,17 @@ export async function handleClientDocs({ req, action, method, body, client, stor
     const { data, missing } = cleanIntake(body.data);
     if (body.submit && missing.length) return out(400, { error: `Please complete: ${missing.join(", ")}`, missing });
     await store.saveIntake(p.id, data, Boolean(body.submit));
-    if (body.submit) await log("intake_submitted");
+    if (body.submit) {
+      await log("intake_submitted");
+      await notify("intake_sent", p, await teamRecipients(store, p.id));
+    }
     return out(200, { intake: await store.getIntake(p.id) });
   }
   return out(404, { error: "Unknown action" });
 }
 
 // ---------------- the team's side (called from the hub) ----------------
-export async function handleStaffDocs({ req, action, method, body, user, store, memberIds, projectOr404, deny, out, str }) {
+export async function handleStaffDocs({ req, action, method, body, user, store, memberIds, projectOr404, deny, out, str, notify = async () => 0 }) {
   const acts = ["cdocs", "cdoc", "cdoc-create", "cdoc-edit", "cdoc-send", "cdoc-countersign", "cdoc-comment", "cintake", "cintake-reopen", "cdoc-templates"];
   if (!acts.includes(action)) return null;
   if (action === "cdoc-templates" && method === "GET") {
@@ -178,6 +187,7 @@ export async function handleStaffDocs({ req, action, method, body, user, store, 
     } else {
       // seen or signed: never change it; make the next version
       await store.addDocVersion(d.id, latest.version + 1, text, fingerprint(d.id, latest.version + 1, title, text), user.id);
+      if (d.sent) await notify("doc_sent", p, await clientRecipients(store, p.id));
     }
     if (title !== d.title) await store.setDocument(d.id, { title });
     await log("cdoc_edited", { doc: d.id });
@@ -192,6 +202,7 @@ export async function handleStaffDocs({ req, action, method, body, user, store, 
     }
     await store.setDocument(d.id, { sent: true });
     await log("cdoc_sent", { doc: d.id });
+    if (!d.sent) await notify("doc_sent", p, await clientRecipients(store, p.id));
     return out(200, { ok: true });
   }
   if (action === "cdoc-countersign" && method === "POST") {
@@ -207,6 +218,7 @@ export async function handleStaffDocs({ req, action, method, body, user, store, 
     if (name.length < 3 || body.agree !== true) return out(400, { error: "Type your full name and tick that you agree" });
     await store.addSignature({ project_id: p.id, doc_id: d.id, version: latest.version, milestone_n: null, signer: "genomac", client_id: null, staff_id: user.id, typed_name: name, ip: String(req.ip || ""), user_agent: ua(req), hash: latest.hash });
     await log("cdoc_countersigned", { doc: d.id, version: latest.version });
+    await notify("doc_complete", p, await clientRecipients(store, p.id));
     return out(200, { document: await docView(store, d, { forClient: false }) });
   }
   if (action === "cdoc-comment" && method === "POST") {

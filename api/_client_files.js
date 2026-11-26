@@ -1,3 +1,5 @@
+import { clientRecipients } from "./_client_notify.js";
+
 // Client portal part 3: the final files (deliverables), released to the client only after the balance is paid.
 //
 // Rules (enforced here, for both doors):
@@ -36,7 +38,7 @@ export async function handleClientFiles({ action, method, req, store, projectOr4
 }
 
 // ---------------- the team's side (called from the hub) ----------------
-export async function handleStaffFiles({ action, method, body, query, user, store, memberIds, projectOr404, deny, out, str }) {
+export async function handleStaffFiles({ action, method, body, query, user, store, memberIds, projectOr404, deny, out, str, notify = async () => 0 }) {
   const acts = ["cfiles", "cfile-save", "cfile-delete", "cfiles-release", "cfiles-withdraw"];
   if (!acts.includes(action)) return null;
   const p = await projectOr404(method === "GET" ? query?.id : body.project_id);
@@ -93,6 +95,7 @@ export async function handleStaffFiles({ action, method, body, query, user, stor
     const step = (await store.listMilestones(p.id)).find((m) => m.n === RELEASE_STEP);
     if (step && step.status !== "done") await store.updateMilestone(p.id, RELEASE_STEP, { status: "done", done: new Date().toISOString().slice(0, 10) });
     await log("cfiles_released");
+    await notify("files_released", p, await clientRecipients(store, p.id));
     return out(200, { ok: true });
   }
   if (action === "cfiles-withdraw" && method === "POST") {

@@ -4,6 +4,7 @@ import { handleReports } from "./_hub_reports.js";
 import { handleTeam } from "./_hub_team.js";
 import { handleQa, qaPassed } from "./_hub_qa.js";
 import { handleClientStaff } from "./_client_core.js";
+import { clientRecipients, makeNotifier } from "./_client_notify.js";
 import { CLEARANCE_ITEMS, COMMITMENT_FEE, PAYMENT_ROW_STATUSES, RETIRED_LIBRARY, RETIRED_LIBRARY_QA, DEFAULT_LIBRARY, DEFAULT_MILESTONES, LIBRARY_AUDIENCES, LIBRARY_KINDS, MILESTONE_STATUSES } from "./_hub_defaults.js";
 
 // Genomac Research Hub (staff only): sign-in, roles, project membership and the access rules.
@@ -396,6 +397,9 @@ export async function handleHub(req, store, env = {}) {
     }
     await store.updateMilestone(p.id, n, patch);
     await store.log({ user_id: user.id, event: "milestone_updated", detail: { project: p.id, n, patch } });
+    if (patch.status === "done" && row.status !== "done" && row.signoff && !row.signed) {
+      await makeNotifier(store, env)("signoff_ready", p, await clientRecipients(store, p.id));
+    }
     return out(200, { ok: true });
   }
 
@@ -649,7 +653,7 @@ export async function handleHub(req, store, env = {}) {
     return out(200, { log: req.query?.project ? rows.filter((l) => Number(l.detail?.project) === pid).slice(0, 100) : rows });
   }
 
-  const cl = await handleClientStaff({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str, req });
+  const cl = await handleClientStaff({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str, req, env });
   if (cl) return cl;
   const qa = await handleQa({ action, method, body, query: req.query, user, store, memberIds, projectOr404, deny, out, str });
   if (qa) return qa;
