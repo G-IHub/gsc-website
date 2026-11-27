@@ -6,6 +6,9 @@ import { contact, enquiryEndpoint } from "../data/site";
 
 const programmeName = "Research-to-Publication Lab";
 
+// Applicants are sent here once their submission has gone through
+const WHATSAPP_GROUP_URL = "https://chat.whatsapp.com/JE9Q8Ex9ZmPIl7yta2MCOg?s=cl&p=a&iam=2";
+
 const inputClass =
   "w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-[15px] text-ink placeholder:text-gray-400 focus:outline-none focus:border-magenta focus:ring-2 focus:ring-magenta/15 transition";
 
@@ -224,14 +227,22 @@ const ResearchProgramme = () => {
     if (enquiryEndpoint) {
       setStatus("sending");
       try {
-        const res = await fetch(enquiryEndpoint, {
+        // keepalive lets the save finish even though the page is about to leave for WhatsApp
+        const request = fetch(enquiryEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify(payload),
+          keepalive: true,
         });
-        if (!res.ok) throw new Error(String(res.status));
+        // Wait a moment for the answer so a failed save is noticed, but never hold the visitor up
+        const result = await Promise.race([
+          request.then((res) => (res.ok ? "saved" : "failed")),
+          new Promise<"pending">((resolve) => window.setTimeout(() => resolve("pending"), 1500)),
+        ]);
+        if (result === "failed") throw new Error("save failed");
         setStatus("sent");
         form.reset();
+        window.location.assign(WHATSAPP_GROUP_URL);
         return;
       } catch {
         // Email is not configured or failed: open the visitor's email app instead
@@ -435,6 +446,13 @@ const ResearchProgramme = () => {
               <p className="text-muted max-w-sm mx-auto">
                 We will review it and respond within 3–5 working days.
               </p>
+              <p className="text-muted max-w-sm mx-auto mt-3 text-sm">
+                You are being taken to our WhatsApp group.{" "}
+                <a href={WHATSAPP_GROUP_URL} className="text-magenta-dark font-medium hover:underline">
+                  Join it here
+                </a>{" "}
+                if nothing happens.
+              </p>
               <button onClick={() => setStatus("idle")} className="mt-6 text-magenta-dark font-medium text-sm hover:underline">
                 Submit another idea
               </button>
@@ -544,6 +562,9 @@ const ResearchProgramme = () => {
               >
                 {status === "sending" ? "Sending…" : "Submit for feasibility review"}
               </button>
+              <p className="text-xs text-muted">
+                Note: after you submit, you will be redirected to join our WhatsApp group.
+              </p>
             </form>
           )}
         </div>
