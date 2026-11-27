@@ -506,8 +506,8 @@ const ResearchProgramme = () => {
                 <Field label="Target journal or type of journal">
                   <input name="journal" className={inputClass} />
                 </Field>
-                <Field label="Phone / WhatsApp">
-                  <input name="phone" className={inputClass} autoComplete="tel" />
+                <Field label="Phone / WhatsApp" required>
+                  <input name="phone" type="tel" required className={inputClass} autoComplete="tel" />
                 </Field>
               </div>
               <Field label="How did you hear about us?">
